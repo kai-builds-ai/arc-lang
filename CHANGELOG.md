@@ -2,6 +2,27 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.3] — 2026-02-16
+
+### Fixed — 11 Bug Fixes (Compiler, Stdlib, Toolchain Audit)
+
+**Compiler (4 fixes):**
+- Unterminated strings no longer silently accepted — lexer now throws proper error
+- Escape sequence at EOF no longer produces "undefined" in string
+- Division and modulo by zero now throw runtime error instead of returning Infinity/NaN
+- `ret` keyword now fully functional — was lexed but never parsed or interpreted
+
+**Standard Library (4 fixes):**
+- `math.floor()` no longer double-floors negative numbers (`floor(-2.3)` → `-3` not `-4`)
+- `math.ceil()` now correct for negative non-integers (`ceil(-2.3)` → `-2` not `-3`)
+- `json._quote()` now properly escapes double quotes inside strings
+- `strings.pad_left()`/`pad_right()` no longer overshoot target width with multi-char pad strings
+
+**Toolchain (3 fixes):**
+- JS codegen control flow fixed — if/else and match expressions no longer always execute last branch
+- `arc build new` project templates now use valid `{}` syntax instead of unsupported `do/end`
+- Formatter now respects maxLineLength for if/else expressions
+
 ## [0.5.0] — 2026-02-16
 
 ### Added — Phase 5: Production Hardening

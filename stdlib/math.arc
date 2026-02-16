@@ -35,14 +35,12 @@ pub fn ceil(x) {
   let i = int(x)
   if float(i) == float(x) { i }
   el if x > 0 { i + 1 }
-  el { i }
+  el { i + 1 }
 }
 
 pub fn floor(x) {
-  let i = int(x)
-  if float(i) == float(x) { i }
-  el if x < 0 { i - 1 }
-  el { i }
+  # int() already truncates toward negative infinity (Math.floor)
+  int(x)
 }
 
 pub fn clamp(x, lo, hi) {

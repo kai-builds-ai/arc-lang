@@ -62,6 +62,7 @@ export class Parser {
       case TokenType.Do: return this.parseDo();
       case TokenType.Use: return this.parseUse();
       case TokenType.Type: return this.parseType();
+      case TokenType.Ret: return this.parseRet();
       default: {
         const exprLoc = this.loc();
         const expr = this.parseExpr();
@@ -225,6 +226,17 @@ export class Parser {
     this.expect(TokenType.Assign);
     const def = this.parseTypeExpr();
     return { kind: "TypeStmt", name, pub, def, loc };
+  }
+
+  private parseRet(): AST.RetStmt {
+    const loc = this.loc();
+    this.expect(TokenType.Ret);
+    let value: AST.Expr | undefined;
+    // If the next token could start an expression, parse it
+    if (!this.at(TokenType.EOF) && !this.at(TokenType.RBrace) && !this.at(TokenType.Semicolon)) {
+      value = this.parseExpr();
+    }
+    return { kind: "RetStmt", value, loc };
   }
 
   private parseTypeExpr(): AST.TypeExpr {

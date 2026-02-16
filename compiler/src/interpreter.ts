@@ -232,6 +232,11 @@ function makePrelude(env: Env): void {
   }
 }
 
+// Return signal — thrown to unwind the stack on `ret`
+class ReturnSignal {
+  constructor(public value: Value) {}
+}
+
 // Tail Call Optimization signal
 interface TCOSignal {
   __tco: true;
@@ -313,8 +318,14 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         case "+": return (left as number) + (right as number);
         case "-": return (left as number) - (right as number);
         case "*": return (left as number) * (right as number);
-        case "/": return (left as number) / (right as number);
-        case "%": return (left as number) % (right as number);
+        case "/": {
+          if (right === 0) throw new Error(`Division by zero at line ${expr.loc.line}`);
+          return (left as number) / (right as number);
+        }
+        case "%": {
+          if (right === 0) throw new Error(`Modulo by zero at line ${expr.loc.line}`);
+          return (left as number) % (right as number);
+        }
         case "**": return Math.pow(left as number, right as number);
         case "==": return left === right;
         case "!=": return left !== right;
@@ -348,18 +359,26 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         let fn = callee as FnValue;
         // Tail call optimization loop: if the function body resolves to
         // a tail call back to itself, reuse the frame instead of recursing
-        tailLoop: while (true) {
-          const fnEnv = new Env(fn.closure);
-          fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
-          const bodyResult = evalExprTCO(fn.body, fnEnv, fn.name);
-          if (bodyResult && typeof bodyResult === "object" && "__tco" in bodyResult) {
-            const tco = bodyResult as TCOSignal;
-            args = tco.args;
-            // fn stays the same — it's a self-recursive tail call
-            continue tailLoop;
+        try {
+          tailLoop: while (true) {
+            const fnEnv = new Env(fn.closure);
+            fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
+            const bodyResult = evalExprTCO(fn.body, fnEnv, fn.name);
+            if (bodyResult && typeof bodyResult === "object" && "__tco" in bodyResult) {
+              const tco = bodyResult as TCOSignal;
+              args = tco.args;
+              // fn stays the same — it's a self-recursive tail call
+              continue tailLoop;
+            }
+            result = bodyResult;
+            break;
           }
-          result = bodyResult;
-          break;
+        } catch (e) {
+          if (e instanceof ReturnSignal) {
+            result = e.value;
+          } else {
+            throw e;
+          }
         }
       } else {
         throw new Error(`Not callable: ${toStr(callee)} at line ${expr.loc.line}`);
@@ -617,6 +636,10 @@ function evalStmt(stmt: AST.Stmt, env: Env): Value {
       throw new Error(`Cannot assign index on ${toStr(obj)}`);
     }
 
+    case "RetStmt": {
+      const value = stmt.value ? evalExpr(stmt.value, env) : null;
+      throw new ReturnSignal(value);
+    }
     case "ExprStmt": return evalExpr(stmt.expr, env);
     case "UseStmt": {
       // Module imports handled by interpretWithFile; no-op if no file context

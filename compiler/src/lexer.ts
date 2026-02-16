@@ -80,6 +80,10 @@ export function lex(source: string): Token[] {
       let hasInterp = false;
 
       while (i < source.length && peek() !== '"') {
+        if (peek() === "\n") {
+          // Unterminated string - newline before closing quote
+          throw new Error(`Unterminated string literal at line ${sl}, col ${sc}`);
+        }
         if (peek() === "{") {
           hasInterp = true;
           if (str.length > 0 || parts.length === 0) {
@@ -101,6 +105,9 @@ export function lex(source: string): Token[] {
         }
         if (peek() === "\\") {
           advance();
+          if (i >= source.length) {
+            throw new Error(`Unterminated string literal (escape at end of file) at line ${sl}, col ${sc}`);
+          }
           const esc = advance();
           if (esc === "n") str += "\n";
           else if (esc === "t") str += "\t";
@@ -110,6 +117,9 @@ export function lex(source: string): Token[] {
           continue;
         }
         str += advance();
+      }
+      if (i >= source.length) {
+        throw new Error(`Unterminated string literal at line ${sl}, col ${sc}`);
       }
       if (peek() === '"') advance(); // skip closing quote
 

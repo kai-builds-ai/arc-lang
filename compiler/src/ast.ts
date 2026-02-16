@@ -169,7 +169,7 @@ export interface OrPattern { kind: "OrPattern"; patterns: Pattern[]; loc: Loc; }
 
 export type Stmt =
   | LetStmt | FnStmt | ForStmt | DoStmt | ExprStmt | UseStmt | TypeStmt
-  | AssignStmt | MemberAssignStmt | IndexAssignStmt;
+  | AssignStmt | MemberAssignStmt | IndexAssignStmt | RetStmt;
 
 export interface AssignStmt {
   kind: "AssignStmt";
@@ -191,6 +191,12 @@ export interface IndexAssignStmt {
   object: Expr;
   index: Expr;
   value: Expr;
+  loc: Loc;
+}
+
+export interface RetStmt {
+  kind: "RetStmt";
+  value?: Expr;
   loc: Loc;
 }
 

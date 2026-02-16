@@ -2,10 +2,11 @@
 
 pub fn pad_left(s, width, ch) {
   let mut result = str(s)
+  let pad_char = slice(str(ch), 0, 1)
   if len(result) >= width { result }
   el {
     do {
-      result = str(ch) ++ result
+      result = pad_char ++ result
     } until len(result) >= width
     result
   }
@@ -13,10 +14,11 @@ pub fn pad_left(s, width, ch) {
 
 pub fn pad_right(s, width, ch) {
   let mut result = str(s)
+  let pad_char = slice(str(ch), 0, 1)
   if len(result) >= width { result }
   el {
     do {
-      result = result ++ str(ch)
+      result = result ++ pad_char
     } until len(result) >= width
     result
   }

@@ -30,6 +30,7 @@ pub fn to_json(value) {
 fn _quote(s) {
   let escaped = replace(replace(s, "\\", "\\\\"), "\n", "\\n")
   let escaped = replace(escaped, "\t", "\\t")
+  let escaped = replace(escaped, "\"", "\\\"")
   _Q ++ escaped ++ _Q
 }
 

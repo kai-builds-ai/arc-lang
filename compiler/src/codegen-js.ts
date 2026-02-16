@@ -84,9 +84,81 @@ function emitFunction(fn: IRFunction, baseIndent = ""): string {
 
 function emitBlock(block: IRBlock, indent: string): string[] {
   const lines: string[] = [];
-  for (const instr of block.instrs) {
-    lines.push(indent + emitInstr(instr));
+  const instrs = block.instrs;
+
+  // Split instructions into labeled sections for control flow
+  interface Section {
+    label: string;
+    instrs: IRInstr[];
   }
+  const sections: Section[] = [];
+  let currentSection: Section = { label: "__start", instrs: [] };
+  sections.push(currentSection);
+
+  for (const instr of instrs) {
+    if (instr.op === "label") {
+      currentSection = { label: instr.name, instrs: [] };
+      sections.push(currentSection);
+    } else {
+      currentSection.instrs.push(instr);
+    }
+  }
+
+  // If no labels exist, emit linearly (simple case)
+  if (sections.length === 1) {
+    for (const instr of instrs) {
+      lines.push(indent + emitInstr(instr));
+    }
+    return lines;
+  }
+
+  // Use a state-machine approach with a __pc variable and a while/switch loop
+  // to properly handle branches and jumps
+  const labelToIdx = new Map<string, number>();
+  for (let i = 0; i < sections.length; i++) {
+    labelToIdx.set(sections[i].label, i);
+  }
+
+  lines.push(`${indent}var __pc = 0;`);
+  lines.push(`${indent}__control: while (true) {`);
+  lines.push(`${indent}  switch (__pc) {`);
+
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i];
+    lines.push(`${indent}    case ${i}: /* ${section.label} */`);
+
+    for (const instr of section.instrs) {
+      if (instr.op === "jump") {
+        const target = labelToIdx.get(instr.target);
+        if (target !== undefined) {
+          lines.push(`${indent}      __pc = ${target}; continue __control;`);
+        }
+      } else if (instr.op === "branch") {
+        const ifTrue = labelToIdx.get(instr.ifTrue);
+        const ifFalse = labelToIdx.get(instr.ifFalse);
+        lines.push(`${indent}      if (${S(instr.cond)}) { __pc = ${ifTrue}; } else { __pc = ${ifFalse}; } continue __control;`);
+      } else if (instr.op === "ret") {
+        lines.push(`${indent}      ` + emitInstr(instr));
+      } else {
+        lines.push(`${indent}      ` + emitInstr(instr));
+      }
+    }
+
+    // Fall through to next section if no jump/branch/ret at end
+    const lastInstr = section.instrs[section.instrs.length - 1];
+    if (!lastInstr || (lastInstr.op !== "jump" && lastInstr.op !== "branch" && lastInstr.op !== "ret")) {
+      if (i + 1 < sections.length) {
+        lines.push(`${indent}      __pc = ${i + 1}; continue __control;`);
+      } else {
+        lines.push(`${indent}      break __control;`);
+      }
+    }
+  }
+
+  lines.push(`${indent}    default: break __control;`);
+  lines.push(`${indent}  }`);
+  lines.push(`${indent}}`);
+
   return lines;
 }
 

@@ -132,15 +132,38 @@ export function format(source: string, options?: Partial<FormatOptions>): string
       }
       case "IfExpr": {
         const cond = formatExpr(expr.condition, depth);
-        const then = formatBlockExpr(expr.then, depth);
+        const thenInline = formatBlockExpr(expr.then, depth);
         if (expr.else_) {
+          let elInline: string;
           if (expr.else_.kind === "IfExpr") {
-            return `if ${cond} ${then} el ${formatExpr(expr.else_, depth)}`;
+            elInline = formatExpr(expr.else_, depth);
+          } else {
+            elInline = formatBlockExpr(expr.else_, depth);
           }
-          const el = formatBlockExpr(expr.else_, depth);
-          return `if ${cond} ${then} el ${el}`;
+          const single = `if ${cond} ${thenInline} el ${elInline}`;
+          if (single.length + depth * opts.indentSize <= opts.maxLineLength) {
+            return single;
+          }
+          // Force multi-line blocks when single-line is too long
+          const thenMulti = expr.then.kind === "BlockExpr"
+            ? formatBlockMultiline(expr.then, depth)
+            : thenInline;
+          if (expr.else_.kind === "IfExpr") {
+            return `if ${cond} ${thenMulti} el ${formatExpr(expr.else_, depth)}`;
+          }
+          const elMulti = expr.else_.kind === "BlockExpr"
+            ? formatBlockMultiline(expr.else_ as AST.BlockExpr, depth)
+            : elInline;
+          return `if ${cond} ${thenMulti} el ${elMulti}`;
         }
-        return `if ${cond} ${then}`;
+        const single = `if ${cond} ${thenInline}`;
+        if (single.length + depth * opts.indentSize <= opts.maxLineLength) {
+          return single;
+        }
+        const thenMulti = expr.then.kind === "BlockExpr"
+          ? formatBlockMultiline(expr.then, depth)
+          : thenInline;
+        return `if ${cond} ${thenMulti}`;
       }
       case "MatchExpr": {
         const subject = formatExpr(expr.subject, depth);
@@ -204,6 +227,12 @@ export function format(source: string, options?: Partial<FormatOptions>): string
   function formatBlockExpr(expr: AST.Expr, depth: number): string {
     if (expr.kind === "BlockExpr") return formatBlockInline(expr, depth);
     return formatExpr(expr, depth);
+  }
+
+  function formatBlockMultiline(block: AST.BlockExpr, depth: number): string {
+    if (block.stmts.length === 0) return "{}";
+    const body = block.stmts.map(s => `${indent(depth + 1)}${formatStmtStr(s, depth + 1)}`).join('\n');
+    return `{\n${body}\n${indent(depth)}}`;
   }
 
   function formatBlockInline(block: AST.BlockExpr, depth: number): string {

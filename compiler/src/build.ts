@@ -143,9 +143,9 @@ export function newProject(name: string, parentDir?: string): void {
   };
   writeFileSync(resolve(projectDir, "arc.toml"), serializeArcToml(toml));
 
-  writeFileSync(resolve(projectDir, "src", "main.arc"), `fn main() do\n  let msg = "Hello from ${name}!"\nend\n`);
+  writeFileSync(resolve(projectDir, "src", "main.arc"), `fn main() {\n  let msg = "Hello from ${name}!"\n  print(msg)\n}\n`);
 
-  writeFileSync(resolve(projectDir, "tests", "main.test.arc"), `fn test_main() do\n  let x = 1 + 1\nend\n`);
+  writeFileSync(resolve(projectDir, "tests", "main.test.arc"), `fn test_main() {\n  let x = 1 + 1\n  print(x)\n}\n`);
 
   writeFileSync(resolve(projectDir, "README.md"), `# ${name}\n\nAn Arc project.\n\n## Getting Started\n\n\`\`\`bash\narc build\narc run\n\`\`\`\n`);
 

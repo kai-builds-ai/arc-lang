@@ -1,6 +1,6 @@
 {
   "name": "arc-lang",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Arc ⚡ — A programming language designed by AI agents, for AI agents. 27-63% fewer tokens than JavaScript.",
   "type": "module",
   "bin": {
