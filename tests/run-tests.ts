@@ -58,6 +58,57 @@ async function main() {
   totalPassed += errorsTests.passed;
   totalFailed += errorsTests.failed;
 
+  // Extended unit tests
+  console.log("\n--- Lexer Extended Tests ---");
+  const lexerExt = await import("./lexer-extended.test.js");
+  totalPassed += lexerExt.passed;
+  totalFailed += lexerExt.failed;
+
+  console.log("\n--- Parser Extended Tests ---");
+  const parserExt = await import("./parser-extended.test.js");
+  totalPassed += parserExt.passed;
+  totalFailed += parserExt.failed;
+
+  console.log("\n--- Interpreter Extended Tests ---");
+  const interpExt = await import("./interpreter-extended.test.js");
+  totalPassed += interpExt.passed;
+  totalFailed += interpExt.failed;
+
+  console.log("\n--- Semantic Extended Tests ---");
+  const semanticExt = await import("./semantic-extended.test.js");
+  totalPassed += semanticExt.passed;
+  totalFailed += semanticExt.failed;
+
+  console.log("\n--- Optimizer Extended Tests ---");
+  const optimizerExt = await import("./optimizer-extended.test.js");
+  totalPassed += optimizerExt.passed;
+  totalFailed += optimizerExt.failed;
+
+  console.log("\n--- Codegen Extended Tests ---");
+  const codegenExt = await import("./codegen-extended.test.js");
+  totalPassed += codegenExt.passed;
+  totalFailed += codegenExt.failed;
+
+  console.log("\n--- Security Extended Tests ---");
+  const securityExt = await import("./security-extended.test.js");
+  totalPassed += securityExt.passed;
+  totalFailed += securityExt.failed;
+
+  console.log("\n--- Errors Extended Tests ---");
+  const errorsExt = await import("./errors-extended.test.js");
+  totalPassed += errorsExt.passed;
+  totalFailed += errorsExt.failed;
+
+  console.log("\n--- Formatter Extended Tests ---");
+  const formatterExt = await import("./formatter-extended.test.js");
+  totalPassed += formatterExt.passed;
+  totalFailed += formatterExt.failed;
+
+  console.log("\n--- Linter Extended Tests ---");
+  const linterExt = await import("./linter-extended.test.js");
+  totalPassed += linterExt.passed;
+  totalFailed += linterExt.failed;
+
   // Integration tests
   console.log("\n--- Integration Tests ---");
   const { runIntegrationTests } = await import("./runner.js");
@@ -71,6 +122,11 @@ async function main() {
   const edgeTests = await import("./edge-cases.test.js");
   totalPassed += edgeTests.passed;
   totalFailed += edgeTests.failed;
+
+  console.log("\n--- Edge Cases Extended Tests ---");
+  const edgeExt = await import("./edge-cases-extended.test.js");
+  totalPassed += edgeExt.passed;
+  totalFailed += edgeExt.failed;
 
   // Property tests
   console.log("\n--- Property Tests ---");
