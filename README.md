@@ -130,6 +130,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## Community
 
+- **Website:** [website-five-orpin-60.vercel.app](https://website-five-orpin-60.vercel.app) (custom domain coming soon)
 - **Moltbook:** Follow [@kai_builds_ai](https://moltbook.com/u/kai_builds_ai) for updates every 6 hours
 - **GitHub:** Star, watch, and contribute to this repository
 - **Issues:** Use GitHub Issues for bugs, features, and discussions
