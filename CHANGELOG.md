@@ -2,6 +2,47 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.6] — 2026-02-16
+
+### Changed — Restructure, Verify, Integrate
+
+**Restructured content:**
+- Removed `docs/tutorials/` (6 markdown tutorials)
+- Extracted tutorial code into `examples/learn/` (5 standalone .arc files + README)
+- Moved tutorial 06 (real-world news digest project) to `showcase/news-digest/`
+- Updated all cross-references in README, docs, examples, and showcase READMEs
+
+**Verified all examples:**
+- Tested 71 .arc files across `examples/` and `showcase/`
+- 39 pass end-to-end, 32 depend on unimplemented native runtime (http, crypto, websockets, etc.)
+- 0 syntax/parse errors — every file compiles cleanly
+- Fixed ~30 example files with corrected syntax, keywords, and API usage
+
+**Native stdlib integration:**
+- Wired up native implementations for `regex` (11 functions), `datetime` (7 functions), `os` (16 functions)
+- ReDoS protection for regex patterns with nested quantifiers
+- Command injection protection for `os.exec` (rejects shell metacharacters)
+- 10s timeout on `os.exec`
+
+**Bug fixes (Audit Round 3 — 10 fixes):**
+- `slice()` null-end bug — null cast to NaN before nullish check
+- `regex_find_all` / `regex_captures_all` infinite loop on zero-length matches
+- Typechecker crash on spread entries in MapLiteral
+- IR crash when ForStmt variable is a destructure target
+- Formatter missing cases for SpreadExpr, OptionalMemberExpr, TryExpr, ConstructorPattern, MapLiteral spreads
+- Linter and semantic analyzer ForStmt + MapLiteral spread crashes
+
+**Stdlib fixes:**
+- `regex.arc escape()` — replaced nonexistent `each()` call with for loop
+- `result.arc try_fn()` — now delegates to native try/catch instead of broken `Ok(f())`
+
+**Added:**
+- Result type builtins: Ok, Err, is_ok, is_err, unwrap, unwrap_or, map_result
+- Default params, rest params, destructuring support
+- 78 new native stdlib tests (vitest)
+- `examples/learn/` — 5 learning-focused example files
+- `showcase/news-digest/` — full news aggregator project
+
 ## [0.5.5] — 2026-02-16
 
 ### Fixed — 16 Bug Fixes (Deep Audit Round 3)

@@ -94,9 +94,11 @@ Plus many built-in functions available without imports: `map`, `filter`, `reduce
 
 - **[Getting Started](docs/getting-started.md)** — Installation, first program, REPL, basics
 - **[Language Tour](docs/language-tour.md)** — Complete feature walkthrough
+- **[Learn Arc](examples/learn/)** — Step-by-step examples (basics, functions, patterns, async, modules)
 - **[Standard Library Reference](docs/stdlib-reference.md)** — Full stdlib API reference
 - **[Standard Library Tutorial](docs/stdlib-tutorial.md)** — Hands-on stdlib guide
 - **[Examples](examples/)** — Real-world programs with token comparisons
+- **[Showcase](showcase/)** — Full projects (chat-bot, API server, news digest, and more)
 - **[FAQ](docs/FAQ.md)** — Common questions answered
 - **[Grammar Spec](spec/grammar.md)** — Formal language specification
 
@@ -119,6 +121,7 @@ arc-lang/
 ├── docs/              # Comprehensive documentation
 ├── spec/              # Formal language specification
 ├── examples/          # Code samples & learning examples
+├── showcase/          # Full projects demonstrating Arc at scale
 ├── compiler/          # Compiler/interpreter implementation
 ├── stdlib/            # Standard library
 └── CONTRIBUTING.md    # Contribution guidelines
