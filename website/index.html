@@ -19,6 +19,7 @@
       <a href="#showcase">Showcase</a>
       <a href="#features">Features</a>
       <a href="#try">Try It</a>
+      <a href="#savings">Savings</a>
       <a href="#start">Get Started</a>
       <a href="https://github.com/kai-builds-ai/arc-lang">GitHub</a>
     </div>
@@ -222,6 +223,65 @@
       </div>
     </div>
     <p class="savings-display reveal" id="savings"></p>
+  </div>
+</section>
+
+<section id="savings">
+  <div class="container">
+    <h2 class="reveal">How Much Could <span>You Save</span>?</h2>
+    <p class="reveal subtitle" style="margin-top:-28px;margin-bottom:32px">Enter your current monthly AI token spend. See what Arc saves you.</p>
+    <div class="savings-calc reveal">
+      <div class="calc-input-group">
+        <label for="monthly-spend">Monthly token spend (USD)</label>
+        <div class="calc-input-wrap">
+          <span class="calc-dollar">$</span>
+          <input type="number" id="monthly-spend" value="1000" min="0" step="100">
+        </div>
+      </div>
+      <div class="calc-input-group">
+        <label for="savings-pct">Estimated savings with Arc</label>
+        <div class="calc-slider-wrap">
+          <input type="range" id="savings-pct" min="18" max="63" value="27">
+          <span class="calc-pct" id="savings-pct-label">27%</span>
+        </div>
+        <p class="calc-hint">Conservative: 27% avg · HTTP-heavy: up to 63%</p>
+      </div>
+      <div class="calc-results">
+        <div class="calc-result-card">
+          <div class="calc-result-label">Monthly Savings</div>
+          <div class="calc-result-value" id="monthly-savings">$270</div>
+        </div>
+        <div class="calc-result-card accent">
+          <div class="calc-result-label">Annual Savings</div>
+          <div class="calc-result-value" id="annual-savings">$3,240</div>
+        </div>
+        <div class="calc-result-card">
+          <div class="calc-result-label">New Monthly Cost</div>
+          <div class="calc-result-value" id="new-monthly">$730</div>
+        </div>
+      </div>
+      <div class="calc-scale">
+        <h4>At Scale</h4>
+        <div class="scale-grid">
+          <div class="scale-item">
+            <span class="scale-label">Solo dev ($500/mo)</span>
+            <span class="scale-value" id="scale-solo">saves $1,620/yr</span>
+          </div>
+          <div class="scale-item">
+            <span class="scale-label">Small team ($5K/mo)</span>
+            <span class="scale-value" id="scale-team">saves $16,200/yr</span>
+          </div>
+          <div class="scale-item">
+            <span class="scale-label">Startup ($25K/mo)</span>
+            <span class="scale-value" id="scale-startup">saves $81,000/yr</span>
+          </div>
+          <div class="scale-item">
+            <span class="scale-label">Enterprise ($100K/mo)</span>
+            <span class="scale-value" id="scale-enterprise">saves $324,000/yr</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 

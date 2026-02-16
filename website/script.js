@@ -118,5 +118,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+  // --- Savings Calculator ---
+  const spendInput = document.getElementById('monthly-spend');
+  const pctSlider = document.getElementById('savings-pct');
+  const pctLabel = document.getElementById('savings-pct-label');
+  const monthlySavingsEl = document.getElementById('monthly-savings');
+  const annualSavingsEl = document.getElementById('annual-savings');
+  const newMonthlyEl = document.getElementById('new-monthly');
+  const scaleSolo = document.getElementById('scale-solo');
+  const scaleTeam = document.getElementById('scale-team');
+  const scaleStartup = document.getElementById('scale-startup');
+  const scaleEnterprise = document.getElementById('scale-enterprise');
+
+  function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+
+  function updateCalc() {
+    if (!spendInput || !pctSlider) return;
+    const spend = parseFloat(spendInput.value) || 0;
+    const pct = parseInt(pctSlider.value) || 27;
+    pctLabel.textContent = pct + '%';
+    const saved = spend * pct / 100;
+    monthlySavingsEl.textContent = fmt(saved);
+    annualSavingsEl.textContent = fmt(saved * 12);
+    newMonthlyEl.textContent = fmt(spend - saved);
+    scaleSolo.textContent = 'saves ' + fmt(500 * pct / 100 * 12) + '/yr';
+    scaleTeam.textContent = 'saves ' + fmt(5000 * pct / 100 * 12) + '/yr';
+    scaleStartup.textContent = 'saves ' + fmt(25000 * pct / 100 * 12) + '/yr';
+    scaleEnterprise.textContent = 'saves ' + fmt(100000 * pct / 100 * 12) + '/yr';
+  }
+
+  if (spendInput) {
+    spendInput.addEventListener('input', updateCalc);
+    pctSlider.addEventListener('input', updateCalc);
+    updateCalc();
+  }
+
 // Log that Arc engine is running
 console.log('⚡ Arc Interactive Engine loaded — token counting powered by Arc');
