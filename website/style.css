@@ -63,6 +63,15 @@ section h2 span{color:var(--blue)}
 /* Syntax colors */
 .kw{color:#c678dd}.str{color:#98c379}.fn{color:#61afef}.cm{color:#5c6370;font-style:italic}.op{color:var(--blue)}.num{color:#d19a66}.dec{color:var(--orange)}
 
+/* SHOWCASE GRID */
+.showcase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.showcase-card{background:var(--bg2);border:1px solid #222;border-radius:12px;padding:28px 24px;transition:border-color .3s,transform .3s}
+.showcase-card:hover{border-color:var(--orange);transform:translateY(-4px)}
+.showcase-icon{font-size:2rem;margin-bottom:10px}
+.showcase-card h3{font-size:1.1rem;margin-bottom:8px}
+.showcase-card p{color:var(--gray);font-size:.9rem;margin-bottom:12px;line-height:1.5}
+.showcase-card a{color:var(--orange);font-size:.85rem;font-weight:600}
+
 /* FEATURES GRID */
 .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
 .feature{background:var(--bg2);border:1px solid #222;border-radius:10px;padding:28px 24px}
@@ -124,6 +133,7 @@ footer .footer-links{display:flex;gap:20px;justify-content:center;margin-top:12p
   .features-grid{grid-template-columns:1fr}
   .link-grid{flex-direction:column;align-items:center}
   .link-card{width:100%;text-align:center}
+  .showcase-grid{grid-template-columns:1fr}
   .subtitle{margin-top:-20px;margin-bottom:24px;font-size:.9rem}
   .counter-col textarea{min-height:140px;font-size:.8rem}
   .btn{padding:12px 24px;font-size:.9rem}

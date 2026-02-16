@@ -16,6 +16,7 @@
     <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
     <div class="links">
       <a href="#why">Why Arc</a>
+      <a href="#showcase">Showcase</a>
       <a href="#features">Features</a>
       <a href="#try">Try It</a>
       <a href="#start">Get Started</a>
@@ -83,6 +84,112 @@
     .<span class="fn">map</span>(u <span class="op">=&gt;</span> u.name)
     .<span class="fn">sort</span>();
 }</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="more-code">
+  <div class="container">
+    <h2 class="reveal">More <span>Arc</span> in Action</h2>
+    <div class="code-compare reveal">
+      <div class="code-block">
+        <div class="label">Arc — Pattern Matching <span class="tokens">~28 tokens</span></div>
+        <pre><span class="kw">let</span> msg <span class="op">=</span> <span class="kw">match</span> response.status {
+  <span class="num">200</span> <span class="op">=&gt;</span> <span class="str">"OK"</span>,
+  <span class="num">404</span> <span class="op">=&gt;</span> <span class="str">"Not found"</span>,
+  <span class="num">500</span>..<span class="num">599</span> <span class="op">=&gt;</span> <span class="str">"Server error"</span>,
+  _ <span class="op">=&gt;</span> <span class="str">"Unknown: {response.status}"</span>
+}</pre>
+      </div>
+      <div class="code-block">
+        <div class="label">JavaScript <span class="tokens">~62 tokens</span></div>
+        <pre><span class="kw">let</span> msg;
+<span class="kw">if</span> (response.status <span class="op">===</span> <span class="num">200</span>) {
+  msg <span class="op">=</span> <span class="str">"OK"</span>;
+} <span class="kw">else if</span> (response.status <span class="op">===</span> <span class="num">404</span>) {
+  msg <span class="op">=</span> <span class="str">"Not found"</span>;
+} <span class="kw">else if</span> (response.status <span class="op">&gt;=</span> <span class="num">500</span> <span class="op">&amp;&amp;</span> response.status <span class="op">&lt;</span> <span class="num">600</span>) {
+  msg <span class="op">=</span> <span class="str">"Server error"</span>;
+} <span class="kw">else</span> {
+  msg <span class="op">=</span> <span class="str">`Unknown: ${</span>response.status<span class="str">}`</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="code-compare reveal" style="margin-top:24px">
+      <div class="code-block">
+        <div class="label">Arc — Parallel Fetch <span class="tokens">~32 tokens</span></div>
+        <pre><span class="kw">let</span> [weather, news, stocks] <span class="op">=</span> <span class="kw">fetch</span> [
+  <span class="dec">@GET</span> <span class="str">"api/weather?city=NYC"</span>,
+  <span class="dec">@GET</span> <span class="str">"api/news/top?n=5"</span>,
+  <span class="dec">@GET</span> <span class="str">"api/stocks/AAPL"</span>
+]
+
+<span class="kw">let</span> summary <span class="op">=</span> news.articles
+  <span class="op">|&gt;</span> <span class="fn">take</span>(<span class="num">3</span>)
+  <span class="op">|&gt;</span> <span class="fn">map</span>(a <span class="op">=&gt;</span> <span class="str">"• {a.title}"</span>)
+  <span class="op">|&gt;</span> <span class="fn">join</span>(<span class="str">"\n"</span>)</pre>
+      </div>
+      <div class="code-block">
+        <div class="label">JavaScript <span class="tokens">~89 tokens</span></div>
+        <pre><span class="kw">const</span> [weather, news, stocks] <span class="op">=</span>
+  <span class="kw">await</span> Promise.<span class="fn">all</span>([
+    <span class="fn">fetch</span>(<span class="str">"api/weather?city=NYC"</span>)
+      .<span class="fn">then</span>(r <span class="op">=&gt;</span> r.<span class="fn">json</span>()),
+    <span class="fn">fetch</span>(<span class="str">"api/news/top?n=5"</span>)
+      .<span class="fn">then</span>(r <span class="op">=&gt;</span> r.<span class="fn">json</span>()),
+    <span class="fn">fetch</span>(<span class="str">"api/stocks/AAPL"</span>)
+      .<span class="fn">then</span>(r <span class="op">=&gt;</span> r.<span class="fn">json</span>())
+  ]);
+
+<span class="kw">const</span> summary <span class="op">=</span> news.articles
+  .<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">3</span>)
+  .<span class="fn">map</span>(a <span class="op">=&gt;</span> <span class="str">`• ${</span>a.title<span class="str">}`</span>)
+  .<span class="fn">join</span>(<span class="str">"\n"</span>);</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="showcase">
+  <div class="container">
+    <h2 class="reveal">What People <span>Build</span></h2>
+    <div class="showcase-grid">
+      <div class="showcase-card reveal">
+        <div class="showcase-icon">🤖</div>
+        <h3>Chat Bot Framework</h3>
+        <p>Plugin architecture, middleware chains, session management, 3 API integrations — 285 lines of Arc.</p>
+        <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/showcase/chat-bot">View Code →</a>
+      </div>
+      <div class="showcase-card reveal">
+        <div class="showcase-icon">⏰</div>
+        <h3>Task Scheduler</h3>
+        <p>DAG dependency resolution, cron scheduling, parallel execution, retry with backoff — 66% less code than JS.</p>
+        <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/showcase/task-scheduler">View Code →</a>
+      </div>
+      <div class="showcase-card reveal">
+        <div class="showcase-icon">🧠</div>
+        <h3>Neural Network</h3>
+        <p>Forward/back propagation, matrix ops, activation functions. Trains on XOR. Pure Arc.</p>
+        <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/examples/neural-network.arc">View Code →</a>
+      </div>
+      <div class="showcase-card reveal">
+        <div class="showcase-icon">⛓️</div>
+        <h3>Blockchain</h3>
+        <p>Proof-of-work mining, chain validation, cryptographic hashing. Complete implementation in Arc.</p>
+        <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/examples/blockchain.arc">View Code →</a>
+      </div>
+      <div class="showcase-card reveal">
+        <div class="showcase-icon">🗄️</div>
+        <h3>In-Memory Database</h3>
+        <p>CRUD, WHERE filters, ORDER BY, GROUP BY, JOINs, indexing — a full query engine.</p>
+        <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/examples/database.arc">View Code →</a>
+      </div>
+      <div class="showcase-card reveal">
+        <div class="showcase-icon">🎮</div>
+        <h3>Games</h3>
+        <p>Tic-tac-toe with minimax AI, Snake, roguelike dungeon generator — all in Arc.</p>
+        <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/examples/games">View Code →</a>
       </div>
     </div>
   </div>
