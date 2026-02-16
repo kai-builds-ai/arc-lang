@@ -58,7 +58,8 @@ pub fn diff_minutes(ts1, ts2) {
 pub fn day_of_week(timestamp) {
   # Jan 1 1970 was a Thursday (4)
   let days = int(timestamp / MS_PER_DAY)
-  (days + 4) % 7
+  let result = (days + 4) % 7
+  result
 }
 
 # Returns true if ts1 is before ts2

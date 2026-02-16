@@ -13,7 +13,8 @@ export type Expr =
   | MemberExpr | IndexExpr | PipelineExpr | IfExpr | MatchExpr
   | LambdaExpr | ListLiteral | MapLiteral | ListComprehension
   | ToolCallExpr | RangeExpr | BlockExpr
-  | AsyncExpr | AwaitExpr | FetchExpr;
+  | AsyncExpr | AwaitExpr | FetchExpr | SpreadExpr
+  | OptionalMemberExpr | TryExpr;
 
 export interface IntLiteral { kind: "IntLiteral"; value: number; loc: Loc; }
 export interface FloatLiteral { kind: "FloatLiteral"; value: number; loc: Loc; }
@@ -100,9 +101,21 @@ export interface ListLiteral {
   loc: Loc;
 }
 
+export interface SpreadExpr {
+  kind: "SpreadExpr";
+  expr: Expr;
+  loc: Loc;
+}
+
+export interface MapEntry {
+  key?: string | Expr;
+  value?: Expr;
+  spread?: Expr;
+}
+
 export interface MapLiteral {
   kind: "MapLiteral";
-  entries: { key: string | Expr; value: Expr }[];
+  entries: MapEntry[];
   loc: Loc;
 }
 
@@ -154,16 +167,30 @@ export interface FetchExpr {
   loc: Loc;
 }
 
+export interface OptionalMemberExpr {
+  kind: "OptionalMemberExpr";
+  object: Expr;
+  property: string;
+  loc: Loc;
+}
+
+export interface TryExpr {
+  kind: "TryExpr";
+  expr: Expr;
+  loc: Loc;
+}
+
 // ---- Patterns ----
 
 export type Pattern =
-  | WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern;
+  | WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern | ConstructorPattern;
 
 export interface WildcardPattern { kind: "WildcardPattern"; loc: Loc; }
 export interface LiteralPattern { kind: "LiteralPattern"; value: number | string | boolean | null; loc: Loc; }
 export interface BindingPattern { kind: "BindingPattern"; name: string; loc: Loc; }
 export interface ArrayPattern { kind: "ArrayPattern"; elements: Pattern[]; loc: Loc; }
 export interface OrPattern { kind: "OrPattern"; patterns: Pattern[]; loc: Loc; }
+export interface ConstructorPattern { kind: "ConstructorPattern"; name: string; args: Pattern[]; loc: Loc; }
 
 // ---- Statements ----
 
@@ -213,12 +240,20 @@ export interface DestructureTarget {
   kind: "DestructureTarget";
   type: "object" | "array";
   names: string[];
+  rest?: string;
+}
+
+export interface Param {
+  name: string;
+  default?: Expr;
+  rest?: boolean;
 }
 
 export interface FnStmt {
   kind: "FnStmt";
   name: string;
   params: string[];
+  richParams?: Param[];
   body: Expr;
   isAsync: boolean;
   pub: boolean;
@@ -227,7 +262,7 @@ export interface FnStmt {
 
 export interface ForStmt {
   kind: "ForStmt";
-  variable: string;
+  variable: string | DestructureTarget;
   iterable: Expr;
   body: Expr;
   loc: Loc;

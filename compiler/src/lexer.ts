@@ -11,7 +11,7 @@ export enum TokenType {
   // Operators
   Plus, Minus, Star, Slash, Percent, Power,
   Eq, Neq, Lt, Gt, Lte, Gte,
-  Pipe, Bar, FatArrow, Arrow, Question, Range, Concat, At, Hash,
+  Pipe, Bar, FatArrow, Arrow, Question, QuestionDot, Range, Concat, At, Hash, DotDotDot,
   Assign,
   // Delimiters
   LParen, RParen, LBrace, RBrace, LBracket, RBracket, Comma, Colon, Dot,
@@ -246,6 +246,8 @@ export function lex(source: string): Token[] {
     if (ch === "!" && peek(1) === "=") { advance(); advance(); tokens.push(tok(TokenType.Neq, "!=", sl, sc)); continue; }
     if (ch === "<" && peek(1) === "=") { advance(); advance(); tokens.push(tok(TokenType.Lte, "<=", sl, sc)); continue; }
     if (ch === ">" && peek(1) === "=") { advance(); advance(); tokens.push(tok(TokenType.Gte, ">=", sl, sc)); continue; }
+    if (ch === "?" && peek(1) === ".") { advance(); advance(); tokens.push(tok(TokenType.QuestionDot, "?.", sl, sc)); continue; }
+    if (ch === "." && peek(1) === "." && peek(2) === ".") { advance(); advance(); advance(); tokens.push(tok(TokenType.DotDotDot, "...", sl, sc)); continue; }
     if (ch === "." && peek(1) === ".") { advance(); advance(); tokens.push(tok(TokenType.Range, "..", sl, sc)); continue; }
 
     // Single char

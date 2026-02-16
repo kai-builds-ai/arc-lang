@@ -1,47 +1,17 @@
 # Arc Standard Library: error module
-# Structured error handling beyond basic Result
+# Structured error handling
 
-# Create a structured error with code and message
-pub fn error(code, message) => {kind: "error", code: code, message: message, details: {}, context: nil}
-
-# Create a structured error with extra details map
-pub fn error_with(code, message, details) => {kind: "error", code: code, message: message, details: details, context: nil}
+# Create a structured error
+pub fn error(code, message) => error_new(code, message)
 
 # Check if a value is an error
-pub fn is_error(value) => value.kind == "error"
+pub fn is_error(value) => error_is_error(value)
 
-# Extract error code
-pub fn error_code(err) => err.code
+# Wrap an error with additional context
+pub fn wrap_error(err, context) => error_wrap(err, context)
 
-# Extract error message
-pub fn error_message(err) => err.message
-
-# Wrap an error with additional context string
-pub fn wrap_error(err, context) => {
-  kind: "error",
-  code: err.code,
-  message: err.message,
-  details: err.details,
-  context: context
-}
-
-# Throw an error with a message (creates and returns an error)
-pub fn throw(message) => error("THROW", message)
-
-# Unrecoverable error — like Rust's panic!
-pub fn panic(message) => error("PANIC", "PANIC: " ++ message)
-
-# Assert condition or return error
-pub fn assert(condition, message) {
-  if condition { true }
-  el { throw(message) }
-}
-
-# Assert equality or return error
-pub fn assert_eq(actual, expected, message) {
-  if actual == expected { true }
-  el { throw(message ++ ": expected " ++ str(expected) ++ " but got " ++ str(actual)) }
-}
+# Try executing a function, return Ok/Err result
+pub fn try_fn(f) => error_try(f)
 
 # Execute fn, call handler if result is an error
 pub fn try_catch(f, handler) {
@@ -50,7 +20,7 @@ pub fn try_catch(f, handler) {
   el { result }
 }
 
-# Execute fn, always run cleanup, return fn result
+# Execute fn, always run cleanup
 pub fn try_finally(f, cleanup) {
   let result = f()
   cleanup()
@@ -63,35 +33,4 @@ pub fn try_catch_finally(f, handler, cleanup) {
   let handled = if is_error(result) { handler(result) } el { result }
   cleanup()
   handled
-}
-
-# Retry a function up to max_attempts times with delay_ms between attempts
-pub fn retry(f, max_attempts, delay_ms) {
-  let mut attempt = 0
-  let mut last_result = nil
-  let mut done = false
-  do {
-    last_result = f()
-    if not is_error(last_result) {
-      done = true
-    } el {
-      attempt = attempt + 1
-      if attempt < max_attempts { sleep(delay_ms) }
-    }
-  } until done or attempt >= max_attempts
-  if done { last_result }
-  el { wrap_error(last_result, "failed after " ++ str(max_attempts) ++ " attempts") }
-}
-
-# Execute with timeout — returns error if exceeded
-# Note: true async timeout requires runtime support; this is a placeholder pattern
-pub fn timeout(f, ms) {
-  let start = time_ms()
-  let result = f()
-  let elapsed = time_ms() - start
-  if elapsed > ms {
-    error("TIMEOUT", "operation exceeded " ++ str(ms) ++ "ms (took " ++ str(elapsed) ++ "ms)")
-  } el {
-    result
-  }
 }
