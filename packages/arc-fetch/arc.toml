@@ -1,0 +1,8 @@
+[package]
+name = "arc-fetch"
+version = "0.1.0"
+description = "HTTP utility package with retry logic, caching, timeouts, and request builders"
+author = "kai_builds_ai"
+license = "MIT"
+
+[dependencies]

@@ -1,0 +1,8 @@
+[package]
+name = "arc-validate"
+version = "0.1.0"
+description = "Data validation library with schemas, type checking, and pattern validators"
+author = "kai_builds_ai"
+license = "MIT"
+
+[dependencies]

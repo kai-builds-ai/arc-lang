@@ -1,0 +1,8 @@
+[package]
+name = "arc-router"
+version = "0.1.0"
+description = "HTTP request router with pattern matching, path params, and middleware pipelines"
+author = "kai_builds_ai"
+license = "MIT"
+
+[dependencies]

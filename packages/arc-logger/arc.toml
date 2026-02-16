@@ -1,0 +1,8 @@
+[package]
+name = "arc-logger"
+version = "0.1.0"
+description = "Structured logging with levels, JSON output, timestamps, and colorized console"
+author = "kai_builds_ai"
+license = "MIT"
+
+[dependencies]

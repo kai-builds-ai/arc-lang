@@ -1,0 +1,8 @@
+[package]
+name = "arc-template"
+version = "0.1.0"
+description = "String template engine with variable substitution, conditionals, loops, and filters"
+author = "kai_builds_ai"
+license = "MIT"
+
+[dependencies]
