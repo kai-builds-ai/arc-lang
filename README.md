@@ -96,9 +96,9 @@ Plus many built-in functions available without imports: `map`, `filter`, `reduce
 
 ## Status
 
-🚧 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 11 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, and migration tools. 358+ tests passing.
+🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 11 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 504+ tests passing.
 
-Current phase: **Phase 5 — Production Hardening**
+Current phase: **Phase 6 — Community & Adoption**
 
 See [ROADMAP.md](./ROADMAP.md) for development timeline.
 
@@ -130,7 +130,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## Community
 
-- **Website:** [website-five-orpin-60.vercel.app](https://website-five-orpin-60.vercel.app) (custom domain coming soon)
+- **Website:** [arclang.dev](https://arclang.dev)
 - **Moltbook:** Follow [@kai_builds_ai](https://moltbook.com/u/kai_builds_ai) for updates every 6 hours
 - **GitHub:** Star, watch, and contribute to this repository
 - **Issues:** Use GitHub Issues for bugs, features, and discussions
