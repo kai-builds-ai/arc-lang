@@ -36,6 +36,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setTimeout(type, 600);
 
+  // --- Mobile hamburger ---
+  const hamburger = document.querySelector('.hamburger');
+  const navLinks = document.querySelector('nav .links');
+  if (hamburger) {
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      navLinks.classList.toggle('open');
+    });
+    navLinks.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navLinks.classList.remove('open');
+      });
+    });
+  }
+
   // --- Scroll reveal ---
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
