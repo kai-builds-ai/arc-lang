@@ -415,6 +415,13 @@ function makePrelude(env: Env): void {
 
     // --- regex natives ---
     regex_new: (pattern) => {
+      const p = pattern as string;
+      // ReDoS protection: reject patterns with nested quantifiers that cause catastrophic backtracking
+      if (/(\+|\*|\{)\s*(\+|\*|\{)/.test(p) || /\([^)]*(\+|\*)\)[+*]/.test(p)) {
+        throw new Error(`Potentially unsafe regex pattern (ReDoS risk): ${p}`);
+      }
+      // Validate the pattern
+      new RegExp(p);
       // Return a map representing a compiled regex
       const m = new Map<string, Value>();
       m.set("pattern", pattern);
@@ -632,9 +639,18 @@ function makePrelude(env: Env): void {
         }
         case "os.exec": {
           try {
+            const cmd = args[0] as string;
+            // Command injection protection: reject commands with common shell injection patterns
+            const dangerous = /[;&|`$]|\$\(|>\s*>|<\s*<|\beval\b|\bsource\b/;
+            if (dangerous.test(cmd)) {
+              throw new Error(`Potentially unsafe command (injection risk): ${cmd}`);
+            }
             const cp = require("child_process");
-            return cp.execSync(args[0] as string, { encoding: "utf-8" }).trim();
-          } catch { return null; }
+            return cp.execSync(cmd, { encoding: "utf-8", timeout: 10000 }).trim();
+          } catch (e: any) {
+            if (e.message?.includes("injection risk")) throw e;
+            return null;
+          }
         }
         default: return null;
       }

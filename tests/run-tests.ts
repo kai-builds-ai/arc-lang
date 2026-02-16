@@ -134,12 +134,36 @@ async function main() {
   totalPassed += propTests.passed;
   totalFailed += propTests.failed;
 
+  // Feature tests
+  console.log("\n--- Map & Spread Feature Tests ---");
+  const mapSpreadTests = await import("./features/map-spread.test.js");
+  totalPassed += mapSpreadTests.passed;
+  totalFailed += mapSpreadTests.failed;
+
   // Fuzz tests
   console.log("\n--- Fuzz Tests ---");
   const { runFuzzTests } = await import("./fuzz/fuzzer.js");
   const fuzzResults = runFuzzTests();
   totalPassed += fuzzResults.passed;
   totalFailed += fuzzResults.failed;
+
+  // Feature tests
+  console.log("\n--- Feature: Params & Destructuring ---");
+  const paramsDestrTests = await import("./features/params-destructuring.test.js");
+  totalPassed += paramsDestrTests.passed;
+  totalFailed += paramsDestrTests.failed;
+
+  // Feature tests: stdlib crypto/net/error
+  console.log("\n--- Stdlib Crypto/Net/Error Tests ---");
+  const stdlibTests = await import("./features/stdlib-crypto-net-error.test.js");
+  totalPassed += stdlibTests.passed;
+  totalFailed += stdlibTests.failed;
+
+  // Feature tests
+  console.log("\n--- Result Types Feature Tests ---");
+  const resultTypesTests = await import("./features/result-types.test.js");
+  totalPassed += resultTypesTests.passed;
+  totalFailed += resultTypesTests.failed;
 
   // Summary
   console.log("\n=== Summary ===");
