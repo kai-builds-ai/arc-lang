@@ -48,7 +48,7 @@ All tasks done: package manager (`arc pkg init/add/remove/list/install`), build 
 
 **Completed:** 2026-02-16
 
-All tasks done: security module with SafeInterpreter sandbox and resource limits, rich error messages with ANSI colors and "did you mean?" suggestions, grammar-aware fuzzer (500+ iterations), 14 property tests, 55 edge case tests, benchmarking framework (micro/macro/comparison), interpreter optimizations (TCO, short-circuit eval), token efficiency report (27% fewer tokens than JS), versioning system (semver 0.5.0), CHANGELOG, Dockerfile, CI/CD GitHub Actions, deployment guide, 3 case studies, stability guarantees. 504 tests all passing.
+All tasks done: security module with SafeInterpreter sandbox and resource limits, rich error messages with ANSI colors and "did you mean?" suggestions, grammar-aware fuzzer (500+ iterations), 14 property tests, 55 edge case tests, benchmarking framework (micro/macro/comparison), interpreter optimizations (TCO, short-circuit eval), token efficiency report (27% fewer tokens than JS), versioning system (semver 0.5.0), CHANGELOG, Dockerfile, CI/CD GitHub Actions, deployment guide, 3 case studies, stability guarantees. 508 tests all passing.
 
 ---
 
@@ -58,7 +58,7 @@ All tasks done: security module with SafeInterpreter sandbox and resource limits
 
 ### Tasks
 - [x] Project website — [arclang.dev](https://arclang.dev) (live, mobile responsive, interactive token counter)
-- [x] npm publish — [`arc-lang`](https://www.npmjs.com/package/arc-lang) v0.5.1 on npm
+- [x] npm publish — [`arc-lang`](https://www.npmjs.com/package/arc-lang) v0.5.3 on npm
 - [x] Build showcase projects — 3 projects: weather-agent, data-pipeline, api-server
 - [x] Create educational content — 6-part tutorial series (hello world → real-world project)
 - [x] Package ecosystem — 6 official packages: arc-fetch, arc-cli, arc-validate, arc-template, arc-logger, arc-router
