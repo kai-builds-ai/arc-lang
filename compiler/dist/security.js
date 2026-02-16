@@ -103,8 +103,9 @@ export class ExecutionContext {
         if (this.steps > maxSteps) {
             throw new SecurityError("SEC030", `Execution exceeded maximum of ${maxSteps} steps (possible infinite loop)`);
         }
-        // Check timeout every 1000 steps to avoid perf overhead
-        if (this.steps % 1000 === 0) {
+        // Check timeout periodically to avoid perf overhead
+        // Use modulo for high-frequency ticks, but always check for low step counts
+        if (this.steps <= 1000 || this.steps % 1000 === 0) {
             const timeout = this.config.executionTimeoutMs ?? DEFAULTS.executionTimeoutMs;
             if (Date.now() - this.startTime > timeout) {
                 throw new SecurityError("SEC031", `Execution timed out after ${timeout}ms`);

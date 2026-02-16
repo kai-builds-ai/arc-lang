@@ -2,6 +2,50 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.5] — 2026-02-16
+
+### Fixed — 16 Bug Fixes (Deep Audit Round 3)
+
+**Lexer (1 fix):**
+- Number literal no longer consumes dot for member access (`42.x` now correctly lexes as int + dot + ident)
+
+**Parser (1 fix):**
+- `not` operator precedence lowered to below comparisons (`not x == 5` now correctly parses as `not (x == 5)`)
+
+**Interpreter (2 fixes):**
+- Pipeline operator now catches `ReturnSignal` from user-defined functions using `ret`
+- `zip` with mismatched-length arrays now truncates instead of leaking `undefined`
+
+**Semantic Analyzer (1 fix):**
+- `ret` statements now analyzed for undefined variables (was silently skipping)
+
+**IR Generator (2 fixes):**
+- Map literal expression keys now properly lowered (were silently replaced with empty string)
+- `AsyncExpr` now saves/restores `scopeStack` (was corrupting outer scope)
+
+**Codegen (1 fix):**
+- `println` builtin now has runtime implementation and emitCall routing
+
+**Security (1 fix):**
+- Timeout now checked for programs under 1000 execution steps
+
+**Type Checker (3 fixes):**
+- `walkExpr` now traverses all expression kinds (lambdas, calls, binaries, lists, maps, etc.)
+- `DoStmt` bodies now traversed for type checking
+- Match exhaustiveness warnings now apply to all subject types (not just identifiers)
+
+**Toolchain (4 fixes):**
+- CLI now wires up `build`, `test`, `new`, and all `pkg` subcommands
+- REPL `:reset` now actually clears the environment
+- `compareSemver` now compares pre-release tags lexically
+- Package manager handles trailing slash in `github:user/` URLs
+
+### Added
+- 783 new tests (508 → 1,291 total), all passing
+- 11 extended test suites covering lexer, parser, interpreter, semantic, optimizer, codegen, security, errors, formatter, linter, edge cases
+- 6 new integration test files: closures, math-ops, string-ops, control-flow, advanced-match, list-ops
+- 4 round-3 regression test files
+
 ## [0.5.4] — 2026-02-16
 
 ### Fixed — 25 Bug Fixes (Deep Audit Round 2)

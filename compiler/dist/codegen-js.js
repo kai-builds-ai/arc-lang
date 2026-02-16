@@ -11,6 +11,7 @@ export function generateJS(module) {
     lines.push(`  push(arr, v) { arr.push(v); return arr; },`);
     lines.push(`  __toStr(v) { if (v === null) return "nil"; if (typeof v === "boolean") return v ? "true" : "false"; if (typeof v === "number" || typeof v === "string") return String(v); if (Array.isArray(v)) return "[" + v.map(x => this.__toStr(x)).join(", ") + "]"; if (v && v.__map) { const entries = [...v.entries.entries()].map(([k, val]) => k + ": " + this.__toStr(val)); return "{" + entries.join(", ") + "}"; } return String(v); },`);
     lines.push(`  print(v) { console.log(this.__toStr(v)); },`);
+    lines.push(`  println(v) { console.log(this.__toStr(v)); },`);
     lines.push(`  head(a) { return a[0]; },`);
     lines.push(`  tail(a) { return a.slice(1); },`);
     lines.push(`  map(a, f) { return a.map(f); },`);
@@ -223,7 +224,7 @@ function emitUnop(op, operand) {
 }
 function emitCall(fn, args) {
     const builtins = [
-        "len", "str", "push", "print", "head", "tail", "map", "filter", "fold",
+        "len", "str", "push", "print", "println", "head", "tail", "map", "filter", "fold",
         "range", "keys", "values", "type", "abs", "max", "min", "floor", "ceil",
         "round", "sort", "reverse", "contains", "join", "split", "trim", "replace",
         "uppercase", "lowercase", "sum", "flat", "zip", "enumerate", "slice",

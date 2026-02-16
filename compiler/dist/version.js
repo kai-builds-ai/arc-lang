@@ -1,5 +1,5 @@
 // Arc Version System
-export const ARC_VERSION = "0.5.0";
+export const ARC_VERSION = "0.5.5";
 export const ARC_BUILD_DATE = new Date().toISOString().split("T")[0];
 export const ARC_PLATFORM = `${process.platform}-${process.arch}`;
 /** Print version info */
@@ -32,6 +32,15 @@ export function compareSemver(a, b) {
         return -1;
     if (!aHasPre && bHasPre)
         return 1;
+    // Both have pre-release: compare lexically
+    if (aHasPre && bHasPre) {
+        const aPre = a.slice(a.indexOf("-") + 1);
+        const bPre = b.slice(b.indexOf("-") + 1);
+        if (aPre < bPre)
+            return -1;
+        if (aPre > bPre)
+            return 1;
+    }
     return 0;
 }
 /** Check if a manifest's arc version requirement is compatible */

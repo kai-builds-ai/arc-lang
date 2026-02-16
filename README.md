@@ -102,7 +102,7 @@ Plus many built-in functions available without imports: `map`, `filter`, `reduce
 
 ## Status
 
-🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 17 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 508+ tests passing.
+🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 17 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 1,291+ tests passing.
 
 Current phase: **Phase 6 — Community & Adoption**
 

@@ -412,10 +412,15 @@ export class IRGenerator {
                 const keys = [];
                 const values = [];
                 for (const entry of expr.entries) {
-                    const keyStr = typeof entry.key === "string" ? entry.key : "";
-                    const k = this.temp();
-                    this.emit({ op: "const", dest: k, value: keyStr });
-                    keys.push(k);
+                    if (typeof entry.key === "string") {
+                        const k = this.temp();
+                        this.emit({ op: "const", dest: k, value: entry.key });
+                        keys.push(k);
+                    }
+                    else {
+                        // Expression key — lower it properly
+                        keys.push(this.lowerExpr(entry.key));
+                    }
                     values.push(this.lowerExpr(entry.value));
                 }
                 const dest = this.temp();
@@ -518,7 +523,9 @@ export class IRGenerator {
                 // Lower async block as a thunk reference
                 const fnName = `__async_${this.labelCount++}`;
                 const savedInstrs = this.currentInstrs;
+                const savedScope = this.scopeStack;
                 this.currentInstrs = [];
+                this.scopeStack = [new Map()];
                 const result = this.lowerExpr(expr.body);
                 this.emit({ op: "ret", value: result });
                 this.functions.push({
@@ -527,6 +534,7 @@ export class IRGenerator {
                     blocks: [{ label: "entry", instrs: this.currentInstrs }],
                 });
                 this.currentInstrs = savedInstrs;
+                this.scopeStack = savedScope;
                 const dest = this.temp();
                 this.emit({ op: "load", dest, name: `@fn:${fnName}` });
                 return dest;

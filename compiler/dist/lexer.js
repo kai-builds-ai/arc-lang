@@ -286,6 +286,9 @@ export function lex(source) {
                         break; // range operator
                     if (isFloat)
                         break;
+                    // Only consume dot if followed by a digit (otherwise it's member access)
+                    if (!(peek(1) >= "0" && peek(1) <= "9"))
+                        break;
                     isFloat = true;
                 }
                 num += advance();

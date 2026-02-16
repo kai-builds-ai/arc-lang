@@ -15,6 +15,8 @@ import { format } from "./formatter.js";
 import { lint, formatDiagnostic } from "./linter.js";
 import { printVersion } from "./version.js";
 import { setPrettyErrors } from "./errors.js";
+import { build, test as buildTest, newProject } from "./build.js";
+import { pkgInit, pkgAdd, pkgRemove, pkgList, pkgInstall } from "./package-manager.js";
 const args = process.argv.slice(2);
 if (args.includes("--no-pretty-errors"))
     setPrettyErrors(false);
@@ -50,6 +52,54 @@ else if (command === "fuzz") {
         if (result.crashes.length > 0)
             process.exit(1);
     });
+}
+else if (command === "build") {
+    const targetArg = args.find(a => a.startsWith("--target="))?.split("=")[1];
+    build({ target: targetArg, dir: process.cwd() });
+}
+else if (command === "test") {
+    buildTest(process.cwd());
+}
+else if (command === "new") {
+    const name = args[1];
+    if (!name) {
+        console.error("Usage: arc new <project-name>");
+        process.exit(1);
+    }
+    newProject(name);
+}
+else if (command === "pkg") {
+    const sub = args[1];
+    if (sub === "init") {
+        pkgInit();
+    }
+    else if (sub === "add") {
+        const pkg = args[2];
+        if (!pkg) {
+            console.error("Usage: arc pkg add <package>");
+            process.exit(1);
+        }
+        const dev = args.includes("--dev");
+        pkgAdd(pkg, { dev });
+    }
+    else if (sub === "remove") {
+        const pkg = args[2];
+        if (!pkg) {
+            console.error("Usage: arc pkg remove <package>");
+            process.exit(1);
+        }
+        pkgRemove(pkg);
+    }
+    else if (sub === "list") {
+        pkgList();
+    }
+    else if (sub === "install") {
+        pkgInstall();
+    }
+    else {
+        console.error("Usage: arc pkg <init|add|remove|list|install>");
+        process.exit(1);
+    }
 }
 else if (!command || !file) {
     console.log("Usage:");

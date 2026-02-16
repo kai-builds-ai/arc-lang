@@ -320,6 +320,10 @@ export function analyze(program) {
                 analyzeExpr(stmt.index, scope);
                 analyzeExpr(stmt.value, scope);
                 break;
+            case "RetStmt":
+                if (stmt.value)
+                    analyzeExpr(stmt.value, scope);
+                break;
         }
     }
     analyzeStmts(program.stmts, globalScope);

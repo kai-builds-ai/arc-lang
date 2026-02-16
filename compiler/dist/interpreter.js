@@ -151,7 +151,8 @@ function makePrelude(env) {
         zip: (a, b) => {
             if (!Array.isArray(a) || !Array.isArray(b))
                 return [];
-            return a.map((v, i) => [v, b[i]]);
+            const minLen = Math.min(a.length, b.length);
+            return a.slice(0, minLen).map((v, i) => [v, b[i]]);
         },
         enumerate: (list) => {
             if (!Array.isArray(list))
@@ -444,7 +445,14 @@ function evalExpr(expr, env) {
                     const f = fn;
                     const fnEnv = new Env(f.closure);
                     f.params.forEach((p, i) => fnEnv.set(p, i === 0 ? left : null));
-                    return evalExpr(f.body, fnEnv);
+                    try {
+                        return evalExpr(f.body, fnEnv);
+                    }
+                    catch (e) {
+                        if (e instanceof ReturnSignal)
+                            return e.value;
+                        throw e;
+                    }
                 }
             }
             if (expr.right.kind === "CallExpr") {
@@ -456,7 +464,14 @@ function evalExpr(expr, env) {
                     const fn = callee;
                     const fnEnv = new Env(fn.closure);
                     fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
-                    return evalExpr(fn.body, fnEnv);
+                    try {
+                        return evalExpr(fn.body, fnEnv);
+                    }
+                    catch (e) {
+                        if (e instanceof ReturnSignal)
+                            return e.value;
+                        throw e;
+                    }
                 }
             }
             throw new Error(`Pipeline target must be a function at line ${expr.loc.line}`);
