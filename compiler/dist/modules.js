@@ -1,0 +1,115 @@
+// Arc Module Resolver and Loader
+import { readFileSync, existsSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+import { lex } from "./lexer.js";
+import { parse } from "./parser.js";
+import { createEnv, runStmt } from "./interpreter.js";
+const __filename2 = fileURLToPath(import.meta.url);
+const __dirname2 = dirname(__filename2);
+const moduleCache = new Map();
+export function clearModuleCache() {
+    moduleCache.clear();
+}
+/**
+ * Resolve a module path to a file path.
+ * Search order: stdlib/ first (searching upward), then relative to basePath.
+ * This prevents test files from shadowing stdlib modules.
+ */
+export function resolveModule(path, basePath) {
+    const modulePath = path.join("/") + ".arc";
+    // 1. Search up from basePath for a stdlib/ directory (stdlib takes priority)
+    let dir = dirname(basePath);
+    for (let i = 0; i < 10; i++) {
+        const stdlibPath = resolve(dir, "stdlib", modulePath);
+        if (existsSync(stdlibPath))
+            return stdlibPath;
+        const parent = dirname(dir);
+        if (parent === dir)
+            break;
+        dir = parent;
+    }
+    // 2. Relative to current file's directory
+    const relPath = resolve(dirname(basePath), modulePath);
+    if (existsSync(relPath))
+        return relPath;
+    // 3. Check compiler's sibling stdlib/
+    const compilerStdlib = resolve(__dirname2, "..", "..", "stdlib", modulePath);
+    if (existsSync(compilerStdlib))
+        return compilerStdlib;
+    throw new Error(`Module not found: ${path.join("/")} (searched from ${basePath})`);
+}
+/**
+ * Load a module, parse it, execute it, and return its pub exports.
+ */
+export function loadModule(filePath) {
+    const absPath = resolve(filePath);
+    if (moduleCache.has(absPath)) {
+        return moduleCache.get(absPath);
+    }
+    // Prevent circular imports — set empty first
+    moduleCache.set(absPath, {});
+    const source = readFileSync(absPath, "utf-8");
+    const tokens = lex(source);
+    const ast = parse(tokens);
+    const env = createEnv();
+    // Execute the module, handling nested use statements
+    for (const stmt of ast.stmts) {
+        if (stmt.kind === "UseStmt") {
+            handleUse(stmt, env, absPath);
+        }
+        else {
+            runStmt(stmt, env);
+        }
+    }
+    // Collect pub exports
+    const exports = {};
+    for (const stmt of ast.stmts) {
+        if (stmt.kind === "LetStmt") {
+            const ls = stmt;
+            if (ls.pub && typeof ls.name === "string") {
+                exports[ls.name] = env.get(ls.name);
+            }
+        }
+        else if (stmt.kind === "FnStmt") {
+            const fs = stmt;
+            if (fs.pub) {
+                exports[fs.name] = env.get(fs.name);
+            }
+        }
+    }
+    moduleCache.set(absPath, exports);
+    return exports;
+}
+/**
+ * Handle a use statement: resolve, load, and bind imports into env.
+ */
+export function handleUse(stmt, env, currentFile) {
+    const modulePath = resolveModule(stmt.path, currentFile);
+    const exports = loadModule(modulePath);
+    if (stmt.wildcard) {
+        for (const [name, value] of Object.entries(exports)) {
+            env.set(name, value);
+        }
+    }
+    else if (stmt.imports && stmt.imports.length > 0) {
+        for (const name of stmt.imports) {
+            if (!(name in exports)) {
+                throw new Error(`Module ${stmt.path.join("/")} does not export '${name}'`);
+            }
+            env.set(name, exports[name]);
+        }
+    }
+    else {
+        // No selective imports: bind all exports
+        for (const [name, value] of Object.entries(exports)) {
+            env.set(name, value);
+        }
+    }
+}
+/**
+ * Create a UseHandler bound to a specific file path.
+ */
+export function createUseHandler(currentFile) {
+    return (stmt, env) => handleUse(stmt, env, currentFile);
+}

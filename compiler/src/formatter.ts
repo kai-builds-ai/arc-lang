@@ -328,6 +328,8 @@ export function format(source: string, options?: Partial<FormatOptions>): string
         return `${formatExpr(stmt.object, depth)}.${stmt.property} = ${formatExpr(stmt.value, depth)}`;
       case "IndexAssignStmt":
         return `${formatExpr(stmt.object, depth)}[${formatExpr(stmt.index, depth)}] = ${formatExpr(stmt.value, depth)}`;
+      default:
+        return `/* unknown stmt: ${(stmt as any).kind} */`;
     }
   }
 
