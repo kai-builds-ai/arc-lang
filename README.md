@@ -79,6 +79,12 @@ Arc ships with a growing standard library. Currently implemented:
 | [`test`](stdlib/test.arc) | describe, it, expect_eq, expect_true, run_tests |
 | [`result`](stdlib/result.arc) | ok, err, is_ok, unwrap, map_result, try_fn |
 | [`time`](stdlib/time.arc) | now, format_duration, sleep |
+| [`regex`](stdlib/regex.arc) | match, match_all, test, replace, replace_all, split, capture, escape |
+| [`datetime`](stdlib/datetime.arc) | now, today, parse, format, add_days, diff_days, day_of_week, to_iso |
+| [`os`](stdlib/os.arc) | cwd, list_dir, mkdir, remove, rename, copy, exec, platform, env |
+| [`error`](stdlib/error.arc) | try_catch, try_finally, throw, panic, retry, timeout, assert |
+| [`net`](stdlib/net.arc) | ws_connect, tcp_connect, dns_lookup, base64_encode, url_encode, parse_query |
+| [`crypto`](stdlib/crypto.arc) | sha256, sha512, hmac_sha256, uuid, random_bytes, encrypt, decrypt |
 
 Plus many built-in functions available without imports: `map`, `filter`, `reduce`, `print`, `len`, `split`, `join`, `trim`, and more.
 
@@ -96,7 +102,7 @@ Plus many built-in functions available without imports: `map`, `filter`, `reduce
 
 ## Status
 
-🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 11 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 504+ tests passing.
+🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 17 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 504+ tests passing.
 
 Current phase: **Phase 6 — Community & Adoption**
 
