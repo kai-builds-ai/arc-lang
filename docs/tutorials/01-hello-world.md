@@ -247,7 +247,7 @@ len(numbers)              # 5
 push(numbers, 6)          # [1, 2, 3, 4, 5, 6]
 [1, 2] ++ [3, 4]         # [1, 2, 3, 4]
 take(numbers, 3)          # [1, 2, 3]
-skip(numbers, 2)          # [3, 4, 5]
+drop(numbers, 2)          # [3, 4, 5]
 reverse(numbers)          # [5, 4, 3, 2, 1]
 sort([3, 1, 4, 1, 5])    # [1, 1, 3, 4, 5]
 ```

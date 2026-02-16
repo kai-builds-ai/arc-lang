@@ -1,22 +1,22 @@
-// ============================================================================
-// Template Engine in Arc
-// ============================================================================
-// A full template engine with variable substitution, conditionals, for loops,
-// filters, template inheritance, includes, and HTML escaping.
-// Demonstrates: regex, pattern matching, closures, pipelines, recursion,
-// string interpolation, collections, higher-order functions.
-// ============================================================================
+# ============================================================================
+# Template Engine in Arc
+# ============================================================================
+# A full template engine with variable substitution, conditionals, for loops,
+# filters, template inheritance, includes, and HTML escaping.
+# Demonstrates: regex, pattern matching, closures, pipelines, recursion,
+# string interpolation, collections, higher-order functions.
+# ============================================================================
 
-import regex
-import collections
-import json
+use regex
+use collections
+use json
 
-// --- Token Types ---
+# --- Token Types ---
 
 let TK_TEXT       = "TEXT"
 let TK_VAR        = "VAR"
 let TK_IF         = "IF"
-let TK_ELSE       = "ELSE"
+let TK_ELSE       = "el"
 let TK_ENDIF      = "ENDIF"
 let TK_FOR        = "FOR"
 let TK_ENDFOR     = "ENDFOR"
@@ -26,7 +26,7 @@ let TK_EXTENDS    = "EXTENDS"
 let TK_INCLUDE    = "INCLUDE"
 let TK_COMMENT    = "COMMENT"
 
-// --- Tokenizer ---
+# --- Tokenizer ---
 
 let TAG_PATTERN = regex.compile(r"\{\{(.*?)\}\}|\{%(.*?)%\}|\{#(.*?)#\}")
 
@@ -67,7 +67,7 @@ pub fn tokenize(template) => {
 }
 
 fn parse_var_tag(content) => {
-    // Variable with optional filters: {{ name | upper | truncate:20 }}
+    # Variable with optional filters: {{ name | upper | truncate:20 }}
     let parts = content |> split("|") |> collections.map(fn(p) => p |> trim())
     let var_name = parts[0]
     let filters = parts |> collections.skip(1) |> collections.map(fn(f) => {
@@ -84,10 +84,10 @@ fn parse_statement_tag(content) => {
     let words = content |> split_whitespace()
     match words[0] {
         "if" => { type: TK_IF, condition: words |> collections.skip(1) |> collections.join(" ") },
-        "else" => { type: TK_ELSE, value: "" },
+        "el" => { type: TK_ELSE, value: "" },
         "endif" => { type: TK_ENDIF, value: "" },
         "for" => {
-            // {% for item in items %}
+            # {% for item in items %}
             { type: TK_FOR, var_name: words[1], iterable: words[3] }
         },
         "endfor" => { type: TK_ENDFOR, value: "" },
@@ -99,7 +99,7 @@ fn parse_statement_tag(content) => {
     }
 }
 
-// --- AST Builder ---
+# --- AST Builder ---
 
 fn build_ast(tokens) => {
     let mut pos = 0
@@ -128,12 +128,12 @@ fn build_ast(tokens) => {
                                         },
                                         _ => []
                                     }
-                                    pos = pos + 1  // skip ENDIF
+                                    pos = pos + 1 # skip ENDIF
                                     { type: "if", condition: token.condition, body: body, else_body: else_body }
                                 },
                                 TK_FOR => {
                                     let body = parse_nodes([TK_ENDFOR])
-                                    pos = pos + 1  // skip ENDFOR
+                                    pos = pos + 1 # skip ENDFOR
                                     { type: "for", var_name: token.var_name, iterable: token.iterable, body: body }
                                 },
                                 TK_BLOCK => {
@@ -160,7 +160,7 @@ fn build_ast(tokens) => {
     parse_nodes([])
 }
 
-// --- Filters ---
+# --- Filters ---
 
 let FILTERS = {
     "upper": fn(val, _) => val |> uppercase(),
@@ -218,7 +218,7 @@ fn html_escape(s) => {
     |> regex.replace_all(r"'", "&#39;")
 }
 
-// --- Variable Resolution ---
+# --- Variable Resolution ---
 
 fn resolve_var(name, context) => {
     let parts = name |> split(".")
@@ -230,7 +230,7 @@ fn resolve_var(name, context) => {
     })
 }
 
-// --- Condition Evaluation ---
+# --- Condition Evaluation ---
 
 fn eval_condition(condition, context) => {
     let parts = condition |> split_whitespace()
@@ -285,7 +285,7 @@ fn truthy(val) => {
     }
 }
 
-// --- Renderer ---
+# --- Renderer ---
 
 pub fn render(ast, context, templates) => {
     let mut output = ""
@@ -343,7 +343,7 @@ pub fn render(ast, context, templates) => {
     output
 }
 
-// --- Public API ---
+# --- Public API ---
 
 pub fn compile(template_str) => {
     let tokens = tokenize(template_str)
@@ -355,7 +355,7 @@ pub fn compile_and_render(template_str, context, templates) => {
     render(ast, context, templates or {})
 }
 
-// Template registry
+# Template registry
 pub fn create_env(templates) => {
     { templates: templates or {} }
 }
@@ -374,27 +374,27 @@ pub fn render_template(env, name, context) => {
     }
 }
 
-// --- Helper ---
+# --- Helper ---
 
 fn trim_quotes(s) => s |> regex.replace(r"^['\"]|['\"]$", "")
 fn split_whitespace(s) => regex.find_all(r"\S+", s) |> collections.map(fn(m) => m[0])
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Arc Template Engine Demo ===\n")
     
-    // Simple variable substitution
+    # Simple variable substitution
     let simple = "Hello, {{ name | upper }}! You have {{ count }} messages."
     let result1 = compile_and_render(simple, { name: "alice", count: 5 }, {})
     print("1. ${result1}")
     
-    // Conditionals
-    let cond_tmpl = "{% if logged_in %}Welcome back, {{ user }}!{% else %}Please log in.{% endif %}"
+    # Conditionals
+    let cond_tmpl = "{% if logged_in %}Welcome back, {{ user }}!{% el %}Please log in.{% endif %}"
     print("2. ${compile_and_render(cond_tmpl, { logged_in: true, user: "Bob" }, {})}")
     print("3. ${compile_and_render(cond_tmpl, { logged_in: false }, {})}")
     
-    // For loops
+    # For loops
     let list_tmpl = "<ul>{% for item in items %}<li>{{ item.name }}: ${{ item.price }}</li>{% endfor %}</ul>"
     let items = [
         { name: "Laptop", price: 999 },
@@ -403,7 +403,7 @@ fn main() => {
     ]
     print("4. ${compile_and_render(list_tmpl, { items: items }, {})}")
     
-    // Filters
+    # Filters
     let filter_tmpl = "{{ description | truncate:30 }} | {{ name | title }} | {{ tags | join }}"
     print("5. ${compile_and_render(filter_tmpl, {
         description: "This is a very long description that should be truncated",
@@ -411,7 +411,7 @@ fn main() => {
         tags: ["fast", "safe", "fun"]
     }, {})}")
     
-    // Includes and template registry
+    # Includes and template registry
     let mut env = create_env({})
     env = env
         |> add_template("header", "<header><h1>{{ site_name }}</h1></header>")
@@ -425,7 +425,7 @@ fn main() => {
     })
     print("\n6. Full page:\n${page_result}")
     
-    // Nested loops with loop variable
+    # Nested loops with loop variable
     let table_tmpl = "{% for row in data %}Row {{ loop.index }}: {% for cell in row.cells %}[{{ cell }}]{% endfor %}\n{% endfor %}"
     print("\n7. Table:")
     print(compile_and_render(table_tmpl, {
@@ -436,7 +436,7 @@ fn main() => {
         ]
     }, {}))
     
-    // HTML escaping
+    # HTML escaping
     let escape_tmpl = "Safe: {{ content | escape }}"
     print("8. ${compile_and_render(escape_tmpl, { content: "<script>alert('xss')</script>" }, {})}")
     

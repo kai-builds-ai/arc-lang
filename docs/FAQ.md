@@ -9,7 +9,7 @@ Arc isn't for humans writing code in editors. It's for **AI agents generating an
 | Aspect | Python/JS | Arc |
 |--------|-----------|-----|
 | API calls | Import library, create client, serialize, deserialize | `@GET "url"` — one line |
-| Error handling | try/catch blocks | `?` propagation operator |
+| Error handling | try/catch blocks | Map-based results with `if/el` |
 | Async | async/await keywords everywhere | Auto-await by default |
 | Data transformation | Method chains or nested calls | `\|>` pipeline operator |
 | Pattern matching | if/elif/else chains (Python), switch (JS) | `match` with destructuring |

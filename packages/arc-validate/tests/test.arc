@@ -1,158 +1,150 @@
 # arc-validate tests
 use std/test: describe, it, expect_eq, expect_true
 
-describe("type validators", fn {
-  it("validates strings", fn {
-    expect_eq(validate(is_string(), "hello"), Ok("hello"))
-    match validate(is_string(), 42) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+describe("type validators", () => {
+  it("validates strings", () => {
+    let r = validate(is_string(), "hello")
+    expect_true(r.ok)
+    expect_eq(r.value, "hello")
+    let r2 = validate(is_string(), 42)
+    expect_true(not r2.ok)
   })
 
-  it("validates numbers", fn {
-    expect_eq(validate(is_number(), 42), Ok(42))
-    match validate(is_number(), "nope") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("validates numbers", () => {
+    let r = validate(is_number(), 42)
+    expect_true(r.ok)
+    expect_eq(r.value, 42)
+    let r2 = validate(is_number(), "nope")
+    expect_true(not r2.ok)
   })
 
-  it("validates bools", fn {
-    expect_eq(validate(is_bool(), true), Ok(true))
+  it("validates bools", () => {
+    let r = validate(is_bool(), true)
+    expect_true(r.ok)
   })
 
-  it("validates lists", fn {
-    expect_eq(validate(is_list(), [1, 2]), Ok([1, 2]))
+  it("validates lists", () => {
+    let r = validate(is_list(), [1, 2])
+    expect_true(r.ok)
   })
 
-  it("validates maps", fn {
-    expect_eq(validate(is_map(), {a: 1}), Ok({a: 1}))
+  it("validates maps", () => {
+    let r = validate(is_map(), {a: 1})
+    expect_true(r.ok)
   })
 })
 
-describe("string validators", fn {
-  it("checks min length", fn {
-    expect_eq(validate(min_length(3), "hello"), Ok("hello"))
-    match validate(min_length(3), "hi") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+describe("string validators", () => {
+  it("checks min length", () => {
+    let r = validate(min_length(3), "hello")
+    expect_true(r.ok)
+    let r2 = validate(min_length(3), "hi")
+    expect_true(not r2.ok)
   })
 
-  it("checks max length", fn {
-    expect_eq(validate(max_length(5), "hello"), Ok("hello"))
-    match validate(max_length(3), "hello") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("checks max length", () => {
+    let r = validate(max_length(5), "hello")
+    expect_true(r.ok)
+    let r2 = validate(max_length(3), "hello")
+    expect_true(not r2.ok)
   })
 
-  it("validates email format", fn {
-    expect_eq(validate(email(), "user@example.com"), Ok("user@example.com"))
-    match validate(email(), "not-an-email") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("validates email format", () => {
+    let r = validate(email(), "user@example.com")
+    expect_true(r.ok)
+    let r2 = validate(email(), "not-an-email")
+    expect_true(not r2.ok)
   })
 
-  it("validates URL format", fn {
-    expect_eq(validate(url(), "https://example.com"), Ok("https://example.com"))
-    match validate(url(), "not-a-url") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("validates URL format", () => {
+    let r = validate(url(), "https://example.com")
+    expect_true(r.ok)
+    let r2 = validate(url(), "not-a-url")
+    expect_true(not r2.ok)
   })
 
-  it("validates UUID format", fn {
-    expect_eq(validate(uuid(), "550e8400-e29b-41d4-a716-446655440000"), Ok("550e8400-e29b-41d4-a716-446655440000"))
-    match validate(uuid(), "not-a-uuid") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("validates UUID format", () => {
+    let r = validate(uuid(), "550e8400-e29b-41d4-a716-446655440000")
+    expect_true(r.ok)
+    let r2 = validate(uuid(), "not-a-uuid")
+    expect_true(not r2.ok)
   })
 
-  it("validates one_of", fn {
+  it("validates one_of", () => {
     let v = one_of(["red", "green", "blue"])
-    expect_eq(validate(v, "red"), Ok("red"))
-    match validate(v, "purple") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+    let r = validate(v, "red")
+    expect_true(r.ok)
+    let r2 = validate(v, "purple")
+    expect_true(not r2.ok)
   })
 
-  it("validates not_empty", fn {
-    expect_eq(validate(not_empty(), "hello"), Ok("hello"))
-    match validate(not_empty(), "") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("validates not_empty", () => {
+    let r = validate(not_empty(), "hello")
+    expect_true(r.ok)
+    let r2 = validate(not_empty(), "")
+    expect_true(not r2.ok)
   })
 })
 
-describe("number validators", fn {
-  it("checks min value", fn {
-    expect_eq(validate(min_val(0), 5), Ok(5))
-    match validate(min_val(10), 5) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+describe("number validators", () => {
+  it("checks min value", () => {
+    let r = validate(min_val(0), 5)
+    expect_true(r.ok)
+    let r2 = validate(min_val(10), 5)
+    expect_true(not r2.ok)
   })
 
-  it("checks range", fn {
-    expect_eq(validate(range(1, 10), 5), Ok(5))
-    match validate(range(1, 10), 15) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("checks range", () => {
+    let r = validate(range(1, 10), 5)
+    expect_true(r.ok)
+    let r2 = validate(range(1, 10), 15)
+    expect_true(not r2.ok)
   })
 
-  it("checks positive", fn {
-    expect_eq(validate(positive(), 1), Ok(1))
-    match validate(positive(), -1) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("checks positive", () => {
+    let r = validate(positive(), 1)
+    expect_true(r.ok)
+    let r2 = validate(positive(), -1)
+    expect_true(not r2.ok)
   })
 })
 
-describe("combinators", fn {
-  it("chains validators", fn {
+describe("combinators", () => {
+  it("chains validators", () => {
     let v = chain([is_string(), min_length(3), max_length(10)])
-    expect_eq(validate(v, "hello"), Ok("hello"))
-    match validate(v, "hi") {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+    let r = validate(v, "hello")
+    expect_true(r.ok)
+    let r2 = validate(v, "hi")
+    expect_true(not r2.ok)
   })
 
-  it("handles required fields", fn {
+  it("handles required fields", () => {
     let v = required(is_string())
-    match validate(v, nil) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
-    expect_eq(validate(v, "hello"), Ok("hello"))
+    let r = validate(v, nil)
+    expect_true(not r.ok)
+    let r2 = validate(v, "hello")
+    expect_true(r2.ok)
   })
 
-  it("handles optional fields", fn {
+  it("handles optional fields", () => {
     let v = optional(is_string())
-    expect_eq(validate(v, nil), Ok(nil))
-    expect_eq(validate(v, "hello"), Ok("hello"))
+    let r = validate(v, nil)
+    expect_true(r.ok)
+    let r2 = validate(v, "hello")
+    expect_true(r2.ok)
   })
 
-  it("custom validator", fn {
-    let even = custom("Must be even", fn(v) => v % 2 == 0)
-    expect_eq(validate(even, 4), Ok(4))
-    match validate(even, 3) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("custom validator", () => {
+    let even = custom("Must be even", v => v % 2 == 0)
+    let r = validate(even, 4)
+    expect_true(r.ok)
+    let r2 = validate(even, 3)
+    expect_true(not r2.ok)
   })
 })
 
-describe("schema validation", fn {
-  it("validates a complete schema", fn {
+describe("schema validation", () => {
+  it("validates a complete schema", () => {
     let user_schema = schema({
       name: required(chain([is_string(), min_length(1)])),
       email: required(email()),
@@ -161,46 +153,38 @@ describe("schema validation", fn {
     })
 
     let valid_user = {name: "Alice", email: "alice@example.com", age: 30, role: "admin"}
-    match validate(user_schema, valid_user) {
-      Ok(data) => {
-        expect_eq(data.name, "Alice")
-        expect_eq(data.email, "alice@example.com")
-      },
-      Err(_) => expect_true(false, "Should have passed")
-    }
+    let r = validate(user_schema, valid_user)
+    expect_true(r.ok)
+    expect_eq(r.value.name, "Alice")
+    expect_eq(r.value.email, "alice@example.com")
   })
 
-  it("collects schema errors", fn {
+  it("collects schema errors", () => {
     let s = schema({
       name: required(is_string()),
       age: required(is_number())
     })
-    match validate(s, {name: 42, age: "old"}) {
-      Err(errors) => {
-        expect_true(errors["name"] != nil)
-        expect_true(errors["age"] != nil)
-      },
-      _ => expect_true(false, "Should have failed")
-    }
+    let r = validate(s, {name: 42, age: "old"})
+    expect_true(not r.ok)
+    expect_true(r.error["name"] != nil)
+    expect_true(r.error["age"] != nil)
   })
 })
 
-describe("list validators", fn {
-  it("validates list items", fn {
+describe("list validators", () => {
+  it("validates list items", () => {
     let v = list_of(is_number())
-    expect_eq(validate(v, [1, 2, 3]), Ok([1, 2, 3]))
-    match validate(v, [1, "two", 3]) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+    let r = validate(v, [1, 2, 3])
+    expect_true(r.ok)
+    let r2 = validate(v, [1, "two", 3])
+    expect_true(not r2.ok)
   })
 
-  it("validates non-empty list", fn {
-    expect_eq(validate(non_empty_list(), [1]), Ok([1]))
-    match validate(non_empty_list(), []) {
-      Err(_) => expect_true(true),
-      _ => expect_true(false)
-    }
+  it("validates non-empty list", () => {
+    let r = validate(non_empty_list(), [1])
+    expect_true(r.ok)
+    let r2 = validate(non_empty_list(), [])
+    expect_true(not r2.ok)
   })
 })
 

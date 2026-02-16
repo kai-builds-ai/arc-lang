@@ -1,16 +1,16 @@
-// ============================================================================
-// Hash Map Implementation in Arc
-// ============================================================================
-// A complete hash map built from scratch with separate chaining for collision
-// handling. Supports get, set, delete, resize, iteration, keys, values, entries.
-// Demonstrates: closures, mutation, pattern matching, pipelines, lists,
-// maps, string interpolation, recursion, higher-order functions
-// ============================================================================
+# ============================================================================
+# Hash Map Implementation in Arc
+# ============================================================================
+# A complete hash map built from scratch with separate chaining for collision
+# handling. Supports get, set, delete, resize, iteration, keys, values, entries.
+# Demonstrates: closures, mutation, pattern matching, pipelines, lists,
+# maps, string interpolation, recursion, higher-order functions
+# ============================================================================
 
-import collections
+use collections
 
-// --- Hash Function ---
-// DJB2 hash — simple and effective for strings.
+# --- Hash Function ---
+# DJB2 hash — simple and effective for strings.
 
 fn djb2_hash(key) {
     let str = "{key}"
@@ -21,7 +21,7 @@ fn djb2_hash(key) {
     hash
 }
 
-// FNV-1a hash variant
+# FNV-1a hash variant
 fn fnv1a_hash(key) {
     let str = "{key}"
     let mut hash = 2166136261
@@ -49,7 +49,7 @@ fn char_code(ch) => match ch {
     _ => 0
 }
 
-// --- HashMap Structure ---
+# --- HashMap Structure ---
 
 let INITIAL_CAPACITY = 16
 let LOAD_FACTOR = 0.75
@@ -80,12 +80,12 @@ pub fn create_with_capacity(cap) {
     }
 }
 
-// --- Core Operations ---
+# --- Core Operations ---
 
 fn bucket_index(hm, key) => hm.hash_fn(key) % hm.capacity
 
 pub fn set(hm, key, value) {
-    // Check if we need to resize
+    # Check if we need to resize
     if hm.size >= hm.capacity * LOAD_FACTOR {
         hm = resize(hm)
     }
@@ -93,7 +93,7 @@ pub fn set(hm, key, value) {
     let idx = bucket_index(hm, key)
     let bucket = hm.buckets[idx]
 
-    // Check if key already exists (update)
+    # Check if key already exists (update)
     let mut found = false
     let new_bucket = bucket |> map(entry => {
         if entry.key == key {
@@ -141,7 +141,7 @@ pub fn delete(hm, key) {
     hm
 }
 
-// --- Resize & Rehash ---
+# --- Resize & Rehash ---
 
 fn resize(hm) {
     let new_capacity = hm.capacity * 2
@@ -164,7 +164,7 @@ fn resize(hm) {
     new_hm
 }
 
-// --- Iteration ---
+# --- Iteration ---
 
 pub fn keys(hm) {
     let mut result = []
@@ -204,7 +204,7 @@ pub fn for_each(hm, f) {
     }
 }
 
-// --- Higher-order Operations ---
+# --- Higher-order Operations ---
 
 pub fn map_values(hm, f) {
     let mut new_hm = create_with_capacity(hm.capacity)
@@ -231,7 +231,7 @@ pub fn merge(hm1, hm2) {
     result
 }
 
-// --- From/To conversions ---
+# --- From/To conversions ---
 
 pub fn from_list(pairs) {
     let mut hm = create()
@@ -246,7 +246,7 @@ pub fn to_string(hm) {
     "HashMap{" ++ (parts |> join(", ")) ++ "}"
 }
 
-// --- Statistics ---
+# --- Statistics ---
 
 pub fn stats(hm) {
     let bucket_sizes = hm.buckets |> map(len)
@@ -264,7 +264,7 @@ pub fn stats(hm) {
     }
 }
 
-// --- Utility ---
+# --- Utility ---
 
 fn max(a, b) => if a > b { a } el { b }
 fn any(lst, pred) => lst |> filter(pred) |> len() > 0
@@ -274,12 +274,12 @@ fn join(lst, sep) => match lst {
     [x, ..rest] => "{x}{sep}{join(rest, sep)}"
 }
 
-// --- Test Suite ---
+# --- Test Suite ---
 
 pub fn run_tests() {
     print("=== HashMap Tests ===\n")
 
-    // Basic operations
+    # Basic operations
     let mut hm = create()
     hm = set(hm, "name", "Arc")
     hm = set(hm, "version", "1.0")
@@ -291,15 +291,15 @@ pub fn run_tests() {
     print("Has 'missing': {has(hm, "missing")}")
     print("Size: {hm.size}")
 
-    // Update existing key
+    # Update existing key
     hm = set(hm, "version", "2.0")
     print("Updated version: {get(hm, "version")}")
 
-    // Delete
+    # Delete
     hm = delete(hm, "type")
     print("After delete 'type': has={has(hm, "type")}, size={hm.size}")
 
-    // Add many entries to trigger resize
+    # Add many entries to trigger resize
     print("\n--- Resize Test ---")
     let mut big = create()
     for i in 0..50 {
@@ -309,11 +309,11 @@ pub fn run_tests() {
     print("Get key_7: {get(big, "key_7")}")
     print("Get key_42: {get(big, "key_42")}")
 
-    // Stats
+    # Stats
     let s = stats(big)
     print("Stats: {s}")
 
-    // Iteration
+    # Iteration
     print("\n--- Iteration ---")
     let mut small = create()
     small = set(small, "a", 1)
@@ -323,7 +323,7 @@ pub fn run_tests() {
     print("Values: {values(small)}")
     print("Entries: {entries(small)}")
 
-    // Higher-order operations
+    # Higher-order operations
     print("\n--- Higher-order ---")
     let doubled = map_values(small, v => v * 2)
     print("Doubled values: {values(doubled)}")
@@ -331,7 +331,7 @@ pub fn run_tests() {
     let filtered = filter_entries(small, (k, v) => v > 1)
     print("Filtered (v > 1): {keys(filtered)}")
 
-    // Merge
+    # Merge
     let mut hm2 = create()
     hm2 = set(hm2, "c", 30)
     hm2 = set(hm2, "d", 4)
@@ -339,11 +339,11 @@ pub fn run_tests() {
     print("Merged keys: {keys(merged)}")
     print("Merged c={get(merged, "c")} d={get(merged, "d")}")
 
-    // From list
+    # From list
     let from = from_list([["x", 10], ["y", 20], ["z", 30]])
     print("\nFrom list: {to_string(from)}")
 
-    // Hash distribution test
+    # Hash distribution test
     print("\n--- Hash Distribution ---")
     let words = ["alpha", "beta", "gamma", "delta", "epsilon",
                  "zeta", "eta", "theta", "iota", "kappa"]

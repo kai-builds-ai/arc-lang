@@ -1,15 +1,15 @@
-// =============================================================================
-// event-emitter.arc — Full Event System
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, async/await, closures,
-// higher-order functions, collections, regex, string interpolation, map
-// =============================================================================
+# =============================================================================
+# event-emitter.arc — Full Event System
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, async/await, closures,
+# higher-order functions, collections, regex, string interpolation, map
+# =============================================================================
 
-import collections
-import regex
-import datetime
+use collections
+use regex
+use datetime
 
-// --- Listener wrapper ---
+# --- Listener wrapper ---
 pub struct Listener {
   id: int,
   callback: fn,
@@ -18,7 +18,7 @@ pub struct Listener {
   created_at: datetime,
 }
 
-// --- Event record for history ---
+# --- Event record for history ---
 pub struct EventRecord {
   name: str,
   data: any,
@@ -26,7 +26,7 @@ pub struct EventRecord {
   listener_count: int,
 }
 
-// --- The EventEmitter ---
+# --- The EventEmitter ---
 pub struct EventEmitter {
   mut listeners: map,
   mut history: list,
@@ -43,11 +43,11 @@ pub fn new_emitter() -> EventEmitter {
     next_id: 1,
     max_history: 100,
     wildcard_listeners: [],
-    parent: null,
+    parent: nil,
   }
 }
 
-// --- Register a listener ---
+# --- Register a listener ---
 pub fn on(emitter: mut EventEmitter, event: str, callback: fn) -> int {
   on_with_options(emitter, event, callback, false, 0)
 }
@@ -64,7 +64,7 @@ pub fn on_with_options(emitter: mut EventEmitter, event: str, callback: fn, once
     created_at: datetime::now(),
   }
 
-  // Check if this is a wildcard pattern
+  # Check if this is a wildcard pattern
   let is_wildcard = regex::matches(event, ".*[\\*\\?].*")
 
   if is_wildcard {
@@ -72,7 +72,7 @@ pub fn on_with_options(emitter: mut EventEmitter, event: str, callback: fn, once
       "pattern": event,
       "listener": listener,
     })
-  } else {
+  } el {
     let existing = emitter.listeners[event] ?? []
     let updated = existing
       |> append(listener)
@@ -83,12 +83,12 @@ pub fn on_with_options(emitter: mut EventEmitter, event: str, callback: fn, once
   id
 }
 
-// --- Register a one-time listener ---
+# --- Register a one-time listener ---
 pub fn once(emitter: mut EventEmitter, event: str, callback: fn) -> int {
   on_with_options(emitter, event, callback, true, 0)
 }
 
-// --- Remove a listener by ID ---
+# --- Remove a listener by ID ---
 pub fn off(emitter: mut EventEmitter, event: str, listener_id: int) -> bool {
   let existing = emitter.listeners[event] ?? []
   let filtered = existing |> filter(fn(l) => l.id != listener_id)
@@ -96,8 +96,8 @@ pub fn off(emitter: mut EventEmitter, event: str, listener_id: int) -> bool {
   if len(filtered) < len(existing) {
     emitter.listeners = emitter.listeners |> map::set(event, filtered)
     true
-  } else {
-    // Check wildcard listeners
+  } el {
+    # Check wildcard listeners
     let wl_before = len(emitter.wildcard_listeners)
     emitter.wildcard_listeners = emitter.wildcard_listeners
       |> filter(fn(wl) => wl["listener"].id != listener_id)
@@ -105,12 +105,12 @@ pub fn off(emitter: mut EventEmitter, event: str, listener_id: int) -> bool {
   }
 }
 
-// --- Remove all listeners for an event ---
+# --- Remove all listeners for an event ---
 pub fn remove_all(emitter: mut EventEmitter, event: str) {
   emitter.listeners = emitter.listeners |> map::remove(event)
 }
 
-// --- Check if wildcard pattern matches event name ---
+# --- Check if wildcard pattern matches event name ---
 fn wildcard_matches(pattern: str, event_name: str) -> bool {
   let regex_pattern = pattern
     |> str::replace(".", "\\.")
@@ -119,12 +119,12 @@ fn wildcard_matches(pattern: str, event_name: str) -> bool {
   regex::matches(event_name, "^{regex_pattern}$")
 }
 
-// --- Emit an event ---
+# --- Emit an event ---
 pub fn emit(emitter: mut EventEmitter, event: str, data: any) -> int {
   let mut count = 0
   let mut to_remove = []
 
-  // Direct listeners
+  # Direct listeners
   let direct = emitter.listeners[event] ?? []
   direct |> each(fn(listener) {
     listener.callback(data)
@@ -134,13 +134,13 @@ pub fn emit(emitter: mut EventEmitter, event: str, data: any) -> int {
     }
   })
 
-  // Clean up once listeners
+  # Clean up once listeners
   if len(to_remove) > 0 {
     let remaining = direct |> filter(fn(l) => !(to_remove |> contains(l.id)))
     emitter.listeners = emitter.listeners |> map::set(event, remaining)
   }
 
-  // Wildcard listeners
+  # Wildcard listeners
   let mut wl_to_remove = []
   emitter.wildcard_listeners |> each(fn(wl) {
     if wildcard_matches(wl["pattern"], event) {
@@ -157,12 +157,12 @@ pub fn emit(emitter: mut EventEmitter, event: str, data: any) -> int {
       |> filter(fn(wl) => !(wl_to_remove |> contains(wl["listener"].id)))
   }
 
-  // Event bubbling to parent
-  if emitter.parent != null {
+  # Event bubbling to parent
+  if emitter.parent != nil {
     emit(emitter.parent, event, data)
   }
 
-  // Record history
+  # Record history
   let record = EventRecord {
     name: event,
     data: data,
@@ -177,7 +177,7 @@ pub fn emit(emitter: mut EventEmitter, event: str, data: any) -> int {
   count
 }
 
-// --- Async emit ---
+# --- Async emit ---
 pub async fn emit_async(emitter: mut EventEmitter, event: str, data: any) -> int {
   let direct = emitter.listeners[event] ?? []
   let mut count = 0
@@ -190,7 +190,7 @@ pub async fn emit_async(emitter: mut EventEmitter, event: str, data: any) -> int
   let results = await async::all(tasks)
   count = results |> reduce(0, fn(acc, r) => acc + r)
 
-  // Record in history
+  # Record in history
   emitter.history = emitter.history |> append(EventRecord {
     name: event,
     data: data,
@@ -201,12 +201,12 @@ pub async fn emit_async(emitter: mut EventEmitter, event: str, data: any) -> int
   count
 }
 
-// --- Set parent for event bubbling ---
+# --- Set parent for event bubbling ---
 pub fn set_parent(child: mut EventEmitter, parent: mut EventEmitter) {
   child.parent = parent
 }
 
-// --- Get event history ---
+# --- Get event history ---
 pub fn get_history(emitter: EventEmitter) -> list {
   emitter.history
 }
@@ -215,7 +215,7 @@ pub fn get_history_for(emitter: EventEmitter, event: str) -> list {
   emitter.history |> filter(fn(r) => r.name == event)
 }
 
-// --- Listener count ---
+# --- Listener count ---
 pub fn listener_count(emitter: EventEmitter, event: str) -> int {
   let direct = emitter.listeners[event] ?? []
   let wildcard = emitter.wildcard_listeners
@@ -223,19 +223,19 @@ pub fn listener_count(emitter: EventEmitter, event: str) -> int {
   len(direct) + len(wildcard)
 }
 
-// --- List all registered events ---
+# --- List all registered events ---
 pub fn event_names(emitter: EventEmitter) -> list {
   emitter.listeners |> map::keys()
 }
 
-// --- Pipe: create a forwarding listener ---
+# --- Pipe: create a forwarding listener ---
 pub fn pipe(source: mut EventEmitter, target: mut EventEmitter, event: str) -> int {
   on(source, event, fn(data) {
     emit(target, event, data)
   })
 }
 
-// --- Wait for an event (returns a promise) ---
+# --- Wait for an event (returns a promise) ---
 pub async fn wait_for(emitter: mut EventEmitter, event: str) -> any {
   await async::new(fn(resolve) {
     once(emitter, event, fn(data) {
@@ -244,11 +244,11 @@ pub async fn wait_for(emitter: mut EventEmitter, event: str) -> any {
   })
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   let mut emitter = new_emitter()
 
-  // Basic event handling
+  # Basic event handling
   let id1 = on(emitter, "message", fn(data) {
     print("Received message: {data}")
   })
@@ -257,17 +257,17 @@ fn main() {
     print("Logger: message event with {data}")
   })
 
-  // Once listener
+  # Once listener
   once(emitter, "init", fn(data) {
     print("Initialization complete: {data}")
   })
 
-  // Wildcard listener
+  # Wildcard listener
   on(emitter, "user.*", fn(data) {
     print("User event detected: {data}")
   })
 
-  // Emit events
+  # Emit events
   print("--- Emitting messages ---")
   let count = emit(emitter, "message", "Hello World")
   print("Notified {count} listeners")
@@ -278,12 +278,12 @@ fn main() {
   emit(emitter, "user.login", { "name": "Alice" })
   emit(emitter, "user.logout", { "name": "Bob" })
 
-  // Remove listener
+  # Remove listener
   off(emitter, "message", id1)
   print("\n--- After removing first listener ---")
   emit(emitter, "message", "After removal")
 
-  // Event bubbling
+  # Event bubbling
   let mut child = new_emitter()
   let mut parent = new_emitter()
   set_parent(child, parent)
@@ -294,7 +294,7 @@ fn main() {
 
   emit(child, "bubbled", "from child")
 
-  // History
+  # History
   print("\n--- Event History ---")
   let history = get_history(emitter)
   history |> each(fn(record) {

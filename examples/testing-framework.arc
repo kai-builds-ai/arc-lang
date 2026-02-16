@@ -1,14 +1,14 @@
-// =============================================================================
-// testing-framework.arc — A Test Framework Written in Arc
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, closures, higher-order
-// functions, string interpolation, pattern matching, collections, async/await
-// =============================================================================
+# =============================================================================
+# testing-framework.arc — A Test Framework Written in Arc
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, closures, higher-order
+# functions, string interpolation, pattern matching, collections, async/await
+# =============================================================================
 
-import collections
-import datetime
+use collections
+use datetime
 
-// --- ANSI colors ---
+# --- ANSI colors ---
 let RED = "\x1b[31m"
 let GREEN = "\x1b[32m"
 let YELLOW = "\x1b[33m"
@@ -17,7 +17,7 @@ let DIM = "\x1b[2m"
 let BOLD = "\x1b[1m"
 let RESET = "\x1b[0m"
 
-// --- Test result ---
+# --- Test result ---
 pub enum TestStatus {
   Passed,
   Failed(str),
@@ -31,7 +31,7 @@ pub struct TestResult {
   duration_ms: int,
 }
 
-// --- Test suite ---
+# --- Test suite ---
 pub struct TestSuite {
   name: str,
   mut tests: list,
@@ -41,7 +41,7 @@ pub struct TestSuite {
   mut after_all_fn: fn?,
 }
 
-// --- Test runner state ---
+# --- Test runner state ---
 pub struct TestRunner {
   mut suites: list,
   mut current_suite: TestSuite?,
@@ -51,20 +51,20 @@ pub struct TestRunner {
 
 let mut RUNNER = TestRunner {
   suites: [],
-  current_suite: null,
+  current_suite: nil,
   results: [],
   only_mode: false,
 }
 
-// --- Describe block ---
+# --- Describe block ---
 pub fn describe(name: str, block: fn) {
   let suite = TestSuite {
     name: name,
     tests: [],
-    before_each_fn: null,
-    after_each_fn: null,
-    before_all_fn: null,
-    after_all_fn: null,
+    before_each_fn: nil,
+    after_each_fn: nil,
+    before_all_fn: nil,
+    after_all_fn: nil,
   }
 
   let prev_suite = RUNNER.current_suite
@@ -74,7 +74,7 @@ pub fn describe(name: str, block: fn) {
   RUNNER.current_suite = prev_suite
 }
 
-// --- It block (test case) ---
+# --- It block (test case) ---
 pub fn it(name: str, test_fn: fn) {
   let test = {
     "name": name,
@@ -106,7 +106,7 @@ pub fn it_only(name: str, test_fn: fn) {
   RUNNER.current_suite.tests = RUNNER.current_suite.tests |> append(test)
 }
 
-// --- Hooks ---
+# --- Hooks ---
 pub fn before_each(hook: fn) {
   RUNNER.current_suite.before_each_fn = hook
 }
@@ -123,7 +123,7 @@ pub fn after_all(hook: fn) {
   RUNNER.current_suite.after_all_fn = hook
 }
 
-// --- Expectation builder ---
+# --- Expectation builder ---
 pub struct Expect {
   actual: any,
   negated: bool,
@@ -138,14 +138,14 @@ pub fn not(e: Expect) -> Expect {
 }
 
 fn assert_check(e: Expect, condition: bool, message: str) {
-  let passes = if e.negated { !condition } else { condition }
+  let passes = if e.negated { !condition } el { condition }
   if !passes {
-    let prefix = if e.negated { "Expected NOT: " } else { "" }
+    let prefix = if e.negated { "Expected NOT: " } el { "" }
     panic("{prefix}{message}")
   }
 }
 
-// --- Matchers ---
+# --- Matchers ---
 pub fn to_equal(e: Expect, expected: any) {
   assert_check(e, e.actual == expected,
     "Expected {expected}, got {e.actual}")
@@ -166,8 +166,8 @@ pub fn to_be_false(e: Expect) {
 }
 
 pub fn to_be_null(e: Expect) {
-  assert_check(e, e.actual == null,
-    "Expected null, got {e.actual}")
+  assert_check(e, e.actual == nil,
+    "Expected nil, got {e.actual}")
 }
 
 pub fn to_be_gt(e: Expect, threshold: any) {
@@ -216,7 +216,7 @@ pub fn to_throw(e: Expect) {
   let mut threw = false
   let mut error_msg = ""
   try {
-    e.actual() // actual should be a function
+    e.actual() # actual should be a function
   } catch(err) {
     threw = true
     error_msg = "{err}"
@@ -239,7 +239,7 @@ pub fn to_be_close_to(e: Expect, expected: float, precision: int) {
     "Expected {e.actual} to be close to {expected} (precision: {precision})")
 }
 
-// --- Run all tests ---
+# --- Run all tests ---
 pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
   let start = datetime::now()
   let mut passed = 0
@@ -251,13 +251,13 @@ pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
   RUNNER.suites |> each(fn(suite) {
     print("{BOLD}{CYAN}  {suite.name}{RESET}")
 
-    // Before all hook
-    if suite.before_all_fn != null {
+    # Before all hook
+    if suite.before_all_fn != nil {
       suite.before_all_fn()
     }
 
     suite.tests |> each(fn(test) {
-      // Skip logic
+      # Skip logic
       if test["skip"] {
         print("    {YELLOW}○ {DIM}{test["name"]} (skipped){RESET}")
         skipped = skipped + 1
@@ -270,14 +270,14 @@ pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
         ret
       }
 
-      // Only mode: skip non-only tests
+      # Only mode: skip non-only tests
       if RUNNER.only_mode && !test["only"] {
         skipped = skipped + 1
         ret
       }
 
-      // Before each hook
-      if suite.before_each_fn != null {
+      # Before each hook
+      if suite.before_each_fn != nil {
         suite.before_each_fn()
       }
 
@@ -292,14 +292,14 @@ pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
 
       let duration = datetime::diff_ms(datetime::now(), test_start)
 
-      // After each hook
-      if suite.after_each_fn != null {
+      # After each hook
+      if suite.after_each_fn != nil {
         suite.after_each_fn()
       }
 
       match status {
         TestStatus::Passed => {
-          let time_str = if duration > 100 { " {YELLOW}({duration}ms){RESET}" } else { "" }
+          let time_str = if duration > 100 { " {YELLOW}({duration}ms){RESET}" } el { "" }
           print("    {GREEN}✓{RESET} {DIM}{test["name"]}{RESET}{time_str}")
           passed = passed + 1
         }
@@ -318,8 +318,8 @@ pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
       })
     })
 
-    // After all hook
-    if suite.after_all_fn != null {
+    # After all hook
+    if suite.after_all_fn != nil {
       suite.after_all_fn()
     }
 
@@ -328,14 +328,14 @@ pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
 
   let total_duration = datetime::diff_ms(datetime::now(), start)
 
-  // Summary
+  # Summary
   print("{BOLD}  Summary:{RESET}")
   if passed > 0 { print("    {GREEN}{passed} passing{RESET}") }
   if failed > 0 { print("    {RED}{failed} failing{RESET}") }
   if skipped > 0 { print("    {YELLOW}{skipped} skipped{RESET}") }
   print("    {DIM}Duration: {total_duration}ms{RESET}\n")
 
-  // Print failure details
+  # Print failure details
   if failed > 0 {
     print("{RED}{BOLD}  Failures:{RESET}\n")
     RUNNER.results
@@ -350,7 +350,7 @@ pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
   { passed: passed, failed: failed, skipped: skipped, duration_ms: total_duration }
 }
 
-// --- Demo: Test the testing framework itself! ---
+# --- Demo: Test the testing framework itself! ---
 fn main() {
   describe("Math Operations", fn() {
     it("should add numbers correctly", fn() {
@@ -419,7 +419,7 @@ fn main() {
     })
 
     it("should catch type errors", fn() {
-      expect(fn() { null + 1 }) |> to_throw()
+      expect(fn() { nil + 1 }) |> to_throw()
     })
   })
 
@@ -429,7 +429,7 @@ fn main() {
       expect("hello") |> to_be_type("str")
       expect([1, 2]) |> to_be_type("list")
       expect(true) |> to_be_type("bool")
-      expect(null) |> to_be_null()
+      expect(nil) |> to_be_null()
     })
 
     it("should negate correctly", fn() {
@@ -438,10 +438,10 @@ fn main() {
     })
   })
 
-  // Run all tests
+  # Run all tests
   let results = run()
 
-  // Exit with appropriate code
+  # Exit with appropriate code
   if results.failed > 0 {
     exit(1)
   }

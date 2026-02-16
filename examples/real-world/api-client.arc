@@ -1,21 +1,21 @@
-// ============================================================================
-// REST API Client Library in Arc
-// ============================================================================
-// Full-featured HTTP client with base URL, auth headers, request/response
-// interceptors via pipeline, retry logic, pagination, rate limiting, and
-// response caching.
-// Demonstrates: closures, pipelines, pattern matching, maps, lists, mutation,
-// string interpolation, higher-order functions, error handling, destructuring
-// ============================================================================
+# ============================================================================
+# REST API Client Library in Arc
+# ============================================================================
+# Full-featured HTTP client with base URL, auth headers, request/response
+# interceptors via pipeline, retry logic, pagination, rate limiting, and
+# response caching.
+# Demonstrates: closures, pipelines, pattern matching, maps, lists, mutation,
+# string interpolation, higher-order functions, error handling, destructuring
+# ============================================================================
 
-import http
-import json
-import datetime
-import error
-import crypto
-import collections
+use http
+use json
+use datetime
+use error
+use crypto
+use collections
 
-// --- Client Builder ---
+# --- Client Builder ---
 
 pub fn create(base_url) => {
     base_url: base_url,
@@ -30,7 +30,7 @@ pub fn create(base_url) => {
     debug: false
 }
 
-// --- Configuration (Builder Pattern) ---
+# --- Configuration (Builder Pattern) ---
 
 pub fn with_header(client, name, value) {
     client.headers[name] = value
@@ -53,7 +53,7 @@ pub fn with_debug(client, enabled) {
     client
 }
 
-// --- Authentication ---
+# --- Authentication ---
 
 pub fn with_bearer_token(client, token) {
     client.auth = {type: "bearer", token: token}
@@ -75,7 +75,7 @@ pub fn with_api_key(client, key, header_name) {
     client
 }
 
-// --- Interceptors ---
+# --- Interceptors ---
 
 pub fn add_request_interceptor(client, interceptor) {
     client.interceptors.request = client.interceptors.request ++ [interceptor]
@@ -103,7 +103,7 @@ fn apply_response_interceptors(client, response) {
     resp
 }
 
-// --- Rate Limiting ---
+# --- Rate Limiting ---
 
 pub fn with_rate_limit(client, max_requests, window_ms) {
     client.rate_limit = {
@@ -121,7 +121,7 @@ fn check_rate_limit(client) {
     let now = datetime.now()
     let window_start = now - client.rate_limit.window_ms
 
-    // Remove old timestamps
+    # Remove old timestamps
     client.rate_limit.timestamps = client.rate_limit.timestamps
         |> filter(ts => ts > window_start)
 
@@ -133,7 +133,7 @@ fn check_rate_limit(client) {
     true
 }
 
-// --- Caching ---
+# --- Caching ---
 
 pub fn with_cache(client, ttl_seconds) {
     client.cache = {
@@ -156,7 +156,7 @@ fn get_cached(client, key) {
 
     let now = datetime.now()
     if now - entry.timestamp > client.cache.ttl * 1000 {
-        // Expired
+        # Expired
         client.cache.store[key] = nil
         ret nil
     }
@@ -176,7 +176,7 @@ pub fn clear_cache(client) {
     client
 }
 
-// --- Core Request ---
+# --- Core Request ---
 
 fn build_url(client, path, params) {
     let mut url = "{client.base_url}{path}"
@@ -195,7 +195,7 @@ fn do_request(client, method, path, options) {
     let body = options.body or nil
     let extra_headers = options.headers or {}
 
-    // Rate limit check
+    # Rate limit check
     if not check_rate_limit(client) {
         ret {
             ok: false,
@@ -206,7 +206,7 @@ fn do_request(client, method, path, options) {
         }
     }
 
-    // Check cache for GET requests
+    # Check cache for GET requests
     if method == "GET" {
         let ck = cache_key(method, path, params)
         let cached = get_cached(client, ck)
@@ -218,7 +218,7 @@ fn do_request(client, method, path, options) {
 
     let url = build_url(client, path, params)
 
-    // Merge headers
+    # Merge headers
     let mut headers = {}
     for k in collections.keys(client.headers) {
         headers[k] = client.headers[k]
@@ -229,7 +229,7 @@ fn do_request(client, method, path, options) {
     headers["Content-Type"] = headers["Content-Type"] or "application/json"
     headers["Accept"] = headers["Accept"] or "application/json"
 
-    // Build request object
+    # Build request object
     let mut request = {
         method: method,
         url: url,
@@ -238,7 +238,7 @@ fn do_request(client, method, path, options) {
         timeout: client.timeout
     }
 
-    // Apply request interceptors
+    # Apply request interceptors
     request = apply_request_interceptors(client, request)
 
     if client.debug {
@@ -246,7 +246,7 @@ fn do_request(client, method, path, options) {
         if body != nil { print("[BODY] {json.encode(body)}") }
     }
 
-    // Execute with retries
+    # Execute with retries
     let mut last_error = nil
     for attempt in 0..client.retries {
         let result = error.try(() => http.request(request))
@@ -261,20 +261,20 @@ fn do_request(client, method, path, options) {
                     cached: false
                 }
 
-                // Apply response interceptors
+                # Apply response interceptors
                 resp = apply_response_interceptors(client, resp)
 
                 if client.debug {
                     print("[{response.status}] {len(json.encode(resp.data))} bytes")
                 }
 
-                // Cache successful GET responses
+                # Cache successful GET responses
                 if method == "GET" and resp.ok {
                     let ck = cache_key(method, path, params)
                     set_cached(client, ck, resp.data)
                 }
 
-                // Retry on server errors
+                # Retry on server errors
                 if response.status >= 500 and attempt < client.retries - 1 {
                     if client.debug { print("[RETRY] Attempt {attempt + 1}/{client.retries}") }
                     sleep(client.retry_delay * (attempt + 1))
@@ -312,16 +312,16 @@ fn parse_response(response) {
 }
 
 fn sleep(ms) {
-    // Placeholder for actual sleep
+    # Placeholder for actual sleep
     let _ = ms
 }
 
 fn contains(s, sub) {
-    // Simplified contains check
+    # Simplified contains check
     s != nil and sub != nil
 }
 
-// --- HTTP Methods ---
+# --- HTTP Methods ---
 
 pub fn get(client, path, params) =>
     do_request(client, "GET", path, {params: params})
@@ -338,7 +338,7 @@ pub fn patch(client, path, body) =>
 pub fn delete(client, path) =>
     do_request(client, "DELETE", path, {})
 
-// --- Pagination ---
+# --- Pagination ---
 
 pub fn paginate(client, path, page_param, per_page, max_pages) {
     let mut all_data = []
@@ -367,7 +367,7 @@ pub fn paginate(client, path, page_param, per_page, max_pages) {
         all_data = all_data ++ data
         page = page + 1
 
-        // Check if we got fewer than requested
+        # Check if we got fewer than requested
         if len(data) < per_page { break }
     }
 
@@ -382,7 +382,7 @@ fn type_of(v) => match v {
     _ => "other"
 }
 
-// --- Batch Requests ---
+# --- Batch Requests ---
 
 pub fn batch(client, requests) {
     requests |> map(req => match req {
@@ -394,7 +394,7 @@ pub fn batch(client, requests) {
     })
 }
 
-// --- Resource CRUD Helper ---
+# --- Resource CRUD Helper ---
 
 pub fn resource(client, base_path) => {
     list: (params) => get(client, base_path, params),
@@ -411,12 +411,12 @@ fn join(lst, sep) => match lst {
     [x, ..rest] => "{x}{sep}{join(rest, sep)}"
 }
 
-// --- Demo ---
+# --- Demo ---
 
 pub fn run() {
     print("=== REST API Client Demo ===\n")
 
-    // Create client with full configuration
+    # Create client with full configuration
     let client = create("https://api.example.com/v1")
         |> with_bearer_token("eyJhbGciOiJIUzI1NiJ9.test-token")
         |> with_header("User-Agent", "Arc-HTTP-Client/1.0")
@@ -443,7 +443,7 @@ pub fn run() {
     print("  Cache TTL: {client.cache.ttl}s")
     print("  Rate limit: {client.rate_limit.max_requests}/min")
 
-    // Resource helper
+    # Resource helper
     print("\n--- Resource CRUD ---")
     let users = resource(client, "/users")
     print("Users resource created for /users")
@@ -453,7 +453,7 @@ pub fn run() {
     print("  .update(1, {name: 'Updated'}) => PUT /users/1")
     print("  .remove(1)  => DELETE /users/1")
 
-    // Batch requests
+    # Batch requests
     print("\n--- Batch Request ---")
     let batch_reqs = [
         {method: "GET", path: "/users", params: {limit: 10}},
@@ -462,12 +462,12 @@ pub fn run() {
     ]
     print("Batch of {len(batch_reqs)} requests prepared")
 
-    // Pagination
+    # Pagination
     print("\n--- Pagination ---")
     print("paginate(client, '/users', 'page', 25, 10)")
     print("  Fetches up to 10 pages of 25 items each")
 
-    // Cache demo
+    # Cache demo
     print("\n--- Cache ---")
     let ck = cache_key("GET", "/users", {limit: 10})
     set_cached(client, ck, [{id: 1, name: "Test User"}])
@@ -477,7 +477,7 @@ pub fn run() {
     let _ = clear_cache(client)
     print("  Cache cleared")
 
-    // Interceptor pipeline demo
+    # Interceptor pipeline demo
     print("\n--- Interceptor Pipeline ---")
     let logging_client = create("https://api.example.com")
         |> add_request_interceptor(req => {

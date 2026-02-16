@@ -1,16 +1,16 @@
-// ============================================================================
-// Tic-Tac-Toe with Minimax AI in Arc
-// ============================================================================
-// Complete game with board state, move validation, win detection via pattern
-// matching, minimax AI with alpha-beta pruning, and ASCII rendering.
-// Demonstrates: pattern matching, recursion, closures, pipelines, mutation,
-// maps, lists, string interpolation, higher-order functions
-// ============================================================================
+# ============================================================================
+# Tic-Tac-Toe with Minimax AI in Arc
+# ============================================================================
+# Complete game with board state, move validation, win detection via pattern
+# matching, minimax AI with alpha-beta pruning, and ASCII rendering.
+# Demonstrates: pattern matching, recursion, closures, pipelines, mutation,
+# maps, lists, string interpolation, higher-order functions
+# ============================================================================
 
-import collections
+use collections
 
-// --- Board ---
-// Board is a flat list of 9 cells: nil (empty), "X", or "O"
+# --- Board ---
+# Board is a flat list of 9 cells: nil (empty), "X", or "O"
 
 pub fn new_board() => [nil, nil, nil, nil, nil, nil, nil, nil, nil]
 
@@ -45,7 +45,7 @@ pub fn render_with_numbers(board) {
     print("")
 }
 
-// --- Move Validation ---
+# --- Move Validation ---
 
 pub fn is_valid_move(board, pos) => match true {
     _ if pos < 0 or pos > 8 => false,
@@ -63,13 +63,13 @@ pub fn available_moves(board) {
     [i for i in 0..9 if board[i] == nil]
 }
 
-// --- Win Detection ---
-// Check all winning patterns via pattern matching
+# --- Win Detection ---
+# Check all winning patterns via pattern matching
 
 let WIN_PATTERNS = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8],  // rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8],  // columns
-    [0, 4, 8], [2, 4, 6]              // diagonals
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], # rows
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], # columns
+    [0, 4, 8], [2, 4, 6] # diagonals
 ]
 
 pub fn check_winner(board) {
@@ -102,7 +102,7 @@ pub fn game_status(board) => match check_winner(board) {
     }
 }
 
-// --- Minimax AI with Alpha-Beta Pruning ---
+# --- Minimax AI with Alpha-Beta Pruning ---
 
 let SCORES = {"X": -10, "O": 10, "draw": 0}
 
@@ -112,7 +112,7 @@ fn minimax(board, depth, is_maximizing, alpha, beta) {
     if len(available_moves(board)) == 0 { ret 0 }
 
     if is_maximizing {
-        // AI plays O, maximize
+        # AI plays O, maximize
         let mut best = -999
         let mut a = alpha
         for move in available_moves(board) {
@@ -120,11 +120,11 @@ fn minimax(board, depth, is_maximizing, alpha, beta) {
             let score = minimax(new_board, depth + 1, false, a, beta)
             best = max(best, score)
             a = max(a, score)
-            if beta <= a { break }  // Beta cutoff
+            if beta <= a { break } # Beta cutoff
         }
         best
     } el {
-        // Human plays X, minimize
+        # Human plays X, minimize
         let mut best = 999
         let mut b = beta
         for move in available_moves(board) {
@@ -132,7 +132,7 @@ fn minimax(board, depth, is_maximizing, alpha, beta) {
             let score = minimax(new_board, depth + 1, true, alpha, b)
             best = min(best, score)
             b = min(b, score)
-            if b <= alpha { break }  // Alpha cutoff
+            if b <= alpha { break } # Alpha cutoff
         }
         best
     }
@@ -142,7 +142,7 @@ pub fn ai_move(board) {
     let moves = available_moves(board)
     if len(moves) == 0 { ret nil }
 
-    // Center opening is optimal
+    # Center opening is optimal
     if len(moves) == 9 { ret 4 }
 
     let mut best_score = -999
@@ -159,7 +159,7 @@ pub fn ai_move(board) {
     best_move
 }
 
-// --- Game Engine ---
+# --- Game Engine ---
 
 pub fn play_game(human_first) {
     let mut board = new_board()
@@ -179,7 +179,7 @@ pub fn play_game(human_first) {
 
         match current {
             "X" => {
-                // Simulate human move (use a strategy for demo)
+                # Simulate human move (use a strategy for demo)
                 let move = human_strategy(board, turn)
                 print("Human plays X at position {move}")
                 board = make_move(board, move, "X")
@@ -203,36 +203,36 @@ pub fn play_game(human_first) {
     status
 }
 
-// Simple human strategy for demo (plays first available move with some logic)
+# Simple human strategy for demo (plays first available move with some logic)
 fn human_strategy(board, turn) {
     let moves = available_moves(board)
 
-    // Try to win
+    # Try to win
     for m in moves {
         let b = make_move(board, m, "X")
         if check_winner(b) != nil { ret m }
     }
 
-    // Block opponent
+    # Block opponent
     for m in moves {
         let b = make_move(board, m, "O")
         if check_winner(b) != nil { ret m }
     }
 
-    // Take center
+    # Take center
     if is_valid_move(board, 4) { ret 4 }
 
-    // Take corner
+    # Take corner
     let corners = [0, 2, 6, 8]
     for c in corners {
         if is_valid_move(board, c) { ret c }
     }
 
-    // Take any
+    # Take any
     moves[0]
 }
 
-// --- Tournament ---
+# --- Tournament ---
 
 pub fn run_tournament(num_games) {
     let mut results = {x_wins: 0, o_wins: 0, draws: 0}
@@ -255,7 +255,7 @@ pub fn run_tournament(num_games) {
     results
 }
 
-// --- Board Analysis ---
+# --- Board Analysis ---
 
 pub fn analyze_position(board) {
     let status = game_status(board)
@@ -265,7 +265,7 @@ pub fn analyze_position(board) {
         let moves = available_moves(board)
         print("Available moves: {moves}")
 
-        // Score each move for O (AI)
+        # Score each move for O (AI)
         let scored = moves |> map(m => {
             let b = make_move(board, m, "O")
             let score = minimax(b, 0, false, -999, 999)
@@ -286,7 +286,7 @@ pub fn analyze_position(board) {
 }
 
 fn sort_by(lst, key_fn) {
-    // Simple insertion sort by key
+    # Simple insertion sort by key
     let mut result = []
     for item in lst {
         let k = key_fn(item)
@@ -305,7 +305,7 @@ fn sort_by(lst, key_fn) {
     result
 }
 
-// --- Utility ---
+# --- Utility ---
 
 fn min(a, b) => if a < b { a } el { b }
 fn max(a, b) => if a > b { a } el { b }
@@ -317,7 +317,7 @@ fn map_indexed(lst, f) {
     result
 }
 
-// --- Run ---
+# --- Run ---
 
 print("=== Position Analysis ===")
 let board = ["X", nil, nil, nil, "O", nil, nil, nil, "X"]

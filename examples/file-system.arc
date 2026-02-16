@@ -1,24 +1,24 @@
-// ============================================================================
-// Virtual Filesystem in Arc
-// ============================================================================
-// A complete in-memory virtual filesystem with tree-structured directories,
-// file CRUD, path resolution, permissions, search, and disk usage stats.
-// Demonstrates: pattern matching, recursion, closures, pipelines, regex,
-// collections, datetime, string interpolation, mut, pub.
-// ============================================================================
+# ============================================================================
+# Virtual Filesystem in Arc
+# ============================================================================
+# A complete in-memory virtual filesystem with tree-structured directories,
+# file CRUD, path resolution, permissions, search, and disk usage stats.
+# Demonstrates: pattern matching, recursion, closures, pipelines, regex,
+# collections, datetime, string interpolation, mut, pub.
+# ============================================================================
 
-import collections
-import regex
-import datetime
-import json
+use collections
+use regex
+use datetime
+use json
 
-// --- Node Types ---
+# --- Node Types ---
 
 let NODE_FILE = "file"
 let NODE_DIR  = "directory"
 let NODE_LINK = "symlink"
 
-// --- Permission Bits ---
+# --- Permission Bits ---
 
 let PERM_READ    = 4
 let PERM_WRITE   = 2
@@ -38,7 +38,7 @@ fn format_rwx(bits) => {
     "${r}${w}${x}"
 }
 
-// --- Node Creation ---
+# --- Node Creation ---
 
 pub fn create_file(name, content, owner) => {
     let now = datetime.now() |> datetime.to_iso()
@@ -83,7 +83,7 @@ pub fn create_symlink(name, target, owner) => {
     }
 }
 
-// --- Filesystem ---
+# --- Filesystem ---
 
 pub fn create_fs() => {
     {
@@ -92,7 +92,7 @@ pub fn create_fs() => {
     }
 }
 
-// --- Path Utilities ---
+# --- Path Utilities ---
 
 fn normalize_path(path) => {
     let parts = path |> split("/") |> collections.filter(fn(p) => p != "")
@@ -130,7 +130,7 @@ fn basename(path) => {
     match collections.length(parts) == 0 { true => "/", false => parts |> collections.last() }
 }
 
-// --- Navigation ---
+# --- Navigation ---
 
 fn get_node(fs, path) => {
     let full_path = resolve_path(fs, path)
@@ -171,7 +171,7 @@ fn set_node(fs, path, new_node) => {
     }
 }
 
-// --- File Operations ---
+# --- File Operations ---
 
 pub fn mkdir(fs, path, owner) => {
     let full_path = resolve_path(fs, path)
@@ -270,7 +270,7 @@ pub fn rm(fs, path) => {
     }
 }
 
-pub fn rm_rf(fs, path) => rm(fs, path)  // Simplified: rm works recursively on dirs
+pub fn rm_rf(fs, path) => rm(fs, path) # Simplified: rm works recursively on dirs
 
 pub fn cp(fs, src, dst, owner) => {
     let node = get_node(fs, resolve_path(fs, src))
@@ -304,7 +304,7 @@ pub fn ln_s(fs, target, link_path, owner) => {
     set_node(fs, full_path, link)
 }
 
-// --- Directory Listing ---
+# --- Directory Listing ---
 
 pub fn ls(fs, path) => {
     let node = get_node(fs, resolve_path(fs, path or fs.cwd))
@@ -342,7 +342,7 @@ pub fn ls_la(fs, path) => {
     }
 }
 
-// --- Search ---
+# --- Search ---
 
 pub fn find(fs, path, predicate) => {
     let start = get_node(fs, resolve_path(fs, path))
@@ -409,7 +409,7 @@ pub fn grep(fs, path, pattern) => {
     })
 }
 
-// --- Disk Usage ---
+# --- Disk Usage ---
 
 pub fn du(fs, path) => {
     let node = get_node(fs, resolve_path(fs, path))
@@ -458,7 +458,7 @@ pub fn tree(fs, path, prefix) => {
     }
 }
 
-// --- Change Directory ---
+# --- Change Directory ---
 
 pub fn cd(fs, path) => {
     let full_path = resolve_path(fs, path)
@@ -472,7 +472,7 @@ pub fn cd(fs, path) => {
 
 pub fn pwd(fs) => fs.cwd
 
-// --- Filesystem Stats ---
+# --- Filesystem Stats ---
 
 pub fn df(fs) => {
     let total_size = du(fs, "/")
@@ -487,14 +487,14 @@ pub fn df(fs) => {
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Arc Virtual Filesystem Demo ===\n")
     
     let mut fs = create_fs()
     
-    // Build directory structure
+    # Build directory structure
     fs = fs
         |> mkdir_p("/home/alice", "alice")
         |> mkdir_p("/home/bob", "bob")
@@ -504,7 +504,7 @@ fn main() => {
         |> mkdir_p("/var/log", "root")
         |> mkdir_p("/tmp", "root")
     
-    // Create files
+    # Create files
     fs = fs
         |> write_file("/home/alice/hello.txt", "Hello, World!\nThis is Alice's file.", "alice")
         |> write_file("/home/alice/projects/arc-lang/main.arc", "fn main() => print(\"Hello Arc!\")", "alice")
@@ -513,42 +513,42 @@ fn main() => {
         |> write_file("/etc/config/app.json", "{\"port\": 8080, \"debug\": true}", "root")
         |> write_file("/var/log/app.log", "2025-01-01 INFO: Server started\n2025-01-01 ERROR: Connection failed\n2025-01-02 INFO: Recovered", "root")
     
-    // Create a symlink
+    # Create a symlink
     fs = fs |> ln_s("/home/alice/projects/arc-lang", "/home/alice/arc", "alice")
     
     print("--- Directory Tree ---")
     print("/")
     tree(fs, "/", "")
     
-    // List files
+    # List files
     print("\n--- ls -la /home/alice ---")
     ls_la(fs, "/home/alice")
     
-    // Read a file
+    # Read a file
     print("\n--- cat /home/alice/hello.txt ---")
     match read_file(fs, "/home/alice/hello.txt") {
         { ok: content } => print(content),
         { error: e } => print("Error: ${e}")
     }
     
-    // Find files
+    # Find files
     print("\n--- find / -name '*.arc' ---")
     let arc_files = find_by_name(fs, "/", r"\.arc$")
     arc_files |> collections.each(fn(f) => print("  ${f}"))
     
-    // Grep
+    # Grep
     print("\n--- grep 'ERROR' /var/log ---")
     let matches = grep(fs, "/var/log", "ERROR")
     matches |> collections.each(fn(m) => print("  ${m.file}:${m.line}: ${m.text}"))
     
-    // Disk usage
+    # Disk usage
     print("\n--- Disk Usage ---")
     let stats = df(fs)
     print("Total size: ${stats.total_size} bytes")
     print("Files: ${stats.file_count}")
     print("Directories: ${stats.directory_count}")
     
-    // File operations
+    # File operations
     print("\n--- File Operations ---")
     fs = fs |> cp("/home/alice/hello.txt", "/tmp/hello_copy.txt", "alice")
     print("Copied hello.txt to /tmp/")
@@ -559,14 +559,14 @@ fn main() => {
     fs = fs |> mv("/tmp/hello_copy.txt", "/home/bob/from_alice.txt")
     print("Moved file to Bob's directory")
     
-    // Navigate
+    # Navigate
     fs = fs |> cd("/home/alice/projects")
     print("\nCurrent directory: ${pwd(fs)}")
     
     print("\n--- ls (current dir) ---")
     ls_la(fs, ".")
     
-    // Find large files
+    # Find large files
     print("\n--- Files larger than 20 bytes ---")
     let large_files = find_by_size(fs, "/", 20, 999999)
     large_files |> collections.each(fn(f) => {

@@ -351,7 +351,7 @@ transform(5)    # "11"
 **Exercise 2:**
 ```arc
 fn unless(condition, f) {
-  if !condition { f() }
+  if not condition { f() }
 }
 ```
 

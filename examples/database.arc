@@ -1,17 +1,17 @@
-// ============================================================================
-// In-Memory Database Engine in Arc
-// ============================================================================
-// A relational-style in-memory database with tables, CRUD operations, WHERE
-// filtering, ORDER BY, GROUP BY, JOIN, indexing, and transactions.
-// Demonstrates: collections, closures, pattern matching, pipelines, mut,
-// higher-order functions, pub, string interpolation.
-// ============================================================================
+# ============================================================================
+# In-Memory Database Engine in Arc
+# ============================================================================
+# A relational-style in-memory database with tables, CRUD operations, WHERE
+# filtering, ORDER BY, GROUP BY, JOIN, indexing, and transactions.
+# Demonstrates: collections, closures, pattern matching, pipelines, mut,
+# higher-order functions, pub, string interpolation.
+# ============================================================================
 
-import collections
-import json
-import datetime
+use collections
+use json
+use datetime
 
-// --- Database Creation ---
+# --- Database Creation ---
 
 pub fn create_db(name) => {
     {
@@ -36,7 +36,7 @@ pub fn create_table(db, table_name, schema) => {
     d
 }
 
-// --- Schema Definitions ---
+# --- Schema Definitions ---
 
 pub fn column(name, type, options) => {
     let defaults = { nullable: true, primary_key: false, auto_increment: false, default: nil }
@@ -49,7 +49,7 @@ pub fn float_col(name, options) => column(name, "float", options or {})
 pub fn bool_col(name, options) => column(name, "bool", options or {})
 pub fn datetime_col(name, options) => column(name, "datetime", options or {})
 
-// --- Validation ---
+# --- Validation ---
 
 fn validate_row(table, row) => {
     table.schema |> collections.all(fn(col) => {
@@ -74,14 +74,14 @@ fn validate_type(val, type) => {
     }
 }
 
-// --- INSERT ---
+# --- INSERT ---
 
 pub fn insert(db, table_name, row) => {
     let table = collections.get(db.tables, table_name)
     match table {
         nil => { error: "Table '${table_name}' not found", db: db },
         _ => {
-            // Handle auto-increment
+            # Handle auto-increment
             let mut final_row = row
             let mut next_id = collections.get(db.auto_ids, table_name, 0)
             
@@ -109,7 +109,7 @@ pub fn insert(db, table_name, row) => {
                     d.tables = collections.set(d.tables, table_name, t)
                     d.auto_ids = collections.set(d.auto_ids, table_name, next_id)
                     
-                    // Update indexes
+                    # Update indexes
                     d = update_indexes_for_insert(d, table_name, final_row)
                     
                     { ok: final_row, db: d }
@@ -129,7 +129,7 @@ pub fn insert_many(db, table_name, rows) => {
     })
 }
 
-// --- SELECT (Query Builder) ---
+# --- SELECT (Query Builder) ---
 
 pub fn query(table_name) => {
     {
@@ -207,7 +207,7 @@ pub fn join(q, other_table, on_left, on_right) => {
     qr
 }
 
-// --- Query Execution ---
+# --- Query Execution ---
 
 pub fn execute(db, q) => {
     let table = collections.get(db.tables, q.table)
@@ -216,7 +216,7 @@ pub fn execute(db, q) => {
         _ => {
             let mut rows = table.rows
             
-            // Apply JOINs
+            # Apply JOINs
             rows = q.joins |> collections.reduce(rows, fn(rs, j) => {
                 let other = collections.get(db.tables, j.table)
                 match other {
@@ -231,12 +231,12 @@ pub fn execute(db, q) => {
                 }
             })
             
-            // Apply WHERE conditions
+            # Apply WHERE conditions
             rows = q.conditions |> collections.reduce(rows, fn(rs, cond) => {
                 rs |> collections.filter(cond)
             })
             
-            // Apply GROUP BY
+            # Apply GROUP BY
             match q.group_by_col {
                 nil => {},
                 col => {
@@ -252,7 +252,7 @@ pub fn execute(db, q) => {
                 }
             }
             
-            // Apply ORDER BY
+            # Apply ORDER BY
             match q.order {
                 nil => {},
                 { field: f, direction: d } => {
@@ -264,14 +264,14 @@ pub fn execute(db, q) => {
                 }
             }
             
-            // Apply OFFSET and LIMIT
+            # Apply OFFSET and LIMIT
             rows = rows |> collections.skip(q.offset_val)
             match q.limit_val {
                 nil => {},
                 n => rows = rows |> collections.take(n)
             }
             
-            // Apply column selection
+            # Apply column selection
             match q.select_cols {
                 nil => rows,
                 cols => rows |> collections.map(fn(row) => {
@@ -284,7 +284,7 @@ pub fn execute(db, q) => {
     }
 }
 
-// --- UPDATE ---
+# --- UPDATE ---
 
 pub fn update(db, table_name, predicate, updates) => {
     let table = collections.get(db.tables, table_name)
@@ -310,7 +310,7 @@ pub fn update(db, table_name, predicate, updates) => {
     }
 }
 
-// --- DELETE ---
+# --- DELETE ---
 
 pub fn delete_rows(db, table_name, predicate) => {
     let table = collections.get(db.tables, table_name)
@@ -329,7 +329,7 @@ pub fn delete_rows(db, table_name, predicate) => {
     }
 }
 
-// --- Indexing ---
+# --- Indexing ---
 
 pub fn create_index(db, table_name, column_name) => {
     let table = collections.get(db.tables, table_name)
@@ -374,7 +374,7 @@ pub fn index_lookup(db, table_name, column_name, value) => {
     }
 }
 
-// --- Aggregate Functions ---
+# --- Aggregate Functions ---
 
 pub fn count_agg() => fn(rows) => collections.length(rows)
 pub fn sum_agg(field) => fn(rows) => rows |> collections.reduce(0, fn(s, r) => s + collections.get(r, field, 0))
@@ -385,7 +385,7 @@ pub fn avg_agg(field) => fn(rows) => {
 pub fn min_agg(field) => fn(rows) => rows |> collections.map(fn(r) => collections.get(r, field)) |> collections.min()
 pub fn max_agg(field) => fn(rows) => rows |> collections.map(fn(r) => collections.get(r, field)) |> collections.max()
 
-// --- Database Stats ---
+# --- Database Stats ---
 
 pub fn db_stats(db) => {
     let table_stats = db.tables
@@ -402,15 +402,15 @@ pub fn db_stats(db) => {
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Arc Database Engine Demo ===\n")
     
-    // Create database
+    # Create database
     let mut db = create_db("myapp")
     
-    // Create tables
+    # Create tables
     db = db |> create_table("users", [
         int_col("id", { primary_key: true, auto_increment: true }),
         text_col("name", { nullable: false }),
@@ -429,7 +429,7 @@ fn main() => {
     
     print("Created tables: users, orders\n")
     
-    // Insert users
+    # Insert users
     let user_result = insert_many(db, "users", [
         { name: "Alice", email: "alice@example.com", age: 30, role: "admin" },
         { name: "Bob", email: "bob@example.com", age: 25, role: "user" },
@@ -440,7 +440,7 @@ fn main() => {
     db = user_result.db
     print("Inserted ${collections.length(user_result.inserted)} users")
     
-    // Insert orders
+    # Insert orders
     let order_result = insert_many(db, "orders", [
         { user_id: 1, product: "Laptop", amount: 999.99, status: "completed" },
         { user_id: 2, product: "Phone", amount: 499.99, status: "pending" },
@@ -453,7 +453,7 @@ fn main() => {
     db = order_result.db
     print("Inserted ${collections.length(order_result.inserted)} orders\n")
     
-    // Query: All users over 25, ordered by age
+    # Query: All users over 25, ordered by age
     print("--- Users over 25 (by age desc) ---")
     let users_over_25 = query("users")
         |> where_gt("age", 25)
@@ -462,7 +462,7 @@ fn main() => {
         |> execute(db)
     users_over_25 |> collections.each(fn(u) => print("  ${u.name} (${u.age}) - ${u.role}"))
     
-    // Query: Orders over $100
+    # Query: Orders over $100
     print("\n--- Orders over $100 ---")
     let big_orders = query("orders")
         |> where_gt("amount", 100)
@@ -470,7 +470,7 @@ fn main() => {
         |> execute(db)
     big_orders |> collections.each(fn(o) => print("  ${o.product}: $${o.amount} (${o.status})"))
     
-    // Query: Group orders by status with aggregates
+    # Query: Group orders by status with aggregates
     print("\n--- Orders by Status ---")
     let by_status = query("orders")
         |> group_by("status")
@@ -482,7 +482,7 @@ fn main() => {
         print("  ${g.status}: ${g.count} orders, total=$${g.total}, avg=$${g.avg_amount}")
     })
     
-    // Query: JOIN users and orders
+    # Query: JOIN users and orders
     print("\n--- User Orders (JOIN) ---")
     let user_orders = query("orders")
         |> join("users", "user_id", "id")
@@ -492,19 +492,19 @@ fn main() => {
         |> execute(db)
     user_orders |> collections.each(fn(uo) => print("  ${uo.name} bought ${uo.product} for $${uo.amount}"))
     
-    // Update
+    # Update
     print("\n--- Updating pending orders to processing ---")
     let update_result = update(db, "orders", fn(r) => r.status == "pending", { status: "processing" })
     db = update_result.db
     print("Updated ${update_result.ok} rows")
     
-    // Create index and lookup
+    # Create index and lookup
     db = db |> create_index("users", "role")
     let admins = index_lookup(db, "users", "role", "admin")
     print("\n--- Admin users (via index) ---")
     admins |> collections.each(fn(u) => print("  ${u.name} (${u.email})"))
     
-    // Database stats
+    # Database stats
     print("\n--- Database Stats ---")
     let stats = db_stats(db)
     print("Database: ${stats.name}")

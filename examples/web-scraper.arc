@@ -1,18 +1,18 @@
-// ============================================================================
-// Web Scraper in Arc
-// ============================================================================
-// A parallel web scraper that fetches pages, extracts structured data using
-// regex, transforms with pipelines, and outputs JSON. Demonstrates: async/await,
-// parallel fetch, regex, pipelines, closures, pattern matching, collections.
-// ============================================================================
+# ============================================================================
+# Web Scraper in Arc
+# ============================================================================
+# A parallel web scraper that fetches pages, extracts structured data using
+# regex, transforms with pipelines, and outputs JSON. Demonstrates: async/await,
+# parallel fetch, regex, pipelines, closures, pattern matching, collections.
+# ============================================================================
 
-import http
-import regex
-import json
-import collections
-import datetime
+use http
+use regex
+use json
+use collections
+use datetime
 
-// --- Configuration ---
+# --- Configuration ---
 
 pub fn scraper_config(base_url, options) => {
     let defaults = {
@@ -26,7 +26,7 @@ pub fn scraper_config(base_url, options) => {
     collections.merge(defaults, options, { base_url: base_url })
 }
 
-// --- URL Builder ---
+# --- URL Builder ---
 
 pub fn build_urls(base_url, pattern, range) => {
     range |> collections.map(fn(i) => {
@@ -36,7 +36,7 @@ pub fn build_urls(base_url, pattern, range) => {
     })
 }
 
-// --- HTTP Fetching ---
+# --- HTTP Fetching ---
 
 async fn fetch_page(url, config) => {
     let headers = collections.merge(config.headers, {
@@ -83,7 +83,7 @@ pub async fn fetch_all(urls, config) => {
     })
 }
 
-// --- Extraction Rules ---
+# --- Extraction Rules ---
 
 pub fn extractor(name, pattern, transform) => {
     { name: name, pattern: regex.compile(pattern), transform: transform }
@@ -97,7 +97,7 @@ pub fn extract(html, extractors) => {
     })
 }
 
-// --- Common Extractors ---
+# --- Common Extractors ---
 
 pub fn title_extractor() => extractor(
     "titles",
@@ -132,7 +132,7 @@ pub fn table_row_extractor() => extractor(
     }
 )
 
-// --- Text Processing Pipeline ---
+# --- Text Processing Pipeline ---
 
 fn strip_tags(html) => regex.replace_all(r"<[^>]+>", "", html)
 fn trim(s) => s |> regex.replace(r"^\s+|\s+$", "")
@@ -150,7 +150,7 @@ pub fn clean_text(html) => {
     |> trim()
 }
 
-// --- Data Pipeline ---
+# --- Data Pipeline ---
 
 pub fn pipeline(data, stages) => {
     stages |> collections.reduce(data, fn(d, stage) => stage(d))
@@ -185,7 +185,7 @@ pub fn unique_by(field) => fn(items) => {
 
 pub fn limit(n) => fn(items) => items |> collections.take(n)
 
-// --- Result Formatting ---
+# --- Result Formatting ---
 
 pub fn to_json_output(data) => json.encode(data, indent: 2)
 
@@ -199,7 +199,7 @@ pub fn to_csv(data, fields) => {
     [header] |> collections.concat(rows) |> collections.join("\n")
 }
 
-// --- Scraping Session ---
+# --- Scraping Session ---
 
 pub async fn scrape(config, urls, extractors, transforms) => {
     let start = datetime.now()
@@ -234,7 +234,7 @@ pub async fn scrape(config, urls, extractors, transforms) => {
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 async fn main() => {
     print("=== Arc Web Scraper Demo ===\n")

@@ -13,30 +13,52 @@ pub fn cli(name) => {
   _action: nil
 }
 
-pub fn version(c, v) => {..c, version: v}
-pub fn description(c, d) => {..c, description: d}
+pub fn version(c, v) => {
+  name: c.name, version: v, description: c.description,
+  _flags: c._flags, _args: c._args, _commands: c._commands, _action: c._action
+}
+
+pub fn description(c, d) => {
+  name: c.name, version: c.version, description: d,
+  _flags: c._flags, _args: c._args, _commands: c._commands, _action: c._action
+}
 
 pub fn flag(c, long, short, desc, default_val) {
-  let f = {long: long, short: short, desc: desc, default: default_val or false, type: "bool"}
-  {..c, _flags: c._flags ++ [f]}
+  let f = {long: long, short: short, desc: desc, default_val: if default_val { default_val } el { false }, flag_type: "bool"}
+  {
+    name: c.name, version: c.version, description: c.description,
+    _flags: c._flags ++ [f], _args: c._args, _commands: c._commands, _action: c._action
+  }
 }
 
 pub fn option(c, long, short, desc, default_val) {
-  let f = {long: long, short: short, desc: desc, default: default_val or nil, type: "value"}
-  {..c, _flags: c._flags ++ [f]}
+  let f = {long: long, short: short, desc: desc, default_val: if default_val { default_val } el { nil }, flag_type: "value"}
+  {
+    name: c.name, version: c.version, description: c.description,
+    _flags: c._flags ++ [f], _args: c._args, _commands: c._commands, _action: c._action
+  }
 }
 
 pub fn arg(c, name, desc, required) {
-  let a = {name: name, desc: desc, required: required or false}
-  {..c, _args: c._args ++ [a]}
+  let a = {name: name, desc: desc, required: if required { required } el { false }}
+  {
+    name: c.name, version: c.version, description: c.description,
+    _flags: c._flags, _args: c._args ++ [a], _commands: c._commands, _action: c._action
+  }
 }
 
 pub fn command(c, name, desc, handler) {
   let cmd = {name: name, desc: desc, handler: handler, _flags: [], _args: []}
-  {..c, _commands: c._commands ++ [cmd]}
+  {
+    name: c.name, version: c.version, description: c.description,
+    _flags: c._flags, _args: c._args, _commands: c._commands ++ [cmd], _action: c._action
+  }
 }
 
-pub fn action(c, handler) => {..c, _action: handler}
+pub fn action(c, handler) => {
+  name: c.name, version: c.version, description: c.description,
+  _flags: c._flags, _args: c._args, _commands: c._commands, _action: handler
+}
 
 # --- Parsing ---
 
@@ -48,46 +70,39 @@ pub fn parse(c, argv) {
 
   # Set defaults
   for f in c._flags {
-    flags[f.long] = f.default
+    flags[f.long] = f.default_val
   }
 
   do {
-    if i >= len(argv) { break }
     let token = argv[i]
 
-    match token {
-      t if starts(t, "--") => {
-        let name = slice(t, 2, len(t))
-        let flag_def = c._flags |> find(f => f.long == name)
-        match flag_def {
-          {type: "bool"} => flags[name] = true,
-          {type: "value"} => {
-            i = i + 1
-            flags[name] = argv[i]
-          },
-          nil => flags[name] = true
-        }
-      },
-      t if starts(t, "-") and len(t) == 2 => {
-        let short = slice(t, 1, 2)
-        let flag_def = c._flags |> find(f => f.short == short)
-        match flag_def {
-          {type: "bool", long} => flags[long] = true,
-          {type: "value", long} => {
-            i = i + 1
-            flags[long] = argv[i]
-          },
-          nil => flags[short] = true
-        }
-      },
-      t => {
-        # Check if it's a subcommand
-        let sub = c._commands |> find(cmd => cmd.name == t)
-        if sub != nil {
-          cmd = sub
-        } el {
-          args = args ++ [t]
-        }
+    if starts(token, "--") {
+      let name = slice(token, 2, len(token))
+      let flag_def = c._flags |> find(f => f.long == name)
+      if flag_def != nil and flag_def.flag_type == "value" {
+        i = i + 1
+        flags[name] = argv[i]
+      } el {
+        flags[name] = true
+      }
+    } el if starts(token, "-") and len(token) == 2 {
+      let short = slice(token, 1, 2)
+      let flag_def = c._flags |> find(f => f.short == short)
+      if flag_def != nil and flag_def.flag_type == "value" {
+        i = i + 1
+        flags[flag_def.long] = argv[i]
+      } el if flag_def != nil {
+        flags[flag_def.long] = true
+      } el {
+        flags[short] = true
+      }
+    } el {
+      # Check if it's a subcommand
+      let sub = c._commands |> find(cmd => cmd.name == token)
+      if sub != nil {
+        cmd = sub
+      } el {
+        args = args ++ [token]
       }
     }
 
@@ -109,14 +124,7 @@ pub fn validate(c, parsed) {
     errors = errors ++ ["Missing required arguments: {join(missing, ", ")}"]
   }
 
-  # Check required options
-  for f in c._flags {
-    if f.type == "value" and f.default == nil and parsed.flags[f.long] == nil {
-      # Optional — only error if explicitly marked required
-    }
-  }
-
-  if len(errors) > 0 { Err(errors) } el { Ok(parsed) }
+  if len(errors) > 0 { {ok: false, errors: errors} } el { {ok: true, value: parsed} }
 }
 
 # --- Help Text Generation ---
@@ -138,7 +146,7 @@ pub fn help(c) {
     lines = lines ++ ["OPTIONS:"]
     for f in c._flags {
       let short_str = if f.short != nil { "-{f.short}, " } el { "    " }
-      let default_str = if f.default != nil and f.default != false { " (default: {f.default})" } el { "" }
+      let default_str = if f.default_val != nil and f.default_val != false { " (default: {f.default_val})" } el { "" }
       lines = lines ++ ["  {short_str}--{f.long}    {f.desc}{default_str}"]
     }
     lines = lines ++ [""]
@@ -165,22 +173,21 @@ pub fn run(c, argv) {
     print(help(c))
     nil
   } el {
-    match validate(c, parsed) {
-      Ok(p) => {
-        if p.command != nil and p.command.handler != nil {
-          p.command.handler(p)
-        } el if c._action != nil {
-          c._action(p)
-        } el {
-          p
-        }
-      },
-      Err(errors) => {
-        for e in errors { print("Error: {e}") }
-        print("")
-        print(help(c))
-        Err(errors)
+    let result = validate(c, parsed)
+    if result.ok {
+      let p = result.value
+      if p.command != nil and p.command.handler != nil {
+        p.command.handler(p)
+      } el if c._action != nil {
+        c._action(p)
+      } el {
+        p
       }
+    } el {
+      for e in result.errors { print("Error: {e}") }
+      print("")
+      print(help(c))
+      {ok: false, errors: result.errors}
     }
   }
 }

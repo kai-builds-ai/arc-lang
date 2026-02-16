@@ -1,17 +1,17 @@
-// ============================================================================
-// Expression Calculator in Arc
-// ============================================================================
-// A full expression parser and evaluator with tokenizer, recursive descent
-// parser, AST construction, and pattern-matching evaluation. Supports
-// arithmetic, exponentiation, parentheses, variables, and functions.
-// Demonstrates: regex, pattern matching, closures, pipelines, recursion, mut.
-// ============================================================================
+# ============================================================================
+# Expression Calculator in Arc
+# ============================================================================
+# A full expression parser and evaluator with tokenizer, recursive descent
+# parser, AST construction, and pattern-matching evaluation. Supports
+# arithmetic, exponentiation, parentheses, variables, and functions.
+# Demonstrates: regex, pattern matching, closures, pipelines, recursion, mut.
+# ============================================================================
 
-import regex
-import collections
-import math
+use regex
+use collections
+use math
 
-// --- Token Types ---
+# --- Token Types ---
 
 let TOKEN_NUMBER   = "NUMBER"
 let TOKEN_IDENT    = "IDENT"
@@ -28,10 +28,10 @@ let TOKEN_EOF      = "EOF"
 
 fn token(type, value) => { type: type, value: value }
 
-// --- Tokenizer ---
+# --- Tokenizer ---
 
 let TOKEN_PATTERNS = [
-    { pattern: regex.compile(r"^\s+"), type: nil },                    // whitespace (skip)
+    { pattern: regex.compile(r"^\s+"), type: nil }, # whitespace (skip)
     { pattern: regex.compile(r"^[0-9]+\.?[0-9]*"), type: TOKEN_NUMBER },
     { pattern: regex.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*"), type: TOKEN_IDENT },
     { pattern: regex.compile(r"^\+"), type: TOKEN_PLUS },
@@ -66,7 +66,7 @@ pub fn tokenize(input) => {
                                     matched = true
                                     let len = collections.length(m[0])
                                     match tp.type {
-                                        nil => {},  // skip whitespace
+                                        nil => {}, # skip whitespace
                                         _ => tokens = tokens |> collections.append(token(tp.type, m[0]))
                                     }
                                     remaining = remaining |> collections.slice(len)
@@ -90,7 +90,7 @@ pub fn tokenize(input) => {
     tokens |> collections.append(token(TOKEN_EOF, ""))
 }
 
-// --- AST Node Types ---
+# --- AST Node Types ---
 
 fn num_node(value) => { type: "number", value: value }
 fn var_node(name) => { type: "variable", name: name }
@@ -99,7 +99,7 @@ fn unary_node(op, operand) => { type: "unary", op: op, operand: operand }
 fn call_node(name, args) => { type: "call", name: name, args: args }
 fn assign_node(name, expr) => { type: "assign", name: name, expr: expr }
 
-// --- Parser (Recursive Descent) ---
+# --- Parser (Recursive Descent) ---
 
 pub fn parser(tokens) => {
     let mut pos = 0
@@ -118,14 +118,14 @@ pub fn parser(tokens) => {
         }
     }
     
-    // statement = IDENT '=' expression | expression
+    # statement = IDENT '=' expression | expression
     fn parse_statement() => {
         match peek().type == TOKEN_IDENT {
             true => {
                 match tokens[pos + 1].type == TOKEN_EQUALS {
                     true => {
                         let name = advance().value
-                        advance()  // consume '='
+                        advance() # consume '='
                         let expr = parse_expression()
                         assign_node(name, expr)
                     },
@@ -136,7 +136,7 @@ pub fn parser(tokens) => {
         }
     }
     
-    // expression = term (('+' | '-') term)*
+    # expression = term (('+' | '-') term)*
     fn parse_expression() => {
         let mut left = parse_term()
         loop {
@@ -155,7 +155,7 @@ pub fn parser(tokens) => {
         left
     }
     
-    // term = power (('*' | '/') power)*
+    # term = power (('*' | '/') power)*
     fn parse_term() => {
         let mut left = parse_power()
         loop {
@@ -174,7 +174,7 @@ pub fn parser(tokens) => {
         left
     }
     
-    // power = unary ('^' power)?   (right-associative)
+    # power = unary ('^' power)?   (right-associative)
     fn parse_power() => {
         let base = parse_unary()
         match peek().type {
@@ -186,7 +186,7 @@ pub fn parser(tokens) => {
         }
     }
     
-    // unary = ('-' | '+') unary | primary
+    # unary = ('-' | '+') unary | primary
     fn parse_unary() => {
         match peek().type {
             TOKEN_MINUS => {
@@ -201,7 +201,7 @@ pub fn parser(tokens) => {
         }
     }
     
-    // primary = NUMBER | IDENT '(' args ')' | IDENT | '(' expression ')'
+    # primary = NUMBER | IDENT '(' args ')' | IDENT | '(' expression ')'
     fn parse_primary() => {
         match peek().type {
             TOKEN_NUMBER => {
@@ -212,7 +212,7 @@ pub fn parser(tokens) => {
                 let t = advance()
                 match peek().type {
                     TOKEN_LPAREN => {
-                        advance()  // consume '('
+                        advance() # consume '('
                         let args = parse_args()
                         expect(TOKEN_RPAREN)
                         call_node(t.value, args)
@@ -254,14 +254,14 @@ pub fn parser(tokens) => {
     }
     
     fn parse_float(s) => {
-        // Convert string to number
+        # Convert string to number
         s |> to_number()
     }
     
     parse_statement()
 }
 
-// --- Evaluator ---
+# --- Evaluator ---
 
 let BUILTIN_FUNCTIONS = {
     "sin": fn(args) => math.sin(args[0]),
@@ -360,7 +360,7 @@ pub fn evaluate(ast, env) => {
     }
 }
 
-// --- AST Pretty Printer ---
+# --- AST Pretty Printer ---
 
 pub fn ast_to_string(ast) => {
     match ast {
@@ -377,7 +377,7 @@ pub fn ast_to_string(ast) => {
     }
 }
 
-// --- REPL ---
+# --- REPL ---
 
 pub fn calc(input, env) => {
     let tokens = tokenize(input)
@@ -397,7 +397,7 @@ pub fn calc(input, env) => {
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Arc Calculator Demo ===\n")

@@ -34,28 +34,31 @@ fn set_cached(key, value) {
 # --- Retry Logic ---
 
 pub fn with_retry(f, opts) {
-  let max = opts.retries or 3
-  let delay = opts.delay_ms or 1000
-  let backoff = opts.backoff or 2
+  let max = if opts.retries { opts.retries } el { 3 }
+  let delay = if opts.delay_ms { opts.delay_ms } el { 1000 }
+  let backoff = if opts.backoff { opts.backoff } el { 2 }
 
   let mut attempt = 0
   let mut last_err = nil
+  let mut result = nil
+  let mut done = false
 
   do {
     attempt = attempt + 1
-    match f() {
-      Ok(result) => Ok(result),
-      Err(e) => {
-        last_err = e
-        if attempt < max {
-          sleep(delay * (backoff ** (attempt - 1)))
-        }
-        Err(e)
+    let r = f()
+    if r.ok {
+      result = r
+      done = true
+    } el {
+      last_err = r.error
+      if attempt < max {
+        sleep(delay * (backoff ** (attempt - 1)))
       }
     }
-  } until attempt >= max
+  } until attempt >= max or done
 
-  Err("Failed after {max} attempts: {last_err}")
+  if done { result }
+  el { {ok: false, error: "Failed after {max} attempts: {last_err}"} }
 }
 
 # --- Headers Builder ---
@@ -92,15 +95,35 @@ pub fn request(method, url) => {
   _cache_ttl: 0
 }
 
-pub fn body(req, data) => {..req, _body: data}
-pub fn timeout(req, ms) => {..req, _timeout_ms: ms}
-pub fn retries(req, n) => {..req, _retries: n}
-pub fn cache(req, ttl_ms) => {..req, _cache_ttl: ttl_ms}
+pub fn body(req, data) => {
+  method: req.method, url: req.url, _headers: req._headers,
+  _body: data, _timeout_ms: req._timeout_ms, _retries: req._retries, _cache_ttl: req._cache_ttl
+}
+
+pub fn timeout(req, ms) => {
+  method: req.method, url: req.url, _headers: req._headers,
+  _body: req._body, _timeout_ms: ms, _retries: req._retries, _cache_ttl: req._cache_ttl
+}
+
+pub fn retries(req, n) => {
+  method: req.method, url: req.url, _headers: req._headers,
+  _body: req._body, _timeout_ms: req._timeout_ms, _retries: n, _cache_ttl: req._cache_ttl
+}
+
+pub fn cache(req, ttl_ms) => {
+  method: req.method, url: req.url, _headers: req._headers,
+  _body: req._body, _timeout_ms: req._timeout_ms, _retries: req._retries, _cache_ttl: ttl_ms
+}
+
 pub fn header(req, key, value) {
   let h = req._headers
   h[key] = value
-  {..req, _headers: h}
+  {
+    method: req.method, url: req.url, _headers: h,
+    _body: req._body, _timeout_ms: req._timeout_ms, _retries: req._retries, _cache_ttl: req._cache_ttl
+  }
 }
+
 pub fn auth(req, token) => req |> header("Authorization", "Bearer {token}")
 
 pub fn send(req) {
@@ -119,13 +142,13 @@ pub fn send(req) {
 }
 
 fn execute(req) {
-  let do_request = fn {
+  let do_request = () => {
     match req.method {
-      "GET" => @GET req.url,
-      "POST" => @POST req.url req._body,
-      "PUT" => @PUT req.url req._body,
-      "DELETE" => @DELETE req.url,
-      _ => Err("Unknown method: {req.method}")
+      "GET" => @GET req.url
+      "POST" => @POST(req.url, req._body)
+      "PUT" => @PUT(req.url, req._body)
+      "DELETE" => @DELETE req.url
+      _ => {ok: false, error: "Unknown method: {req.method}"}
     }
   }
 
@@ -158,12 +181,12 @@ pub fn fetch_all(urls) {
 
 pub fn fetch_map(url_map) {
   # Takes {key: url} map, returns {key: response}
-  let keys = url_map |> keys
-  let urls = keys |> map(k => url_map[k])
+  let ks = keys(url_map)
+  let urls = ks |> map(k => url_map[k])
   let responses = fetch_all(urls)
   let mut result = {}
-  for i in 0..len(keys) {
-    result[keys[i]] = responses[i]
+  for i in 0..len(ks) {
+    result[ks[i]] = responses[i]
   }
   result
 }
@@ -171,10 +194,8 @@ pub fn fetch_map(url_map) {
 # --- URL Helpers ---
 
 pub fn query_string(params) {
-  params
-    |> entries
-    |> map(({k, v}) => "{k}={v}")
-    |> join("&")
+  let ks = keys(params)
+  ks |> map(k => "{k}={params[k]}") |> join("&")
 }
 
 pub fn with_params(url, params) {

@@ -1,17 +1,17 @@
-// ============================================================================
-// Searching & Graph Algorithms in Arc
-// ============================================================================
-// Search algorithms: linear, binary, interpolation, jump, exponential.
-// Graph algorithms: BFS, DFS, Dijkstra's shortest path.
-// Demonstrates: recursion, pattern matching, pipelines, maps, sets, closures,
-// list comprehensions, mutation, destructuring, string interpolation
-// ============================================================================
+# ============================================================================
+# Searching & Graph Algorithms in Arc
+# ============================================================================
+# Search algorithms: linear, binary, interpolation, jump, exponential.
+# Graph algorithms: BFS, DFS, Dijkstra's shortest path.
+# Demonstrates: recursion, pattern matching, pipelines, maps, sets, closures,
+# list comprehensions, mutation, destructuring, string interpolation
+# ============================================================================
 
-import collections
-import math
+use collections
+use math
 
-// --- Linear Search ---
-// Simple scan through the list. O(n).
+# --- Linear Search ---
+# Simple scan through the list. O(n).
 
 pub fn linear_search(lst, target) {
     for i in 0..len(lst) {
@@ -20,7 +20,7 @@ pub fn linear_search(lst, target) {
     {found: false, index: -1}
 }
 
-// Linear search with predicate
+# Linear search with predicate
 pub fn find_first(lst, pred) {
     for i in 0..len(lst) {
         if pred(lst[i]) { ret {found: true, index: i, value: lst[i]} }
@@ -28,8 +28,8 @@ pub fn find_first(lst, pred) {
     {found: false, index: -1, value: nil}
 }
 
-// --- Binary Search ---
-// Requires sorted input. O(log n).
+# --- Binary Search ---
+# Requires sorted input. O(log n).
 
 pub fn binary_search(lst, target) {
     let mut lo = 0
@@ -45,7 +45,7 @@ pub fn binary_search(lst, target) {
     }
 }
 
-// Recursive binary search
+# Recursive binary search
 pub fn binary_search_rec(lst, target, lo, hi) => match true {
     _ if lo > hi => {found: false, index: -1},
     _ => {
@@ -58,7 +58,7 @@ pub fn binary_search_rec(lst, target, lo, hi) => match true {
     }
 }
 
-// Find lower bound (first element >= target)
+# Find lower bound (first element >= target)
 pub fn lower_bound(lst, target) {
     let mut lo = 0
     let mut hi = len(lst)
@@ -69,8 +69,8 @@ pub fn lower_bound(lst, target) {
     }
 }
 
-// --- Interpolation Search ---
-// Improved binary search for uniformly distributed data. O(log log n) avg.
+# --- Interpolation Search ---
+# Improved binary search for uniformly distributed data. O(log log n) avg.
 
 pub fn interpolation_search(lst, target) {
     let mut lo = 0
@@ -81,7 +81,7 @@ pub fn interpolation_search(lst, target) {
             if lst[lo] == target { ret {found: true, index: lo} }
             el { ret {found: false, index: -1} }
         }
-        // Estimate position using linear interpolation
+        # Estimate position using linear interpolation
         let pos = lo + ((target - lst[lo]) * (hi - lo)) / (lst[hi] - lst[lo])
         if pos < lo or pos > hi { ret {found: false, index: -1} }
         match lst[pos] {
@@ -92,15 +92,15 @@ pub fn interpolation_search(lst, target) {
     }
 }
 
-// --- Jump Search ---
-// Block-based search on sorted arrays. O(√n).
+# --- Jump Search ---
+# Block-based search on sorted arrays. O(√n).
 
 pub fn jump_search(lst, target) {
     let n = len(lst)
     if n == 0 { ret {found: false, index: -1} }
     let step = math.sqrt(n) |> math.floor() |> max(1)
 
-    // Find the block where element may be present
+    # Find the block where element may be present
     let mut prev = 0
     let mut curr = step
     loop {
@@ -109,7 +109,7 @@ pub fn jump_search(lst, target) {
         curr = curr + step
     }
 
-    // Linear search within the block
+    # Linear search within the block
     let mut i = prev
     let end = min(curr + 1, n)
     loop {
@@ -120,28 +120,28 @@ pub fn jump_search(lst, target) {
     }
 }
 
-// --- Exponential Search ---
-// Find range then binary search. Good for unbounded/infinite lists. O(log n).
+# --- Exponential Search ---
+# Find range then binary search. Good for unbounded/infinite lists. O(log n).
 
 pub fn exponential_search(lst, target) {
     let n = len(lst)
     if n == 0 { ret {found: false, index: -1} }
     if lst[0] == target { ret {found: true, index: 0} }
 
-    // Find range by doubling
+    # Find range by doubling
     let mut bound = 1
     loop {
         if bound >= n or lst[bound] > target { break }
         bound = bound * 2
     }
 
-    // Binary search within [bound/2, min(bound, n-1)]
+    # Binary search within [bound/2, min(bound, n-1)]
     let lo = bound / 2
     let hi = min(bound, n - 1)
     binary_search_rec(lst, target, lo, hi)
 }
 
-// --- Graph Data Structure (Adjacency List) ---
+# --- Graph Data Structure (Adjacency List) ---
 
 pub fn create_graph(directed) => {
     adj: {},
@@ -172,7 +172,7 @@ pub fn edge_weight(graph, from, to) => match graph.weights["{from}->{to}"] {
     w => w
 }
 
-// --- Breadth-First Search ---
+# --- Breadth-First Search ---
 
 pub fn bfs(graph, start) {
     let mut visited = {}
@@ -196,7 +196,7 @@ pub fn bfs(graph, start) {
     order
 }
 
-// BFS shortest path (unweighted)
+# BFS shortest path (unweighted)
 pub fn bfs_shortest_path(graph, start, goal) {
     let mut visited = {}
     let mut parent = {}
@@ -210,7 +210,7 @@ pub fn bfs_shortest_path(graph, start, goal) {
         queue = queue |> drop(1)
 
         if node == goal {
-            // Reconstruct path
+            # Reconstruct path
             let mut path = []
             let mut curr = goal
             loop {
@@ -232,7 +232,7 @@ pub fn bfs_shortest_path(graph, start, goal) {
     nil
 }
 
-// --- Depth-First Search ---
+# --- Depth-First Search ---
 
 pub fn dfs(graph, start) {
     let mut visited = {}
@@ -250,7 +250,7 @@ fn dfs_visit(graph, node, visited, order) {
     }
 }
 
-// Iterative DFS using explicit stack
+# Iterative DFS using explicit stack
 pub fn dfs_iterative(graph, start) {
     let mut visited = {}
     let mut stack = [start]
@@ -265,7 +265,7 @@ pub fn dfs_iterative(graph, start) {
         visited[node] = true
         order = order ++ [node]
 
-        // Push neighbors in reverse for consistent ordering
+        # Push neighbors in reverse for consistent ordering
         let nbrs = neighbors(graph, node) |> reverse()
         for neighbor in nbrs {
             if visited[neighbor] != true {
@@ -276,7 +276,7 @@ pub fn dfs_iterative(graph, start) {
     order
 }
 
-// DFS path finding
+# DFS path finding
 pub fn dfs_path(graph, start, goal) {
     let mut visited = {}
     dfs_path_helper(graph, start, goal, visited, [])
@@ -296,14 +296,14 @@ fn dfs_path_helper(graph, node, goal, visited, path) {
     nil
 }
 
-// --- Dijkstra's Shortest Path ---
+# --- Dijkstra's Shortest Path ---
 
 pub fn dijkstra(graph, start) {
     let mut dist = {}
     let mut prev = {}
     let mut visited = {}
 
-    // Initialize all nodes with infinity distance
+    # Initialize all nodes with infinity distance
     for node in keys(graph.adj) {
         dist[node] = 999999999
         prev[node] = nil
@@ -311,7 +311,7 @@ pub fn dijkstra(graph, start) {
     dist[start] = 0
 
     loop {
-        // Find unvisited node with minimum distance
+        # Find unvisited node with minimum distance
         let mut min_node = nil
         let mut min_dist = 999999999
         for node in keys(graph.adj) {
@@ -324,7 +324,7 @@ pub fn dijkstra(graph, start) {
         if min_node == nil { break }
         visited[min_node] = true
 
-        // Update distances for neighbors
+        # Update distances for neighbors
         for neighbor in neighbors(graph, min_node) {
             let w = edge_weight(graph, min_node, neighbor)
             let alt = dist[min_node] + w
@@ -338,7 +338,7 @@ pub fn dijkstra(graph, start) {
     {distances: dist, previous: prev}
 }
 
-// Reconstruct shortest path from Dijkstra result
+# Reconstruct shortest path from Dijkstra result
 pub fn shortest_path(dijkstra_result, target) {
     let mut path = []
     let mut curr = target
@@ -353,21 +353,21 @@ pub fn shortest_path(dijkstra_result, target) {
     }
 }
 
-// --- Utility ---
+# --- Utility ---
 
 fn min(a, b) => if a < b { a } el { b }
 fn max(a, b) => if a > b { a } el { b }
 fn reverse(lst) => lst |> reduce([], (acc, x) => [x] ++ acc)
 fn keys(m) => m |> collections.keys()
 
-// --- Test Suite ---
+# --- Test Suite ---
 
 pub fn run_tests() {
     print("=== Search Algorithm Tests ===\n")
 
     let sorted = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
 
-    // Test all search algorithms
+    # Test all search algorithms
     let searches = [
         {name: "Linear", fn: (lst, t) => linear_search(lst, t)},
         {name: "Binary", fn: (lst, t) => binary_search(lst, t)},
@@ -383,14 +383,14 @@ pub fn run_tests() {
         print("[{algo.name}] Search for 99: found={r2.found}")
     }
 
-    // Find with predicate
+    # Find with predicate
     let items = [{name: "a", val: 1}, {name: "b", val: 5}, {name: "c", val: 3}]
     let found = find_first(items, x => x.val > 4)
     print("\nFind first val > 4: {found.value.name} at index {found.index}")
 
     print("\n=== Graph Algorithm Tests ===\n")
 
-    // Build a graph
+    # Build a graph
     let mut g = create_graph(false)
     g = add_edge(g, "A", "B", 4)
     g = add_edge(g, "A", "C", 2)
@@ -416,7 +416,7 @@ pub fn run_tests() {
     let dpath = dfs_path(g, "A", "F")
     print("DFS path A->F: {dpath}")
 
-    // Dijkstra's on weighted graph
+    # Dijkstra's on weighted graph
     let mut wg = create_graph(true)
     wg = add_edge(wg, "S", "A", 7)
     wg = add_edge(wg, "S", "B", 2)

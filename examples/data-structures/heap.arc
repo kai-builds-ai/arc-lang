@@ -1,17 +1,17 @@
-// ============================================================================
-// Heap / Priority Queue in Arc
-// ============================================================================
-// Min-heap and max-heap implementations. Supports insert, extract, peek,
-// heapify, heap sort, and a priority queue abstraction.
-// Demonstrates: mutation, pattern matching, closures, pipelines, recursion,
-// higher-order functions, string interpolation, maps
-// ============================================================================
+# ============================================================================
+# Heap / Priority Queue in Arc
+# ============================================================================
+# Min-heap and max-heap implementations. Supports insert, extract, peek,
+# heapify, heap sort, and a priority queue abstraction.
+# Demonstrates: mutation, pattern matching, closures, pipelines, recursion,
+# higher-order functions, string interpolation, maps
+# ============================================================================
 
-import collections
+use collections
 
-// --- Heap Core ---
-// A heap is represented as: {data: [...], size: n, cmp: comparator_fn}
-// cmp(a, b) => true if a should be above b in the heap
+# --- Heap Core ---
+# A heap is represented as: {data: [...], size: n, cmp: comparator_fn}
+# cmp(a, b) => true if a should be above b in the heap
 
 pub fn min_heap() => {
     data: [],
@@ -31,7 +31,7 @@ pub fn custom_heap(cmp) => {
     cmp: cmp
 }
 
-// --- Internal helpers ---
+# --- Internal helpers ---
 
 fn parent_idx(i) => (i - 1) / 2
 fn left_idx(i) => 2 * i + 1
@@ -77,7 +77,7 @@ fn sift_down(heap, idx) {
     }
 }
 
-// --- Public Operations ---
+# --- Public Operations ---
 
 pub fn insert(heap, value) {
     heap.data = heap.data ++ [value]
@@ -109,13 +109,13 @@ pub fn is_empty(heap) => heap.size == 0
 
 pub fn size(heap) => heap.size
 
-// --- Build Heap (Heapify) ---
-// Build a heap from an unsorted array in O(n) time.
+# --- Build Heap (Heapify) ---
+# Build a heap from an unsorted array in O(n) time.
 
 pub fn heapify(arr, cmp) {
     let heap = {data: arr |> collections.to_list(), size: len(arr), cmp: cmp}
 
-    // Sift down from last non-leaf to root
+    # Sift down from last non-leaf to root
     let mut i = heap.size / 2 - 1
     loop {
         if i < 0 { break }
@@ -128,7 +128,7 @@ pub fn heapify(arr, cmp) {
 pub fn heapify_min(arr) => heapify(arr, (a, b) => a < b)
 pub fn heapify_max(arr) => heapify(arr, (a, b) => a > b)
 
-// --- Heap Sort ---
+# --- Heap Sort ---
 
 pub fn heap_sort_asc(arr) {
     let mut h = heapify_min(arr)
@@ -154,13 +154,13 @@ pub fn heap_sort_desc(arr) {
     result
 }
 
-// --- Merge k sorted lists ---
+# --- Merge k sorted lists ---
 
 pub fn merge_k_sorted(lists) {
-    // Use a min-heap of {value, list_idx, elem_idx}
+    # Use a min-heap of {value, list_idx, elem_idx}
     let mut h = custom_heap((a, b) => a.value < b.value)
 
-    // Initialize with first element of each list
+    # Initialize with first element of each list
     for i in 0..len(lists) {
         if len(lists[i]) > 0 {
             h = insert(h, {value: lists[i][0], list_idx: i, elem_idx: 0})
@@ -175,7 +175,7 @@ pub fn merge_k_sorted(lists) {
         h = r.heap
         result = result ++ [item.value]
 
-        // Insert next element from the same list
+        # Insert next element from the same list
         let next_idx = item.elem_idx + 1
         if next_idx < len(lists[item.list_idx]) {
             h = insert(h, {
@@ -188,8 +188,8 @@ pub fn merge_k_sorted(lists) {
     result
 }
 
-// --- Priority Queue ---
-// Wraps a heap with named priorities.
+# --- Priority Queue ---
+# Wraps a heap with named priorities.
 
 pub fn priority_queue() => {
     heap: custom_heap((a, b) => a.priority < b.priority),
@@ -221,7 +221,7 @@ pub fn pq_is_empty(pq) => pq.item_count == 0
 
 pub fn pq_size(pq) => pq.item_count
 
-// --- Top-K elements ---
+# --- Top-K elements ---
 
 pub fn top_k(arr, k) {
     let mut h = min_heap()
@@ -232,7 +232,7 @@ pub fn top_k(arr, k) {
             h = r.heap
         }
     }
-    // Extract all from heap
+    # Extract all from heap
     let mut result = []
     loop {
         if is_empty(h) { break }
@@ -243,7 +243,7 @@ pub fn top_k(arr, k) {
     result
 }
 
-// Kth smallest element
+# Kth smallest element
 pub fn kth_smallest(arr, k) {
     let mut h = max_heap()
     for x in arr {
@@ -256,19 +256,19 @@ pub fn kth_smallest(arr, k) {
     peek(h)
 }
 
-// --- To String ---
+# --- To String ---
 
 pub fn to_string(heap) {
     let items = heap.data |> take(heap.size)
     "Heap(size={heap.size}, data={items})"
 }
 
-// --- Test Suite ---
+# --- Test Suite ---
 
 pub fn run_tests() {
     print("=== Heap / Priority Queue Tests ===\n")
 
-    // Min-heap
+    # Min-heap
     print("--- Min Heap ---")
     let mut mh = min_heap()
     for x in [5, 3, 8, 1, 4, 9, 2, 7, 6] {
@@ -286,7 +286,7 @@ pub fn run_tests() {
     }
     print("Extracted in order: {sorted}")
 
-    // Max-heap
+    # Max-heap
     print("\n--- Max Heap ---")
     let mut xh = max_heap()
     for x in [5, 3, 8, 1, 4, 9, 2] {
@@ -298,20 +298,20 @@ pub fn run_tests() {
     let r2 = extract(r1.heap)
     print("Extracted: {r2.value}")
 
-    // Heapify
+    # Heapify
     print("\n--- Heapify ---")
     let data = [9, 4, 7, 1, 8, 2, 3, 6, 5]
     let h = heapify_min(data)
     print("Heapified: {to_string(h)}")
     print("Min: {peek(h)}")
 
-    // Heap Sort
+    # Heap Sort
     print("\n--- Heap Sort ---")
     let unsorted = [38, 27, 43, 3, 9, 82, 10]
     print("Ascending:  {heap_sort_asc(unsorted)}")
     print("Descending: {heap_sort_desc(unsorted)}")
 
-    // Priority Queue
+    # Priority Queue
     print("\n--- Priority Queue ---")
     let mut pq = priority_queue()
     pq = pq_enqueue(pq, "low priority task", 10)
@@ -330,7 +330,7 @@ pub fn run_tests() {
         print("  [{r.priority}] {r.item}")
     }
 
-    // Merge k sorted lists
+    # Merge k sorted lists
     print("\n--- Merge K Sorted ---")
     let lists = [
         [1, 4, 7, 10],
@@ -341,7 +341,7 @@ pub fn run_tests() {
     let merged = merge_k_sorted(lists)
     print("Merged: {merged}")
 
-    // Top-K and Kth smallest
+    # Top-K and Kth smallest
     print("\n--- Top-K / Kth Smallest ---")
     let arr = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]
     print("Top 3: {top_k(arr, 3)}")

@@ -1,18 +1,18 @@
-// ============================================================================
-// Configuration File Parser in Arc
-// ============================================================================
-// Parses TOML/INI-style configuration files. Supports sections, key-value
-// pairs, nested values, arrays, type coercion, defaults, validation, and
-// config merging.
-// Demonstrates: regex, pattern matching, pipelines, closures, maps, lists,
-// string interpolation, mutation, recursion, higher-order functions
-// ============================================================================
+# ============================================================================
+# Configuration File Parser in Arc
+# ============================================================================
+# Parses TOML/INI-style configuration files. Supports sections, key-value
+# pairs, nested values, arrays, type coercion, defaults, validation, and
+# config merging.
+# Demonstrates: regex, pattern matching, pipelines, closures, maps, lists,
+# string interpolation, mutation, recursion, higher-order functions
+# ============================================================================
 
-import regex
-import json
-import collections
+use regex
+use json
+use collections
 
-// --- Patterns ---
+# --- Patterns ---
 
 let SECTION_RE = regex.compile("^\\[([^\\]]+)\\]\\s*$")
 let KV_RE = regex.compile("^([\\w.]+)\\s*=\\s*(.+)\\s*$")
@@ -25,39 +25,39 @@ let FLOAT_RE = regex.compile("^-?\\d+\\.\\d+$")
 let BOOL_TRUE_RE = regex.compile("^(true|yes|on|1)$")
 let BOOL_FALSE_RE = regex.compile("^(false|no|off|0)$")
 
-// --- Type Coercion ---
+# --- Type Coercion ---
 
 pub fn coerce_value(raw) {
     let trimmed = raw |> trim()
 
-    // Quoted string
+    # Quoted string
     let quoted = regex.match(QUOTED_RE, trimmed)
     if quoted != nil { ret {type: "string", value: quoted[1]} }
 
-    // Boolean
+    # Boolean
     if regex.test(BOOL_TRUE_RE, trimmed) { ret {type: "bool", value: true} }
     if regex.test(BOOL_FALSE_RE, trimmed) { ret {type: "bool", value: false} }
 
-    // Integer
+    # Integer
     if regex.test(INT_RE, trimmed) { ret {type: "int", value: parse_int(trimmed)} }
 
-    // Float
+    # Float
     if regex.test(FLOAT_RE, trimmed) { ret {type: "float", value: parse_float(trimmed)} }
 
-    // Array
+    # Array
     let arr = regex.match(ARRAY_RE, trimmed)
     if arr != nil {
         let items = arr[1] |> split(",") |> map(s => coerce_value(s).value)
         ret {type: "array", value: items}
     }
 
-    // Default: string
+    # Default: string
     {type: "string", value: trimmed}
 }
 
-fn trim(s) => s  // simplified — assume trimmed input
+fn trim(s) => s # simplified — assume trimmed input
 fn split(s, sep) {
-    // Simple split implementation
+    # Simple split implementation
     let mut parts = []
     let mut current = ""
     for ch in s {
@@ -95,9 +95,9 @@ fn parse_int(s) {
     if negative { -result } el { result }
 }
 
-fn parse_float(s) => parse_int(s)  // simplified
+fn parse_float(s) => parse_int(s) # simplified
 
-// --- Parser ---
+# --- Parser ---
 
 pub fn parse(text) {
     let lines = text |> split_lines()
@@ -109,12 +109,12 @@ pub fn parse(text) {
     for line in lines {
         line_num = line_num + 1
 
-        // Skip empty lines and comments
+        # Skip empty lines and comments
         if regex.test(EMPTY_RE, line) or regex.test(COMMENT_RE, line) {
             continue
         }
 
-        // Section header
+        # Section header
         let section = regex.match(SECTION_RE, line)
         if section != nil {
             current_section = section[1]
@@ -124,14 +124,14 @@ pub fn parse(text) {
             continue
         }
 
-        // Key-value pair
+        # Key-value pair
         let kv = regex.match(KV_RE, line)
         if kv != nil {
             let key = kv[1]
             let raw_value = kv[2]
             let coerced = coerce_value(raw_value)
 
-            // Handle nested keys (e.g., "server.host")
+            # Handle nested keys (e.g., "server.host")
             if key |> contains(".") {
                 let parts = key |> split(".")
                 set_nested(config, current_section, parts, coerced.value)
@@ -170,7 +170,7 @@ fn set_nested(config, section, parts, value) {
     current[parts[len(parts) - 1]] = value
 }
 
-// --- Config Access ---
+# --- Config Access ---
 
 pub fn get(config, section, key) {
     match config[section] {
@@ -203,7 +203,7 @@ pub fn keys_in(config, section) => match config[section] {
     s => s |> collections.keys()
 }
 
-// --- Validation ---
+# --- Validation ---
 
 pub fn validate(config, schema) {
     let mut errors = []
@@ -211,7 +211,7 @@ pub fn validate(config, schema) {
     for rule in schema {
         let value = get(config, rule.section, rule.key)
 
-        // Required check
+        # Required check
         if rule.required and value == nil {
             errors = errors ++ [{
                 path: "{rule.section}.{rule.key}",
@@ -222,7 +222,7 @@ pub fn validate(config, schema) {
 
         if value == nil { continue }
 
-        // Type check
+        # Type check
         match rule.type {
             "string" => {
                 if type_of(value) != "string" {
@@ -242,7 +242,7 @@ pub fn validate(config, schema) {
             _ => {}
         }
 
-        // Range check
+        # Range check
         if rule.min != nil and value < rule.min {
             errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Below minimum {rule.min}"}]
         }
@@ -250,7 +250,7 @@ pub fn validate(config, schema) {
             errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Above maximum {rule.max}"}]
         }
 
-        // Allowed values
+        # Allowed values
         if rule.allowed != nil {
             let valid = rule.allowed |> filter(a => a == value) |> len() > 0
             if not valid {
@@ -265,21 +265,21 @@ fn type_of(v) => match v {
     true => "boolean",
     false => "boolean",
     _ if v == nil => "nil",
-    _ => "string"  // simplified
+    _ => "string" # simplified
 }
 
-// --- Defaults ---
+# --- Defaults ---
 
 pub fn with_defaults(config, defaults) {
     let mut result = {}
-    // Copy defaults
+    # Copy defaults
     for section in collections.keys(defaults) {
         result[section] = {}
         for key in collections.keys(defaults[section]) {
             result[section][key] = defaults[section][key]
         }
     }
-    // Override with config values
+    # Override with config values
     for section in collections.keys(config) {
         if result[section] == nil { result[section] = {} }
         for key in collections.keys(config[section]) {
@@ -289,7 +289,7 @@ pub fn with_defaults(config, defaults) {
     result
 }
 
-// --- Merge Configs ---
+# --- Merge Configs ---
 
 pub fn merge(base, override_cfg) {
     let mut result = {}
@@ -308,7 +308,7 @@ pub fn merge(base, override_cfg) {
     result
 }
 
-// --- Serialization ---
+# --- Serialization ---
 
 pub fn to_string(config) {
     let mut lines = []
@@ -339,7 +339,7 @@ fn join_lines(lst, sep) => match lst {
     [x, ..rest] => "{x}{sep}{join_lines(rest, sep)}"
 }
 
-// --- Test ---
+# --- Test ---
 
 pub fn run() {
     print("=== Config Parser Demo ===\n")
@@ -380,14 +380,14 @@ max_entries = 10000"
     print("Parsed sections: {sections(config)}")
     print("Parse errors: {len(result.errors)}")
 
-    // Access values
+    # Access values
     print("\nServer host: {get(config, "server", "host")}")
     print("Server port: {get(config, "server", "port")}")
     print("DB pool size: {get(config, "database", "pool_size")}")
     print("Log level: {get(config, "logging", "level")}")
     print("Auth providers: {get(config, "auth", "providers")}")
 
-    // Defaults
+    # Defaults
     print("\n--- With Defaults ---")
     let defaults = {
         server: {host: "0.0.0.0", port: 3000, workers: 1},
@@ -396,7 +396,7 @@ max_entries = 10000"
     let with_def = with_defaults(config, defaults)
     print("Cache TTL (from config): {get(with_def, "cache", "ttl")}")
 
-    // Validation
+    # Validation
     print("\n--- Validation ---")
     let schema = [
         {section: "server", key: "host", required: true, type: "string"},
@@ -414,7 +414,7 @@ max_entries = 10000"
         }
     }
 
-    // Merge (e.g., dev overrides)
+    # Merge (e.g., dev overrides)
     print("\n--- Config Merge ---")
     let dev_overrides = {
         server: {debug: true, port: 3000},
@@ -424,7 +424,7 @@ max_entries = 10000"
     print("Merged DB host: {get(merged, "database", "host")}")
     print("Merged server port: {get(merged, "server", "port")}")
 
-    // Serialize back
+    # Serialize back
     print("\n--- Serialized Config ---")
     print(to_string(config))
 

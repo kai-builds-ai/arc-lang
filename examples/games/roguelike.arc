@@ -1,16 +1,16 @@
-// ============================================================================
-// Roguelike Dungeon Generator in Arc
-// ============================================================================
-// Procedural dungeon generation with room placement, corridor carving,
-// player/enemy entities, turn-based combat with pattern matching, inventory
-// management, and ASCII map rendering.
-// Demonstrates: mutation, pattern matching, closures, pipelines, maps, lists,
-// string interpolation, recursion, higher-order functions, destructuring
-// ============================================================================
+# ============================================================================
+# Roguelike Dungeon Generator in Arc
+# ============================================================================
+# Procedural dungeon generation with room placement, corridor carving,
+# player/enemy entities, turn-based combat with pattern matching, inventory
+# management, and ASCII map rendering.
+# Demonstrates: mutation, pattern matching, closures, pipelines, maps, lists,
+# string interpolation, recursion, higher-order functions, destructuring
+# ============================================================================
 
-import collections
+use collections
 
-// --- Tile Types ---
+# --- Tile Types ---
 
 let WALL = "#"
 let FLOOR = "."
@@ -19,7 +19,7 @@ let CORRIDOR = "·"
 let STAIRS_DOWN = ">"
 let STAIRS_UP = "<"
 
-// --- Random ---
+# --- Random ---
 
 let mut rng_seed = 12345
 
@@ -31,7 +31,7 @@ fn rand() {
 fn rand_range(lo, hi) => lo + (rand() % (hi - lo))
 fn rand_bool() => rand() % 2 == 0
 
-// --- Dungeon Map ---
+# --- Dungeon Map ---
 
 pub fn create_map(width, height) {
     let mut grid = []
@@ -59,7 +59,7 @@ fn is_walkable(dungeon, x, y) {
     tile == FLOOR or tile == CORRIDOR or tile == DOOR or tile == STAIRS_DOWN or tile == STAIRS_UP
 }
 
-// --- Room Generation ---
+# --- Room Generation ---
 
 fn create_room(x, y, w, h) => {x: x, y: y, w: w, h: h}
 
@@ -82,7 +82,7 @@ fn carve_room(dungeon, room) {
     dungeon.rooms = dungeon.rooms ++ [room]
 }
 
-// --- Corridor Generation ---
+# --- Corridor Generation ---
 
 fn carve_h_corridor(dungeon, x1, x2, y) {
     let start = min(x1, x2)
@@ -117,7 +117,7 @@ fn connect_rooms(dungeon, room_a, room_b) {
     }
 }
 
-// --- Dungeon Generator ---
+# --- Dungeon Generator ---
 
 pub fn generate_dungeon(width, height, max_rooms) {
     let mut dungeon = create_map(width, height)
@@ -129,12 +129,12 @@ pub fn generate_dungeon(width, height, max_rooms) {
         let y = rand_range(1, height - h - 1)
         let room = create_room(x, y, w, h)
 
-        // Check overlap with existing rooms
+        # Check overlap with existing rooms
         let overlaps = dungeon.rooms |> any(r => rooms_overlap(r, room, 1))
         if not overlaps {
             carve_room(dungeon, room)
 
-            // Connect to previous room
+            # Connect to previous room
             if len(dungeon.rooms) > 1 {
                 let prev = dungeon.rooms[len(dungeon.rooms) - 2]
                 connect_rooms(dungeon, prev, room)
@@ -142,7 +142,7 @@ pub fn generate_dungeon(width, height, max_rooms) {
         }
     }
 
-    // Place stairs
+    # Place stairs
     if len(dungeon.rooms) >= 2 {
         let first = room_center(dungeon.rooms[0])
         let last = room_center(dungeon.rooms[len(dungeon.rooms) - 1])
@@ -153,7 +153,7 @@ pub fn generate_dungeon(width, height, max_rooms) {
     dungeon
 }
 
-// --- Entity System ---
+# --- Entity System ---
 
 pub fn create_entity(name, x, y, hp, atk, def, symbol) => {
     name: name, x: x, y: y, hp: hp, max_hp: hp,
@@ -172,7 +172,7 @@ fn create_enemy(kind, x, y) => match kind {
     _          => create_entity("Slime", x, y, 15, 5, 2, "~")
 }
 
-// --- Items ---
+# --- Items ---
 
 fn create_item(kind) => match kind {
     "health_potion" => {name: "Health Potion", kind: "potion", effect: "heal", value: 25, symbol: "!"},
@@ -183,7 +183,7 @@ fn create_item(kind) => match kind {
     _               => {name: "Junk", kind: "junk", symbol: "?"}
 }
 
-// --- Combat ---
+# --- Combat ---
 
 pub fn attack(attacker, defender) {
     let damage = max(1, attacker.atk - defender.def + rand_range(-3, 4))
@@ -204,7 +204,7 @@ pub fn attack(attacker, defender) {
     }
 }
 
-// --- Inventory ---
+# --- Inventory ---
 
 pub fn add_to_inventory(entity, item) {
     match item.kind {
@@ -244,7 +244,7 @@ pub fn use_item(entity, item_idx) {
         _ => print("Can't use {item.name}.")
     }
 
-    // Remove used item
+    # Remove used item
     entity.inventory = entity.inventory
         |> filter_indexed((_, i) => i != item_idx)
     entity
@@ -258,16 +258,16 @@ fn filter_indexed(lst, pred) {
     result
 }
 
-// --- Game State ---
+# --- Game State ---
 
 pub fn create_game(width, height) {
     let dungeon = generate_dungeon(width, height, 12)
 
-    // Place player in first room
+    # Place player in first room
     let start = room_center(dungeon.rooms[0])
     let mut player = create_player(start.x, start.y)
 
-    // Spawn enemies in rooms
+    # Spawn enemies in rooms
     let enemy_types = ["goblin", "orc", "skeleton", "rat", "slime"]
     let mut enemies = []
     for i in 1..len(dungeon.rooms) {
@@ -277,14 +277,14 @@ pub fn create_game(width, height) {
         let ey = center.y + rand_range(-1, 2)
         enemies = enemies ++ [create_enemy(kind, ex, ey)]
 
-        // Sometimes add a second enemy
+        # Sometimes add a second enemy
         if rand_bool() {
             let kind2 = enemy_types[rand() % len(enemy_types)]
             enemies = enemies ++ [create_enemy(kind2, center.x - 1, center.y)]
         }
     }
 
-    // Scatter items
+    # Scatter items
     let mut items = []
     let item_types = ["health_potion", "gold", "gold", "sword", "shield"]
     for room in dungeon.rooms {
@@ -308,7 +308,7 @@ pub fn create_game(width, height) {
     }
 }
 
-// --- Rendering ---
+# --- Rendering ---
 
 pub fn render(game) {
     let d = game.dungeon
@@ -321,31 +321,31 @@ pub fn render(game) {
         display = display ++ [row]
     }
 
-    // Draw items
+    # Draw items
     for item_pos in game.items {
         display[item_pos.y][item_pos.x] = item_pos.item.symbol
     }
 
-    // Draw enemies
+    # Draw enemies
     for e in game.enemies {
         if e.hp > 0 {
             display[e.y][e.x] = e.symbol
         }
     }
 
-    // Draw player
+    # Draw player
     let p = game.player
     display[p.y][p.x] = p.symbol
 
-    // Print map
+    # Print map
     for row in display {
         print(row |> join(""))
     }
 
-    // HUD
+    # HUD
     print("HP: {p.hp}/{p.max_hp} | ATK: {p.atk} | DEF: {p.def} | Gold: {p.gold} | Level: {p.level} | Turn: {game.turn}")
 
-    // Messages
+    # Messages
     for msg in game.messages |> take_last(3) {
         print("> {msg}")
     }
@@ -362,7 +362,7 @@ fn take_last(lst, n) {
     lst |> drop(start)
 }
 
-// --- Game Actions ---
+# --- Game Actions ---
 
 pub fn move_player(game, dx, dy) {
     let p = game.player
@@ -374,7 +374,7 @@ pub fn move_player(game, dx, dy) {
         ret game
     }
 
-    // Check for enemy at target
+    # Check for enemy at target
     for e in game.enemies {
         if e.hp > 0 and e.x == nx and e.y == ny {
             let result = attack(game.player, e)
@@ -390,11 +390,11 @@ pub fn move_player(game, dx, dy) {
         }
     }
 
-    // Move
+    # Move
     game.player.x = nx
     game.player.y = ny
 
-    // Pick up items
+    # Pick up items
     let mut remaining_items = []
     for item_pos in game.items {
         if item_pos.x == nx and item_pos.y == ny {
@@ -405,7 +405,7 @@ pub fn move_player(game, dx, dy) {
     }
     game.items = remaining_items
 
-    // Check stairs
+    # Check stairs
     if get_tile(game.dungeon, nx, ny) == STAIRS_DOWN {
         game.messages = game.messages ++ ["🎉 You found the stairs! Descending to the next level..."]
         game.game_over = true
@@ -424,14 +424,14 @@ fn enemy_turn(game) {
         let dist = abs(e.x - p.x) + abs(e.y - p.y)
 
         if dist <= 1 {
-            // Attack player
+            # Attack player
             attack(e, game.player)
             if game.player.hp <= 0 {
                 game.messages = game.messages ++ ["💀 You have been slain!"]
                 game.game_over = true
             }
         } el if dist < 6 {
-            // Move toward player
+            # Move toward player
             let dx = sign(p.x - e.x)
             let dy = sign(p.y - e.y)
 
@@ -458,7 +458,7 @@ fn check_level_up(player) {
     }
 }
 
-// --- Simulation ---
+# --- Simulation ---
 
 pub fn simulate(width, height, max_turns) {
     let mut game = create_game(width, height)
@@ -466,7 +466,7 @@ pub fn simulate(width, height, max_turns) {
     print("=== Roguelike Dungeon ===\n")
     render(game)
 
-    // AI-controlled exploration
+    # AI-controlled exploration
     let directions = [
         {dx: 0, dy: -1, name: "north"},
         {dx: 0, dy: 1, name: "south"},
@@ -480,11 +480,11 @@ pub fn simulate(width, height, max_turns) {
     loop {
         if game.game_over or game.turn >= max_turns { break }
 
-        // Simple AI: move toward unexplored areas or stairs
+        # Simple AI: move toward unexplored areas or stairs
         let p = game.player
         let d = game.dungeon
 
-        // Find stairs position
+        # Find stairs position
         let mut target = nil
         for room in d.rooms {
             let c = room_center(room)
@@ -494,7 +494,7 @@ pub fn simulate(width, height, max_turns) {
         }
 
         let dir = if target != nil {
-            // Move toward target
+            # Move toward target
             let dx = sign(target.x - p.x)
             let dy = sign(target.y - p.y)
             if rand_bool() and dx != 0 { {dx: dx, dy: 0} }
@@ -506,11 +506,11 @@ pub fn simulate(width, height, max_turns) {
 
         game = move_player(game, dir.dx, dir.dy)
 
-        // Detect stuck
+        # Detect stuck
         if p.x == last_pos.x and p.y == last_pos.y {
             stuck_count = stuck_count + 1
             if stuck_count > 3 {
-                // Try random direction
+                # Try random direction
                 let rd = directions[rand() % 4]
                 game = move_player(game, rd.dx, rd.dy)
                 stuck_count = 0
@@ -520,7 +520,7 @@ pub fn simulate(width, height, max_turns) {
         }
         last_pos = {x: game.player.x, y: game.player.y}
 
-        // Render periodically
+        # Render periodically
         if game.turn % 10 == 0 or game.game_over {
             print("\n--- Turn {game.turn} ---")
             render(game)
@@ -543,7 +543,7 @@ pub fn simulate(width, height, max_turns) {
     print("Reached stairs: {game.game_over and game.player.hp > 0}")
 }
 
-// --- Utility ---
+# --- Utility ---
 
 fn min(a, b) => if a < b { a } el { b }
 fn max(a, b) => if a > b { a } el { b }
@@ -555,6 +555,6 @@ fn sign(x) => match true {
 }
 fn any(lst, pred) => lst |> filter(pred) |> len() > 0
 
-// --- Run ---
+# --- Run ---
 
 simulate(50, 25, 100)

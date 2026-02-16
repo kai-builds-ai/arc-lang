@@ -65,11 +65,7 @@ pub fn random_float() => __native_random_float()
 
 # Generate a UUID v4 string
 pub fn uuid() {
-  let bytes = __native_random_bytes(16)
-  # Set version (4) and variant (RFC 4122)
-  let versioned = bytes |> set_byte(6, (get_byte(bytes, 6) & 0x0f) | 0x40)
-  let final = versioned |> set_byte(8, (get_byte(versioned, 8) & 0x3f) | 0x80)
-  final |> format_uuid()
+  __native_uuid_v4()
 }
 
 # --- Password Hashing ---
@@ -120,11 +116,11 @@ pub fn decrypt(ciphertext, key) {
 pub fn constant_time_eq(a, b) {
   if len(a) != len(b) { false }
   el {
-    let mut result = 0
+    let mut result = true
     for i in 0..len(a) {
-      result = result | (char_at(a, i) ^ char_at(b, i))
+      if char_at(a, i) != char_at(b, i) { result = false }
     }
-    result == 0
+    result
   }
 }
 

@@ -6,7 +6,7 @@
 pub fn router() => {
   _routes: [],
   _middleware: [],
-  _not_found: fn(req) => {status: 404, body: "Not Found: {req.method} {req.path}"}
+  _not_found: (req) => {status: 404, body: "Not Found: {req.method} {req.path}"}
 }
 
 # --- Route Registration ---
@@ -20,8 +20,8 @@ pub fn patch(r, path, handler) => add_route(r, "PATCH", path, handler)
 pub fn route(r, method, path, handler) => add_route(r, method, path, handler)
 
 fn add_route(r, method, path, handler) {
-  let route = {method: upper(method), path: path, handler: handler, _middleware: []}
-  {..r, _routes: r._routes ++ [route]}
+  let rt = {method: upper(method), path: path, handler: handler, _middleware: []}
+  {_routes: r._routes ++ [rt], _middleware: r._middleware, _not_found: r._not_found}
 }
 
 # --- Route Groups ---
@@ -29,32 +29,32 @@ fn add_route(r, method, path, handler) {
 pub fn group(r, prefix, setup_fn) {
   let sub = router()
   let configured = setup_fn(sub)
-  let prefixed_routes = configured._routes |> map(fn(route) {
-    {..route, path: prefix ++ route.path}
+  let prefixed_routes = configured._routes |> map(rt => {
+    method: rt.method, path: prefix ++ rt.path, handler: rt.handler, _middleware: rt._middleware
   })
-  {..r, _routes: r._routes ++ prefixed_routes}
+  {_routes: r._routes ++ prefixed_routes, _middleware: r._middleware, _not_found: r._not_found}
 }
 
 # --- Middleware ---
 
-pub fn use_middleware(r, mw) => {..r, _middleware: r._middleware ++ [mw]}
+pub fn use_middleware(r, mw) => {_routes: r._routes, _middleware: r._middleware ++ [mw], _not_found: r._not_found}
 
-pub fn not_found(r, handler) => {..r, _not_found: handler}
+pub fn not_found(r, handler) => {_routes: r._routes, _middleware: r._middleware, _not_found: handler}
 
 # --- Common Middleware ---
 
-pub fn cors(opts) => fn(req, next) {
+pub fn cors(opts) => (req, next) => {
   let response = next(req)
-  let origin = opts.origin or "*"
-  let headers = {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH",
-    "Access-Control-Allow-Headers": opts.headers or "Content-Type, Authorization"
-  }
-  {..response, headers: {..(response.headers or {}), ..headers}}
+  let origin = if opts.origin { opts.origin } el { "*" }
+  let allowed_headers = if opts.headers { opts.headers } el { "Content-Type, Authorization" }
+  let mut h = if response.headers { response.headers } el { {} }
+  h["Access-Control-Allow-Origin"] = origin
+  h["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH"
+  h["Access-Control-Allow-Headers"] = allowed_headers
+  {status: response.status, body: response.body, headers: h}
 }
 
-pub fn request_logger() => fn(req, next) {
+pub fn request_logger() => (req, next) => {
   let start = now()
   let response = next(req)
   let elapsed = now() - start
@@ -62,18 +62,20 @@ pub fn request_logger() => fn(req, next) {
   response
 }
 
-pub fn json_body() => fn(req, next) {
+pub fn json_body() => (req, next) => {
   let parsed_body = if req.body != nil { json_decode(req.body) } el { nil }
-  next({..req, body: parsed_body})
+  next({method: req.method, path: req.path, headers: req.headers, body: parsed_body, params: req.params, user: req.user})
 }
 
-pub fn auth_required(verify_fn) => fn(req, next) {
+pub fn auth_required(verify_fn) => (req, next) => {
   let token = req.headers["Authorization"]
   if token == nil { {status: 401, body: "Unauthorized"} }
   el {
-    match verify_fn(token) {
-      Ok(user) => next({..req, user: user}),
-      Err(msg) => {status: 403, body: "Forbidden: {msg}"}
+    let result = verify_fn(token)
+    if result.ok {
+      next({method: req.method, path: req.path, headers: req.headers, body: req.body, params: req.params, user: result.value})
+    } el {
+      {status: 403, body: "Forbidden: {result.error}"}
     }
   }
 }
@@ -102,7 +104,6 @@ fn match_route(route_path, req_path) {
         params["_wildcard"] = pp
       } el if rp != pp {
         matched = false
-        break
       }
     }
 
@@ -114,19 +115,19 @@ fn match_route(route_path, req_path) {
 
 pub fn handle(r, req) {
   # Find matching route
-  let matching = r._routes |> find(fn(route) {
-    route.method == req.method and match_route(route.path, req.path) != nil
+  let matched = r._routes |> find(rt => {
+    rt.method == req.method and match_route(rt.path, req.path) != nil
   })
 
-  match matching {
-    nil => r._not_found(req),
-    route => {
-      let params = match_route(route.path, req.path)
-      let enriched_req = {..req, params: params}
+  match matched {
+    nil => r._not_found(req)
+    rt => {
+      let params = match_route(rt.path, req.path)
+      let enriched_req = {method: req.method, path: req.path, headers: req.headers, body: req.body, params: params, user: req.user}
 
       # Build middleware chain
-      let all_mw = r._middleware ++ route._middleware
-      let handler = route.handler
+      let all_mw = r._middleware ++ rt._middleware
+      let handler = rt.handler
 
       run_middleware(all_mw, enriched_req, handler)
     }
@@ -137,8 +138,9 @@ fn run_middleware(middleware, req, handler) {
   if len(middleware) == 0 {
     handler(req)
   } el {
-    let [first, ..rest] = middleware
-    first(req, fn(modified_req) {
+    let first = middleware[0]
+    let rest = slice(middleware, 1, len(middleware))
+    first(req, (modified_req) => {
       run_middleware(rest, modified_req, handler)
     })
   }
@@ -147,20 +149,20 @@ fn run_middleware(middleware, req, handler) {
 # --- Response Helpers ---
 
 pub fn json_response(data, status) => {
-  status: status or 200,
-  headers: {"Content-Type": "application/json"},
+  status: if status { status } el { 200 },
+  headers: {content_type: "application/json"},
   body: json_encode(data)
 }
 
 pub fn text_response(text, status) => {
-  status: status or 200,
-  headers: {"Content-Type": "text/plain"},
+  status: if status { status } el { 200 },
+  headers: {content_type: "text/plain"},
   body: text
 }
 
 pub fn redirect(url, status) => {
-  status: status or 302,
-  headers: {"Location": url},
+  status: if status { status } el { 302 },
+  headers: {location: url},
   body: ""
 }
 
@@ -168,7 +170,7 @@ pub fn ok(data) => json_response(data, 200)
 pub fn created(data) => json_response(data, 201)
 pub fn no_content() => {status: 204, body: ""}
 pub fn bad_request(msg) => json_response({error: msg}, 400)
-pub fn unauthorized(msg) => json_response({error: msg or "Unauthorized"}, 401)
-pub fn forbidden(msg) => json_response({error: msg or "Forbidden"}, 403)
-pub fn not_found_response(msg) => json_response({error: msg or "Not Found"}, 404)
-pub fn server_error(msg) => json_response({error: msg or "Internal Server Error"}, 500)
+pub fn unauthorized(msg) => json_response({error: if msg { msg } el { "Unauthorized" }}, 401)
+pub fn forbidden(msg) => json_response({error: if msg { msg } el { "Forbidden" }}, 403)
+pub fn not_found_response(msg) => json_response({error: if msg { msg } el { "Not Found" }}, 404)
+pub fn server_error(msg) => json_response({error: if msg { msg } el { "Internal Server Error" }}, 500)

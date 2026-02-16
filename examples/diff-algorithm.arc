@@ -1,20 +1,20 @@
-// =============================================================================
-// diff-algorithm.arc — Text Diff Algorithm (LCS-based)
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, import, closures,
-// higher-order functions, string interpolation, pattern matching, collections
-// =============================================================================
+# =============================================================================
+# diff-algorithm.arc — Text Diff Algorithm (LCS-based)
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, import, closures,
+# higher-order functions, string interpolation, pattern matching, collections
+# =============================================================================
 
-import collections
+use collections
 
-// --- Diff operation types ---
+# --- Diff operation types ---
 pub enum DiffOp {
   Equal(str),
   Add(str),
   Remove(str),
 }
 
-// --- Diff result ---
+# --- Diff result ---
 pub struct DiffResult {
   ops: list,
   old_lines: list,
@@ -30,22 +30,22 @@ pub struct DiffStats {
   total_new: int,
 }
 
-// --- Compute LCS (Longest Common Subsequence) table ---
+# --- Compute LCS (Longest Common Subsequence) table ---
 fn build_lcs_table(old_lines: list, new_lines: list) -> list {
   let m = len(old_lines)
   let n = len(new_lines)
 
-  // Initialize (m+1) x (n+1) table with zeros
+  # Initialize (m+1) x (n+1) table with zeros
   let mut table = range(0, m + 1) |> map(fn(_) => {
     range(0, n + 1) |> map(fn(_) => 0)
   })
 
-  // Fill the table
+  # Fill the table
   range(1, m + 1) |> each(fn(i) {
     range(1, n + 1) |> each(fn(j) {
       if old_lines[i - 1] == new_lines[j - 1] {
         table[i][j] = table[i - 1][j - 1] + 1
-      } else {
+      } el {
         table[i][j] = math::max(table[i - 1][j], table[i][j - 1])
       }
     })
@@ -54,7 +54,7 @@ fn build_lcs_table(old_lines: list, new_lines: list) -> list {
   table
 }
 
-// --- Backtrack through LCS table to generate diff ops ---
+# --- Backtrack through LCS table to generate diff ops ---
 fn backtrack(table: list, old_lines: list, new_lines: list) -> list {
   let mut ops = []
   let mut i = len(old_lines)
@@ -65,10 +65,10 @@ fn backtrack(table: list, old_lines: list, new_lines: list) -> list {
       ops = [DiffOp::Equal(old_lines[i - 1])] |> concat(ops)
       i = i - 1
       j = j - 1
-    } else if j > 0 && (i == 0 || table[i][j - 1] >= table[i - 1][j]) {
+    } el if j > 0 && (i == 0 || table[i][j - 1] >= table[i - 1][j]) {
       ops = [DiffOp::Add(new_lines[j - 1])] |> concat(ops)
       j = j - 1
-    } else if i > 0 {
+    } el if i > 0 {
       ops = [DiffOp::Remove(old_lines[i - 1])] |> concat(ops)
       i = i - 1
     }
@@ -77,7 +77,7 @@ fn backtrack(table: list, old_lines: list, new_lines: list) -> list {
   ops
 }
 
-// --- Main diff function ---
+# --- Main diff function ---
 pub fn diff(old_text: str, new_text: str) -> DiffResult {
   let old_lines = old_text |> str::split("\n")
   let new_lines = new_text |> str::split("\n")
@@ -120,14 +120,14 @@ fn compute_stats(ops: list, old_lines: list, new_lines: list) -> DiffStats {
   }
 }
 
-// --- Generate unified diff output ---
+# --- Generate unified diff output ---
 pub fn unified_diff(result: DiffResult, old_name: str, new_name: str) -> str {
   let mut output = []
   output = output |> append("--- {old_name}")
   output = output |> append("+++ {new_name}")
 
-  // Generate hunks
-  let hunks = generate_hunks(result.ops, 3) // 3 lines of context
+  # Generate hunks
+  let hunks = generate_hunks(result.ops, 3) # 3 lines of context
 
   hunks |> each(fn(hunk) {
     output = output |> append("@@ -{hunk.old_start},{hunk.old_count} +{hunk.new_start},{hunk.new_count} @@")
@@ -150,7 +150,7 @@ pub struct Hunk {
 
 fn generate_hunks(ops: list, context: int) -> list {
   let mut hunks = []
-  let mut current_hunk = null
+  let mut current_hunk = nil
   let mut old_line = 1
   let mut new_line = 1
   let mut context_buffer = []
@@ -158,8 +158,8 @@ fn generate_hunks(ops: list, context: int) -> list {
   ops |> each(fn(op) {
     match op {
       DiffOp::Equal(line) => {
-        if current_hunk != null {
-          // Add trailing context
+        if current_hunk != nil {
+          # Add trailing context
           if len(current_hunk.lines) > 0 {
             current_hunk.lines = current_hunk.lines |> append(" {line}")
             current_hunk.old_count = current_hunk.old_count + 1
@@ -167,7 +167,7 @@ fn generate_hunks(ops: list, context: int) -> list {
           }
         }
 
-        // Keep context buffer
+        # Keep context buffer
         context_buffer = context_buffer |> append(" {line}")
         if len(context_buffer) > context {
           context_buffer = context_buffer |> collections::slice(1, len(context_buffer))
@@ -177,7 +177,7 @@ fn generate_hunks(ops: list, context: int) -> list {
         new_line = new_line + 1
       }
       DiffOp::Add(line) => {
-        if current_hunk == null {
+        if current_hunk == nil {
           current_hunk = Hunk {
             old_start: old_line - len(context_buffer),
             old_count: len(context_buffer),
@@ -192,7 +192,7 @@ fn generate_hunks(ops: list, context: int) -> list {
         new_line = new_line + 1
       }
       DiffOp::Remove(line) => {
-        if current_hunk == null {
+        if current_hunk == nil {
           current_hunk = Hunk {
             old_start: old_line - len(context_buffer),
             old_count: len(context_buffer),
@@ -209,14 +209,14 @@ fn generate_hunks(ops: list, context: int) -> list {
     }
   })
 
-  if current_hunk != null {
+  if current_hunk != nil {
     hunks = hunks |> append(current_hunk)
   }
 
   hunks
 }
 
-// --- Colorized diff output ---
+# --- Colorized diff output ---
 pub fn colorized_diff(result: DiffResult) -> str {
   let RED = "\x1b[31m"
   let GREEN = "\x1b[32m"
@@ -249,7 +249,7 @@ pub fn colorized_diff(result: DiffResult) -> str {
   output |> str::join("\n") |> str::concat("\n\n{summary}")
 }
 
-// --- Generate a patch ---
+# --- Generate a patch ---
 pub fn generate_patch(result: DiffResult, old_name: str, new_name: str) -> str {
   let mut patch = []
   patch = patch |> append("diff --arc a/{old_name} b/{new_name}")
@@ -257,7 +257,7 @@ pub fn generate_patch(result: DiffResult, old_name: str, new_name: str) -> str {
   patch |> str::join("\n")
 }
 
-// --- Apply a patch to text ---
+# --- Apply a patch to text ---
 pub fn apply_patch(original: str, patch: str) -> str {
   let lines = patch |> str::split("\n")
   let old_lines = original |> str::split("\n")
@@ -266,21 +266,21 @@ pub fn apply_patch(original: str, patch: str) -> str {
 
   lines |> each(fn(line) {
     if str::starts_with(line, "@@") {
-      // Parse hunk header — skip for simple application
-    } else if str::starts_with(line, "-") {
-      // Skip removed line, advance old index
+      # Parse hunk header — skip for simple application
+    } el if str::starts_with(line, "-") {
+      # Skip removed line, advance old index
       old_idx = old_idx + 1
-    } else if str::starts_with(line, "+") {
-      // Add new line
+    } el if str::starts_with(line, "+") {
+      # Add new line
       result = result |> append(line |> str::slice(1, str::len(line)))
-    } else if str::starts_with(line, " ") {
-      // Context line
+    } el if str::starts_with(line, " ") {
+      # Context line
       result = result |> append(line |> str::slice(1, str::len(line)))
       old_idx = old_idx + 1
     }
   })
 
-  // Append remaining original lines
+  # Append remaining original lines
   while old_idx < len(old_lines) {
     result = result |> append(old_lines[old_idx])
     old_idx = old_idx + 1
@@ -289,7 +289,7 @@ pub fn apply_patch(original: str, patch: str) -> str {
   result |> str::join("\n")
 }
 
-// --- Word-level diff ---
+# --- Word-level diff ---
 pub fn word_diff(old_text: str, new_text: str) -> str {
   let old_words = old_text |> str::split_whitespace()
   let new_words = new_text |> str::split_whitespace()
@@ -308,7 +308,7 @@ pub fn word_diff(old_text: str, new_text: str) -> str {
   }) |> str::join(" ")
 }
 
-// --- Similarity ratio ---
+# --- Similarity ratio ---
 pub fn similarity(old_text: str, new_text: str) -> float {
   let result = diff(old_text, new_text)
   let total = result.stats.additions + result.stats.deletions + result.stats.unchanged
@@ -316,7 +316,7 @@ pub fn similarity(old_text: str, new_text: str) -> float {
   (result.stats.unchanged |> to_float()) / (total |> to_float())
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   let old_text = "fn greet(name: str) {
   let message = \"Hello\"

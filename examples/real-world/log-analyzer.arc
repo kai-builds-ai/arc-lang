@@ -1,18 +1,18 @@
-// ============================================================================
-// Log File Analyzer in Arc
-// ============================================================================
-// Parses log files, extracts timestamps/levels/messages, filters by level
-// and date range, aggregates error counts, and generates summary reports.
-// Demonstrates: regex, pipelines, pattern matching, closures, maps, lists,
-// string interpolation, mutation, higher-order functions, destructuring
-// ============================================================================
+# ============================================================================
+# Log File Analyzer in Arc
+# ============================================================================
+# Parses log files, extracts timestamps/levels/messages, filters by level
+# and date range, aggregates error counts, and generates summary reports.
+# Demonstrates: regex, pipelines, pattern matching, closures, maps, lists,
+# string interpolation, mutation, higher-order functions, destructuring
+# ============================================================================
 
-import regex
-import datetime
-import collections
-import io
+use regex
+use datetime
+use collections
+use io
 
-// --- Log Entry Parsing ---
+# --- Log Entry Parsing ---
 
 let LOG_PATTERN = regex.compile("^\\[(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})\\]\\s+\\[(\\w+)\\]\\s+\\[([^\\]]+)\\]\\s+(.*)")
 
@@ -42,7 +42,7 @@ fn to_upper(s) => match s {
     "trace" => "TRACE", _ => s
 }
 
-// --- Log Level Severity ---
+# --- Log Level Severity ---
 
 fn level_severity(level) => match level {
     "TRACE" => 0,
@@ -65,7 +65,7 @@ fn level_color(level) => match level {
     _ => "⚪"
 }
 
-// --- Filtering ---
+# --- Filtering ---
 
 pub fn filter_by_level(entries, min_level) {
     let min_sev = level_severity(min_level)
@@ -85,7 +85,7 @@ pub fn filter_by_message(entries, pattern) {
     entries |> filter(e => regex.test(re, e.message))
 }
 
-// --- Aggregation ---
+# --- Aggregation ---
 
 pub fn count_by_level(entries) {
     let mut counts = {}
@@ -108,7 +108,7 @@ pub fn count_by_source(entries) {
 pub fn count_by_hour(entries) {
     let mut counts = {}
     for e in entries {
-        let hour = e.timestamp |> take(13)  // "2024-01-15T14"
+        let hour = e.timestamp |> take(13) # "2024-01-15T14"
         counts[hour] = (counts[hour] or 0) + 1
     }
     counts
@@ -118,8 +118,8 @@ pub fn error_frequency(entries, window_minutes) {
     let errors = entries |> filter_by_level("ERROR")
     let mut windows = {}
     for e in errors {
-        // Bucket by window
-        let ts = e.timestamp |> take(16)  // "2024-01-15T14:30"
+        # Bucket by window
+        let ts = e.timestamp |> take(16) # "2024-01-15T14:30"
         windows[ts] = (windows[ts] or 0) + 1
     }
     windows
@@ -135,7 +135,7 @@ pub fn group_by(entries, key_fn) {
     groups
 }
 
-// --- Pattern Detection ---
+# --- Pattern Detection ---
 
 pub fn find_error_bursts(entries, threshold, window_size) {
     let errors = entries |> filter_by_level("ERROR")
@@ -145,7 +145,7 @@ pub fn find_error_bursts(entries, threshold, window_size) {
         let mut count = 0
         let start_ts = errors[i].timestamp
         for j in i..len(errors) {
-            // Simple windowing by position
+            # Simple windowing by position
             if j - i < window_size {
                 count = count + 1
             }
@@ -192,7 +192,7 @@ pub fn find_repeated_errors(entries) {
 }
 
 fn sort_by_count(lst) {
-    // Simple sort descending by count
+    # Simple sort descending by count
     let mut result = lst |> collections.to_list()
     for i in 0..len(result) {
         for j in (i + 1)..len(result) {
@@ -206,7 +206,7 @@ fn sort_by_count(lst) {
     result
 }
 
-// --- Report Generation ---
+# --- Report Generation ---
 
 pub fn generate_report(entries) {
     let total = len(entries)
@@ -266,7 +266,7 @@ fn take_last(lst, n) {
 fn min(a, b) => if a < b { a } el { b }
 fn max(a, b) => if a > b { a } el { b }
 
-// --- Sample Data Generator ---
+# --- Sample Data Generator ---
 
 fn generate_sample_logs(count) {
     let levels = ["DEBUG", "DEBUG", "INFO", "INFO", "INFO", "WARN", "ERROR", "FATAL"]
@@ -302,23 +302,23 @@ fn generate_sample_logs(count) {
 
 fn pad(n) => if n < 10 { "0{n}" } el { "{n}" }
 
-// --- Run ---
+# --- Run ---
 
 pub fn run() {
     print("=== Log Analyzer Demo ===\n")
 
-    // Generate sample log data
+    # Generate sample log data
     let raw_logs = generate_sample_logs(50)
     print("Generated {len(raw_logs)} sample log lines\n")
 
-    // Parse
+    # Parse
     let entries = parse_log_lines(raw_logs)
     print("Parsed {len(entries)} valid entries\n")
 
-    // Full report
+    # Full report
     generate_report(entries)
 
-    // Filtered views
+    # Filtered views
     print("\n--- Errors Only ---")
     let errors = entries |> filter_by_level("ERROR")
     for e in errors {
@@ -331,7 +331,7 @@ pub fn run() {
         print("{level_color(e.level)} [{e.level}] {e.message}")
     }
 
-    // Hourly distribution
+    # Hourly distribution
     print("\n--- Hourly Distribution ---")
     let by_hour = count_by_hour(entries)
     for hour in collections.keys(by_hour) {

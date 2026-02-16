@@ -1,24 +1,24 @@
-// ============================================================================
-// Blockchain Implementation in Arc
-// ============================================================================
-// A simple blockchain with proof-of-work mining, chain validation, and
-// transaction support. Demonstrates: structs, pattern matching, pipelines,
-// closures, string interpolation, import, pub, fn, let, mut, match, |>, =>
-// ============================================================================
+# ============================================================================
+# Blockchain Implementation in Arc
+# ============================================================================
+# A simple blockchain with proof-of-work mining, chain validation, and
+# transaction support. Demonstrates: structs, pattern matching, pipelines,
+# closures, string interpolation, import, pub, fn, let, mut, match, |>, =>
+# ============================================================================
 
-import crypto
-import datetime
-import json
-import collections
+use crypto
+use datetime
+use json
+use collections
 
-// --- Block Structure ---
+# --- Block Structure ---
 
 pub fn create_block(index, data, prev_hash, difficulty) => {
     let timestamp = datetime.now() |> datetime.to_iso()
     let mut nonce = 0
     let target = "0".repeat(difficulty)
     
-    // Proof-of-work mining loop
+    # Proof-of-work mining loop
     let mut hash = ""
     loop {
         let raw = "${index}${timestamp}${json.encode(data)}${prev_hash}${nonce}"
@@ -44,7 +44,7 @@ pub fn genesis_block(difficulty) => {
     create_block(0, { message: "Genesis Block", transactions: [] }, "0", difficulty)
 }
 
-// --- Transaction Management ---
+# --- Transaction Management ---
 
 pub fn create_transaction(sender, recipient, amount) => {
     let id = crypto.sha256("${sender}${recipient}${amount}${datetime.now()}")
@@ -64,7 +64,7 @@ pub fn validate_transaction(tx) => {
     }
 }
 
-// --- Blockchain ---
+# --- Blockchain ---
 
 pub fn create_chain(difficulty) => {
     let genesis = genesis_block(difficulty)
@@ -108,7 +108,7 @@ pub fn mine_pending(chain, miner_address) => {
     c
 }
 
-// --- Validation ---
+# --- Validation ---
 
 pub fn validate_block(block, prev_block) => {
     let checks = [
@@ -138,7 +138,7 @@ pub fn validate_chain(chain) => {
     }
 }
 
-// --- Balance Calculation ---
+# --- Balance Calculation ---
 
 pub fn get_balance(chain, address) => {
     chain.blocks
@@ -152,7 +152,7 @@ pub fn get_balance(chain, address) => {
     })
 }
 
-// --- Chain Statistics ---
+# --- Chain Statistics ---
 
 pub fn chain_stats(chain) => {
     let blocks = chain.blocks
@@ -174,7 +174,7 @@ pub fn chain_stats(chain) => {
     }
 }
 
-// --- Serialization ---
+# --- Serialization ---
 
 pub fn to_json(chain) => json.encode(chain, indent: 2)
 
@@ -186,7 +186,7 @@ pub fn from_json(data) => {
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Arc Blockchain Demo ===\n")
@@ -194,7 +194,7 @@ fn main() => {
     let mut chain = create_chain(2)
     print("Genesis block created with difficulty 2")
     
-    // Add transactions
+    # Add transactions
     let tx1 = create_transaction("Alice", "Bob", 10.0)
     let tx2 = create_transaction("Bob", "Charlie", 5.0)
     let tx3 = create_transaction("Alice", "Charlie", 3.0)
@@ -206,11 +206,11 @@ fn main() => {
     
     print("Added 3 pending transactions")
     
-    // Mine block
+    # Mine block
     chain = chain |> mine_pending("Miner1")
     print("Block mined by Miner1!")
     
-    // More transactions and mining
+    # More transactions and mining
     let tx4 = create_transaction("Charlie", "Alice", 2.0)
     let tx5 = create_transaction("Miner1", "Bob", 25.0)
     
@@ -221,14 +221,14 @@ fn main() => {
     
     print("Second block mined!\n")
     
-    // Check balances
+    # Check balances
     let addresses = ["Alice", "Bob", "Charlie", "Miner1"]
     addresses |> collections.each(fn(addr) => {
         let bal = get_balance(chain, addr)
         print("${addr}'s balance: ${bal}")
     })
     
-    // Chain stats
+    # Chain stats
     print("\n--- Chain Statistics ---")
     let stats = chain_stats(chain)
     print("Total blocks: ${stats.total_blocks}")
@@ -236,7 +236,7 @@ fn main() => {
     print("Difficulty: ${stats.difficulty}")
     print("Chain valid: ${stats.is_valid}")
     
-    // Serialization round-trip
+    # Serialization round-trip
     let serialized = to_json(chain)
     print("\nChain serialized to ${collections.length(serialized)} bytes of JSON")
 }

@@ -2,13 +2,13 @@
 # Structured error handling beyond basic Result
 
 # Create a structured error with code and message
-pub fn error(code, message) => {type: "error", code: code, message: message, details: {}, context: nil}
+pub fn error(code, message) => {kind: "error", code: code, message: message, details: {}, context: nil}
 
 # Create a structured error with extra details map
-pub fn error_with(code, message, details) => {type: "error", code: code, message: message, details: details, context: nil}
+pub fn error_with(code, message, details) => {kind: "error", code: code, message: message, details: details, context: nil}
 
 # Check if a value is an error
-pub fn is_error(value) => value.type == "error"
+pub fn is_error(value) => value.kind == "error"
 
 # Extract error code
 pub fn error_code(err) => err.code
@@ -18,7 +18,7 @@ pub fn error_message(err) => err.message
 
 # Wrap an error with additional context string
 pub fn wrap_error(err, context) => {
-  type: "error",
+  kind: "error",
   code: err.code,
   message: err.message,
   details: err.details,
@@ -69,13 +69,18 @@ pub fn try_catch_finally(f, handler, cleanup) {
 pub fn retry(f, max_attempts, delay_ms) {
   let mut attempt = 0
   let mut last_result = nil
-  while attempt < max_attempts {
+  let mut done = false
+  do {
     last_result = f()
-    if not is_error(last_result) { ret last_result }
-    attempt = attempt + 1
-    if attempt < max_attempts { sleep(delay_ms) }
-  }
-  wrap_error(last_result, "failed after " ++ str(max_attempts) ++ " attempts")
+    if not is_error(last_result) {
+      done = true
+    } el {
+      attempt = attempt + 1
+      if attempt < max_attempts { sleep(delay_ms) }
+    }
+  } until done or attempt >= max_attempts
+  if done { last_result }
+  el { wrap_error(last_result, "failed after " ++ str(max_attempts) ++ " attempts") }
 }
 
 # Execute with timeout — returns error if exceeded

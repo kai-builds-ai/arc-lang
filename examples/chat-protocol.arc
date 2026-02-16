@@ -1,19 +1,19 @@
-// ============================================================================
-// IRC-like Chat Protocol in Arc
-// ============================================================================
-// A chat protocol implementation with message parsing, command handling,
-// user/channel management, message routing, and protocol state machines.
-// Demonstrates: regex, pattern matching, closures, pipelines, async/await,
-// collections, datetime, net, string interpolation, pub.
-// ============================================================================
+# ============================================================================
+# IRC-like Chat Protocol in Arc
+# ============================================================================
+# A chat protocol implementation with message parsing, command handling,
+# user/channel management, message routing, and protocol state machines.
+# Demonstrates: regex, pattern matching, closures, pipelines, async/await,
+# collections, datetime, net, string interpolation, pub.
+# ============================================================================
 
-import regex
-import collections
-import datetime
-import json
-import net
+use regex
+use collections
+use datetime
+use json
+use net
 
-// --- Message Types ---
+# --- Message Types ---
 
 let MSG_JOIN     = "JOIN"
 let MSG_PART     = "PART"
@@ -32,7 +32,7 @@ let MSG_WHOIS    = "WHOIS"
 let MSG_NAMES    = "NAMES"
 let MSG_ERROR    = "ERROR"
 
-// --- Message Parsing ---
+# --- Message Parsing ---
 
 let IRC_PATTERN = regex.compile(r"^(?::(\S+)\s)?(\S+)\s(.+)$")
 let PREFIX_PATTERN = regex.compile(r"^([^!]+)(?:!([^@]+))?(?:@(.+))?$")
@@ -126,7 +126,7 @@ pub fn format_message(prefix, command, params) => {
     "${prefix_str}${command} ${params_str}"
 }
 
-// --- User Management ---
+# --- User Management ---
 
 pub fn create_user(nick, username, hostname) => {
     {
@@ -147,7 +147,7 @@ pub fn user_is_op(user, channel_name) => {
     user.modes |> collections.any(fn(m) => m.channel == channel_name and m.mode == "o")
 }
 
-// --- Channel Management ---
+# --- Channel Management ---
 
 pub fn create_channel(name, topic) => {
     {
@@ -195,7 +195,7 @@ pub fn channel_add_message(channel, from, text) => {
     c
 }
 
-// --- Server State ---
+# --- Server State ---
 
 pub fn create_server(name) => {
     {
@@ -212,7 +212,7 @@ pub fn create_server(name) => {
     }
 }
 
-// --- Command Handlers ---
+# --- Command Handlers ---
 
 pub fn handle_message(server, msg, sender_nick) => {
     let mut s = server
@@ -243,7 +243,7 @@ fn handle_join(server, nick, params) => {
     let channel_name = params[0]
     let mut s = server
     
-    // Create channel if it doesn't exist
+    # Create channel if it doesn't exist
     let channel = collections.get(s.channels, channel_name, nil)
     let mut ch = match channel {
         nil => create_channel(channel_name, nil),
@@ -252,7 +252,7 @@ fn handle_join(server, nick, params) => {
     
     ch = channel_add_user(ch, nick)
     
-    // First user becomes operator
+    # First user becomes operator
     match collections.length(ch.users) == 1 {
         true => ch.operators = [nick],
         false => {}
@@ -260,7 +260,7 @@ fn handle_join(server, nick, params) => {
     
     s.channels = collections.set(s.channels, channel_name, ch)
     
-    // Update user
+    # Update user
     let user = collections.get(s.users, nick)
     match user {
         nil => {},
@@ -271,11 +271,11 @@ fn handle_join(server, nick, params) => {
         }
     }
     
-    // Broadcast join to channel
+    # Broadcast join to channel
     let join_msg = format_message(nick, MSG_JOIN, [channel_name])
     let replies = ch.users |> collections.map(fn(u) => { to: u, message: join_msg })
     
-    // Send topic and names
+    # Send topic and names
     let topic_reply = match ch.topic != "" {
         true => [{ to: nick, message: format_message(s.name, "332", [nick, channel_name, ch.topic]) }],
         false => []
@@ -321,7 +321,7 @@ fn handle_privmsg(server, nick, params) => {
     
     match target |> starts_with("#") {
         true => {
-            // Channel message
+            # Channel message
             let channel = collections.get(s.channels, target, nil)
             match channel {
                 nil => { server: s, replies: [{ to: nick, message: format_message(s.name, "403", [nick, target, "No such channel"]) }] },
@@ -336,7 +336,7 @@ fn handle_privmsg(server, nick, params) => {
             }
         },
         false => {
-            // Direct message
+            # Direct message
             let user = collections.get(s.users, target, nil)
             match user {
                 nil => { server: s, replies: [{ to: nick, message: format_message(s.name, "401", [nick, target, "No such nick"]) }] },
@@ -363,7 +363,7 @@ fn handle_nick(server, old_nick, params) => {
             u.nick = new_nick
             s.users = s.users |> collections.remove(old_nick) |> collections.set(new_nick, u)
             
-            // Update channels
+            # Update channels
             s.channels = s.channels |> collections.map_values(fn(ch) => {
                 let mut c = ch
                 c.users = c.users |> collections.map(fn(n) => match n == old_nick { true => new_nick, false => n })
@@ -384,7 +384,7 @@ fn handle_quit(server, nick, params) => {
     let quit_msg = format_message(nick, MSG_QUIT, [reason])
     let mut all_recipients = []
     
-    // Remove from all channels
+    # Remove from all channels
     s.channels = s.channels |> collections.map_values(fn(ch) => {
         match collections.contains(ch.users, nick) {
             true => {
@@ -500,11 +500,11 @@ fn handle_ping(server, nick, params) => {
 }
 
 fn handle_mode(server, nick, params) => {
-    // Simplified mode handling
+    # Simplified mode handling
     { server: server, replies: [] }
 }
 
-// --- Server Statistics ---
+# --- Server Statistics ---
 
 pub fn server_stats(server) => {
     let channels = server.channels |> collections.entries()
@@ -521,14 +521,14 @@ pub fn server_stats(server) => {
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Arc Chat Protocol Demo ===\n")
     
     let mut server = create_server("irc.arc-lang.org")
     
-    // Register users
+    # Register users
     let users = ["Alice", "Bob", "Charlie", "Diana"]
     users |> collections.each(fn(nick) => {
         let user = create_user(nick, nick |> lowercase(), "client.arc-lang.org")
@@ -537,7 +537,7 @@ fn main() => {
         print("User connected: ${nick}")
     })
     
-    // Simulate chat session
+    # Simulate chat session
     let messages = [
         "JOIN #general",
         "JOIN #general",
@@ -557,7 +557,7 @@ fn main() => {
         "NAMES #general"
     ]
     
-    // Process first 3 joins manually (they need sender context)
+    # Process first 3 joins manually (they need sender context)
     let join_users = ["Alice", "Bob", "Charlie"]
     join_users |> collections.each(fn(nick) => {
         let msg = parse_message("JOIN #general")
@@ -567,7 +567,7 @@ fn main() => {
         result.replies |> collections.each(fn(r) => print("  -> ${r.to}: ${r.message}"))
     })
     
-    // Process remaining messages
+    # Process remaining messages
     messages |> collections.skip(3) |> collections.each(fn(raw) => {
         let msg = parse_message(raw)
         match msg {
@@ -591,7 +591,7 @@ fn main() => {
         }
     })
     
-    // Server stats
+    # Server stats
     print("\n\n--- Server Statistics ---")
     let stats = server_stats(server)
     print("Server: ${stats.name}")

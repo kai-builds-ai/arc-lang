@@ -1,18 +1,18 @@
-// =============================================================================
-// todo-app.arc — Full TODO Application
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, import, @GET/@POST, closures,
-// higher-order functions, string interpolation, pattern matching, json, io,
-// datetime, regex, collections, async/await
-// =============================================================================
+# =============================================================================
+# todo-app.arc — Full TODO Application
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, import, @GET/@POST, closures,
+# higher-order functions, string interpolation, pattern matching, json, io,
+# datetime, regex, collections, async/await
+# =============================================================================
 
-import json
-import io
-import datetime
-import regex
-import collections
+use json
+use io
+use datetime
+use regex
+use collections
 
-// --- Priority levels ---
+# --- Priority levels ---
 pub enum Priority {
   Critical,
   High,
@@ -51,7 +51,7 @@ pub fn priority_label(p: Priority) -> str {
   }
 }
 
-// --- Todo status ---
+# --- Todo status ---
 pub enum Status {
   Pending,
   InProgress,
@@ -68,7 +68,7 @@ pub fn status_icon(s: Status) -> str {
   }
 }
 
-// --- Todo item ---
+# --- Todo item ---
 pub struct Todo {
   id: int,
   title: str,
@@ -82,7 +82,7 @@ pub struct Todo {
   completed_at: datetime?,
 }
 
-// --- Todo store ---
+# --- Todo store ---
 pub struct TodoStore {
   mut todos: list,
   mut next_id: int,
@@ -97,9 +97,9 @@ pub fn new_store(path: str) -> TodoStore {
   }
 }
 
-// --- CRUD Operations ---
+# --- CRUD Operations ---
 
-// Create
+# Create
 pub fn add(store: mut TodoStore, title: str, opts: map) -> Todo {
   let now = datetime::now()
   let todo = Todo {
@@ -108,11 +108,11 @@ pub fn add(store: mut TodoStore, title: str, opts: map) -> Todo {
     description: opts["description"] ?? "",
     priority: opts["priority"] ?? Priority::None,
     status: Status::Pending,
-    due_date: opts["due_date"] ?? null,
+    due_date: opts["due_date"] ?? nil,
     tags: opts["tags"] ?? [],
     created_at: now,
     updated_at: now,
-    completed_at: null,
+    completed_at: nil,
   }
 
   store.todos = store.todos |> append(todo)
@@ -120,7 +120,7 @@ pub fn add(store: mut TodoStore, title: str, opts: map) -> Todo {
   todo
 }
 
-// Read
+# Read
 pub fn get(store: TodoStore, id: int) -> Todo? {
   store.todos |> find_by(fn(t) => t.id == id)
 }
@@ -129,9 +129,9 @@ pub fn list_all(store: TodoStore) -> list {
   store.todos
 }
 
-// Update
+# Update
 pub fn update(store: mut TodoStore, id: int, updates: map) -> Todo? {
-  let mut found = null
+  let mut found = nil
   store.todos = store.todos |> map(fn(todo) {
     if todo.id == id {
       let updated = Todo {
@@ -145,21 +145,21 @@ pub fn update(store: mut TodoStore, id: int, updates: map) -> Todo? {
       }
       found = updated
       updated
-    } else {
+    } el {
       todo
     }
   })
   found
 }
 
-// Delete
+# Delete
 pub fn remove(store: mut TodoStore, id: int) -> bool {
   let before = len(store.todos)
   store.todos = store.todos |> filter(fn(t) => t.id != id)
   len(store.todos) < before
 }
 
-// --- Status transitions ---
+# --- Status transitions ---
 pub fn start(store: mut TodoStore, id: int) -> Todo? {
   set_status(store, id, Status::InProgress)
 }
@@ -169,7 +169,7 @@ pub fn complete(store: mut TodoStore, id: int) -> Todo? {
   store.todos = store.todos |> map(fn(todo) {
     if todo.id == id {
       Todo { ...todo, status: Status::Done, completed_at: now, updated_at: now }
-    } else { todo }
+    } el { todo }
   })
   get(store, id)
 }
@@ -182,12 +182,12 @@ fn set_status(store: mut TodoStore, id: int, status: Status) -> Todo? {
   store.todos = store.todos |> map(fn(todo) {
     if todo.id == id {
       Todo { ...todo, status: status, updated_at: datetime::now() }
-    } else { todo }
+    } el { todo }
   })
   get(store, id)
 }
 
-// --- Filtering ---
+# --- Filtering ---
 pub fn filter_by_status(store: TodoStore, status: Status) -> list {
   store.todos |> filter(fn(t) => t.status == status)
 }
@@ -203,7 +203,7 @@ pub fn filter_by_tag(store: TodoStore, tag: str) -> list {
 pub fn filter_overdue(store: TodoStore) -> list {
   let now = datetime::now()
   store.todos |> filter(fn(t) => {
-    t.due_date != null && t.status != Status::Done && t.status != Status::Cancelled
+    t.due_date != nil && t.status != Status::Done && t.status != Status::Cancelled
       && datetime::is_before(t.due_date, now)
   })
 }
@@ -212,13 +212,13 @@ pub fn filter_due_today(store: TodoStore) -> list {
   let today = datetime::today()
   let tomorrow = today |> datetime::add_days(1)
   store.todos |> filter(fn(t) => {
-    t.due_date != null
+    t.due_date != nil
       && datetime::is_after(t.due_date, today)
       && datetime::is_before(t.due_date, tomorrow)
   })
 }
 
-// --- Search ---
+# --- Search ---
 pub fn search(store: TodoStore, query: str) -> list {
   let pattern = regex::compile(query, "i")
   store.todos |> filter(fn(t) => {
@@ -226,7 +226,7 @@ pub fn search(store: TodoStore, query: str) -> list {
   })
 }
 
-// --- Sorting ---
+# --- Sorting ---
 pub fn sort_by_priority(todos: list) -> list {
   todos |> collections::sort_by(fn(a, b) => {
     priority_value(b.priority) - priority_value(a.priority)
@@ -235,8 +235,8 @@ pub fn sort_by_priority(todos: list) -> list {
 
 pub fn sort_by_due_date(todos: list) -> list {
   todos |> collections::sort_by(fn(a, b) => {
-    let a_ms = if a.due_date != null { datetime::to_epoch_ms(a.due_date) } else { 9999999999999 }
-    let b_ms = if b.due_date != null { datetime::to_epoch_ms(b.due_date) } else { 9999999999999 }
+    let a_ms = if a.due_date != nil { datetime::to_epoch_ms(a.due_date) } el { 9999999999999 }
+    let b_ms = if b.due_date != nil { datetime::to_epoch_ms(b.due_date) } el { 9999999999999 }
     a_ms - b_ms
   })
 }
@@ -247,7 +247,7 @@ pub fn sort_by_created(todos: list) -> list {
   })
 }
 
-// --- Statistics ---
+# --- Statistics ---
 pub fn stats(store: TodoStore) -> map {
   let todos = store.todos
   let total = len(todos)
@@ -259,7 +259,7 @@ pub fn stats(store: TodoStore) -> map {
 
   let completion_rate = if total > 0 {
     (done |> to_float()) / (total |> to_float()) * 100.0
-  } else { 0.0 }
+  } el { 0.0 }
 
   let by_priority = todos |> reduce({}, fn(acc, t) => {
     let key = priority_label(t.priority)
@@ -268,7 +268,7 @@ pub fn stats(store: TodoStore) -> map {
   })
 
   let avg_completion_ms = todos
-    |> filter(fn(t) => t.completed_at != null)
+    |> filter(fn(t) => t.completed_at != nil)
     |> map(fn(t) => datetime::diff_ms(t.completed_at, t.created_at))
     |> collections::average() ?? 0
 
@@ -285,7 +285,7 @@ pub fn stats(store: TodoStore) -> map {
   }
 }
 
-// --- Persistence ---
+# --- Persistence ---
 pub fn save(store: TodoStore) {
   let data = store.todos |> map(fn(t) => {
     {
@@ -294,11 +294,11 @@ pub fn save(store: TodoStore) {
       "description": t.description,
       "priority": "{t.priority}",
       "status": "{t.status}",
-      "due_date": if t.due_date != null { datetime::to_iso(t.due_date) } else { null },
+      "due_date": if t.due_date != nil { datetime::to_iso(t.due_date) } el { nil },
       "tags": t.tags,
       "created_at": datetime::to_iso(t.created_at),
       "updated_at": datetime::to_iso(t.updated_at),
-      "completed_at": if t.completed_at != null { datetime::to_iso(t.completed_at) } else { null },
+      "completed_at": if t.completed_at != nil { datetime::to_iso(t.completed_at) } el { nil },
     }
   })
   let json_str = json::stringify(data, 2)
@@ -321,11 +321,11 @@ pub fn load(store: mut TodoStore) {
         "Cancelled" => Status::Cancelled
         _ => Status::Pending
       },
-      due_date: if item["due_date"] != null { datetime::from_iso(item["due_date"]) } else { null },
+      due_date: if item["due_date"] != nil { datetime::from_iso(item["due_date"]) } el { nil },
       tags: item["tags"],
       created_at: datetime::from_iso(item["created_at"]),
       updated_at: datetime::from_iso(item["updated_at"]),
-      completed_at: if item["completed_at"] != null { datetime::from_iso(item["completed_at"]) } else { null },
+      completed_at: if item["completed_at"] != nil { datetime::from_iso(item["completed_at"]) } el { nil },
     })
     store.next_id = store.todos
       |> map(fn(t) => t.id)
@@ -333,16 +333,16 @@ pub fn load(store: mut TodoStore) {
   }
 }
 
-// --- Display ---
+# --- Display ---
 pub fn format_todo(t: Todo) -> str {
   let icon = status_icon(t.status)
   let prio = priority_label(t.priority)
-  let due = if t.due_date != null {
+  let due = if t.due_date != nil {
     " 📅 {datetime::format(t.due_date, "MMM DD")}"
-  } else { "" }
+  } el { "" }
   let tags_str = if len(t.tags) > 0 {
     " [{t.tags |> str::join(", ")}]"
-  } else { "" }
+  } el { "" }
 
   "{icon} #{t.id} {t.title} ({prio}){due}{tags_str}"
 }
@@ -351,18 +351,18 @@ pub fn print_list(todos: list, header: str) {
   print("\n=== {header} ({len(todos)}) ===")
   if len(todos) == 0 {
     print("  (empty)")
-  } else {
+  } el {
     todos |> each(fn(t) {
       print("  {format_todo(t)}")
     })
   }
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   let mut store = new_store("todos.json")
 
-  // Add todos
+  # Add todos
   add(store, "Design API schema", {
     "priority": Priority::Critical,
     "due_date": datetime::now() |> datetime::add_days(2),
@@ -393,17 +393,17 @@ fn main() {
     "tags": ["backend", "tech-debt"],
   })
 
-  // Change statuses
+  # Change statuses
   start(store, 1)
   complete(store, 3)
 
-  // Display
+  # Display
   print_list(list_all(store), "All Todos")
   print_list(filter_overdue(store), "⚠ Overdue")
   print_list(filter_by_tag(store, "backend") |> sort_by_priority(), "Backend Tasks")
   print_list(search(store, "bug|test"), "Search: bug|test")
 
-  // Statistics
+  # Statistics
   let s = stats(store)
   print("\n=== Statistics ===")
   print("  Total: {s["total"]}")
@@ -413,7 +413,7 @@ fn main() {
   print("  Completion rate: {s["completion_rate"]}%")
   print("  By priority: {s["by_priority"]}")
 
-  // Save
+  # Save
   save(store)
   print("\nSaved to {store.storage_path}")
 }

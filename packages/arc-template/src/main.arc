@@ -1,27 +1,28 @@
 # arc-template — String template engine for Arc
 # Variable substitution, conditionals, loops, filters, escaping
-#
-# Template syntax:
-#   {{ variable }}           — variable substitution
-#   {{ variable | filter }}  — apply filter
-#   {{% if condition }}...{{% end }}  — conditional
-#   {{% for item in list }}...{{% end }}  — loop
-#   {{! escaped }}           — HTML escaped output
-#   {{# comment #}}          — comment (stripped)
+
+# Template delimiter strings
+let OPEN_VAR = "\{\{"
+let CLOSE_VAR = "}}"
+let OPEN_ESC = "\{\{!"
+let OPEN_BLOCK = "\{\{%"
+let OPEN_COMMENT = "\{\{#"
+let CLOSE_COMMENT = "#}}"
+let BLOCK_IF = "\{\{% if "
+let BLOCK_END = "\{\{% end }}"
+let BLOCK_ELSE = "\{\{% el }}"
+let BLOCK_FOR = "\{\{% for "
 
 # --- Built-in Filters ---
 
 let mut _filters = {
-  upper: fn(v) => upper(v),
-  lower: fn(v) => lower(v),
-  trim: fn(v) => trim(v),
-  capitalize: fn(v) => upper(slice(v, 0, 1)) ++ slice(v, 1, len(v)),
-  reverse: fn(v) => reverse(v),
-  length: fn(v) => str(len(v)),
-  default: fn(v, fallback) => if v == nil or v == "" { fallback } el { v },
-  truncate: fn(v, n) => if len(v) > n { slice(v, 0, n) ++ "..." } el { v },
-  json: fn(v) => json_encode(v),
-  join: fn(v, sep) => join(v, sep)
+  upper: v => upper(v),
+  lower: v => lower(v),
+  trim_filter: v => trim(v),
+  capitalize: v => upper(slice(v, 0, 1)) ++ slice(v, 1, len(v)),
+  reverse: v => reverse(v),
+  length: v => str(len(v)),
+  json: v => json_encode(v)
 }
 
 pub fn register_filter(name, f) {
@@ -40,8 +41,8 @@ pub fn escape_html(s) {
 
 # --- Template Rendering ---
 
-pub fn render(template, data) {
-  template
+pub fn render(tpl, data) {
+  tpl
     |> strip_comments
     |> process_conditionals(data)
     |> process_loops(data)
@@ -49,31 +50,29 @@ pub fn render(template, data) {
 }
 
 fn strip_comments(tpl) {
-  # Remove {{# ... #}} comments
   let mut result = tpl
-  let mut start = index_of(result, "{{#")
+  let mut start = index_of(result, OPEN_COMMENT)
   do {
-    if start == -1 { break }
-    let end = index_of(result, "#}}", start)
-    if end == -1 { break }
+    if start == -1 { ret result }
+    let end = index_of(result, CLOSE_COMMENT, start)
+    if end == -1 { ret result }
     result = slice(result, 0, start) ++ slice(result, end + 3, len(result))
-    start = index_of(result, "{{#")
+    start = index_of(result, OPEN_COMMENT)
   } until start == -1
   result
 }
 
 fn process_conditionals(tpl, data) {
-  # Process {{% if condition }}...{{% el }}...{{% end }}
   let mut result = tpl
-  let mut start = index_of(result, "{{% if ")
+  let mut start = index_of(result, BLOCK_IF)
 
   do {
-    if start == -1 { break }
-    let cond_end = index_of(result, "}}", start)
+    if start == -1 { ret result }
+    let cond_end = index_of(result, CLOSE_VAR, start)
     let condition = slice(result, start + 7, cond_end) |> trim
 
-    let end_tag = index_of(result, "{{% end }}", start)
-    let else_tag = index_of(result, "{{% el }}", start)
+    let end_tag = index_of(result, BLOCK_END, start)
+    let else_tag = index_of(result, BLOCK_ELSE, start)
 
     let truthy = resolve_value(condition, data)
 
@@ -88,38 +87,39 @@ fn process_conditionals(tpl, data) {
       result = slice(result, 0, start) ++ replacement ++ slice(result, end_tag + 10, len(result))
     }
 
-    start = index_of(result, "{{% if ")
+    start = index_of(result, BLOCK_IF)
   } until start == -1
   result
 }
 
 fn process_loops(tpl, data) {
-  # Process {{% for item in list }}...{{% end }}
   let mut result = tpl
-  let mut start = index_of(result, "{{% for ")
+  let mut start = index_of(result, BLOCK_FOR)
 
   do {
-    if start == -1 { break }
-    let tag_end = index_of(result, "}}", start)
+    if start == -1 { ret result }
+    let tag_end = index_of(result, CLOSE_VAR, start)
     let loop_expr = slice(result, start + 8, tag_end) |> trim
 
-    # Parse "item in list"
     let parts = split(loop_expr, " in ")
     let item_name = parts[0] |> trim
     let list_name = parts[1] |> trim
 
-    let end_tag = index_of(result, "{{% end }}", start)
+    let end_tag = index_of(result, BLOCK_END, start)
     let body = slice(result, tag_end + 2, end_tag)
 
-    let list = resolve_value(list_name, data) or []
-    let rendered = list |> map(fn(item) {
-      let item_data = {..data}
+    let list = resolve_value(list_name, data)
+    let items = if list != nil { list } el { [] }
+    let rendered = items |> map(item => {
+      let mut item_data = {}
+      let data_keys = keys(data)
+      for k in data_keys { item_data[k] = data[k] }
       item_data[item_name] = item
       body |> process_variables(item_data)
     }) |> join("")
 
     result = slice(result, 0, start) ++ rendered ++ slice(result, end_tag + 10, len(result))
-    start = index_of(result, "{{% for ")
+    start = index_of(result, BLOCK_FOR)
   } until start == -1
   result
 }
@@ -128,26 +128,26 @@ fn process_variables(tpl, data) {
   let mut result = tpl
 
   # Process escaped {{! var }}
-  let mut start = index_of(result, "{{!")
+  let mut start = index_of(result, OPEN_ESC)
   do {
-    if start == -1 { break }
-    let end = index_of(result, "}}", start)
+    if start == -1 { ret result }
+    let end = index_of(result, CLOSE_VAR, start)
     let expr = slice(result, start + 3, end) |> trim
     let value = resolve_value(expr, data)
-    let escaped = escape_html(str(value or ""))
+    let escaped = escape_html(str(if value != nil { value } el { "" }))
     result = slice(result, 0, start) ++ escaped ++ slice(result, end + 2, len(result))
-    start = index_of(result, "{{!")
+    start = index_of(result, OPEN_ESC)
   } until start == -1
 
   # Process {{ var }} and {{ var | filter }}
-  start = index_of(result, "{{")
+  start = index_of(result, OPEN_VAR)
   do {
-    if start == -1 { break }
+    if start == -1 { ret result }
     # Skip if it's a block tag
-    if slice(result, start, start + 3) == "{{%" {
-      start = index_of(result, "{{", start + 2)
+    if slice(result, start, start + 3) == OPEN_BLOCK {
+      start = index_of(result, OPEN_VAR, start + 2)
     } el {
-      let end = index_of(result, "}}", start)
+      let end = index_of(result, CLOSE_VAR, start)
       let expr = slice(result, start + 2, end) |> trim
 
       let value = if contains(expr, "|") {
@@ -160,8 +160,8 @@ fn process_variables(tpl, data) {
         resolve_value(expr, data)
       }
 
-      result = slice(result, 0, start) ++ str(value or "") ++ slice(result, end + 2, len(result))
-      start = index_of(result, "{{")
+      result = slice(result, 0, start) ++ str(if value != nil { value } el { "" }) ++ slice(result, end + 2, len(result))
+      start = index_of(result, OPEN_VAR)
     }
   } until start == -1
 
@@ -169,12 +169,11 @@ fn process_variables(tpl, data) {
 }
 
 fn resolve_value(path, data) {
-  # Handle dot notation: "user.name" => data.user.name
   let parts = split(path, ".")
   let mut current = data
   for p in parts {
-    if current == nil { nil }
-    el { current = current[p] }
+    if current == nil { ret nil }
+    current = current[p]
   }
   current
 }
@@ -191,14 +190,19 @@ pub fn template(tpl) => {_template: tpl, _data: {}}
 pub fn set(t, key, value) {
   let d = t._data
   d[key] = value
-  {..t, _data: d}
+  {_template: t._template, _data: d}
 }
 
-pub fn set_all(t, data) => {..t, _data: {..t._data, ..data}}
+pub fn set_all(t, data) {
+  let mut d = {}
+  let t_keys = keys(t._data)
+  for k in t_keys { d[k] = t._data[k] }
+  let data_keys = keys(data)
+  for k in data_keys { d[k] = data[k] }
+  {_template: t._template, _data: d}
+}
 
 pub fn to_string(t) => render(t._template, t._data)
-
-# --- Convenience ---
 
 pub fn render_string(tpl, data) => render(tpl, data)
 

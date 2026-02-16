@@ -1,17 +1,17 @@
-// ============================================================================
-// State Machine Library in Arc
-// ============================================================================
-// A generic finite state machine with state definitions, transition rules,
-// guard conditions, event handling, history tracking, and serialization.
-// Includes two demos: a vending machine and a traffic light controller.
-// Demonstrates: pattern matching, closures, pipelines, collections, json, mut.
-// ============================================================================
+# ============================================================================
+# State Machine Library in Arc
+# ============================================================================
+# A generic finite state machine with state definitions, transition rules,
+# guard conditions, event handling, history tracking, and serialization.
+# Includes two demos: a vending machine and a traffic light controller.
+# Demonstrates: pattern matching, closures, pipelines, collections, json, mut.
+# ============================================================================
 
-import collections
-import json
-import datetime
+use collections
+use json
+use datetime
 
-// --- State Machine Definition ---
+# --- State Machine Definition ---
 
 pub fn define_machine(name, config) => {
     {
@@ -38,7 +38,7 @@ pub fn create_instance(machine, context) => {
     }
 }
 
-// --- Transition Logic ---
+# --- Transition Logic ---
 
 fn find_transition(machine, current_state, event) => {
     machine.transitions |> collections.find(fn(t) => {
@@ -66,7 +66,7 @@ pub fn send_event(instance, event, payload) => {
             instance
         },
         _ => {
-            // Check guard condition
+            # Check guard condition
             let guard_ok = match transition.guard {
                 nil => true,
                 guard => guard(instance.context)
@@ -82,30 +82,30 @@ pub fn send_event(instance, event, payload) => {
                     let from_state = inst.current_state
                     let to_state = transition.to
                     
-                    // Execute on_exit callback
+                    # Execute on_exit callback
                     let exit_fn = collections.get(inst.machine.on_exit, from_state, nil)
                     match exit_fn {
                         nil => {},
                         f => { inst.context = f(inst.context, event) }
                     }
                     
-                    // Execute transition action
+                    # Execute transition action
                     match transition.action {
                         nil => {},
                         action => { inst.context = action(inst.context, payload) }
                     }
                     
-                    // Update state
+                    # Update state
                     inst.current_state = to_state
                     
-                    // Execute on_enter callback
+                    # Execute on_enter callback
                     let enter_fn = collections.get(inst.machine.on_enter, to_state, nil)
                     match enter_fn {
                         nil => {},
                         f => { inst.context = f(inst.context, event) }
                     }
                     
-                    // Record history
+                    # Record history
                     inst.history = inst.history |> collections.append({
                         from: from_state,
                         to: to_state,
@@ -122,7 +122,7 @@ pub fn send_event(instance, event, payload) => {
     }
 }
 
-// --- Batch Events ---
+# --- Batch Events ---
 
 pub fn send_events(instance, events) => {
     events |> collections.reduce(instance, fn(inst, evt) => {
@@ -133,7 +133,7 @@ pub fn send_events(instance, events) => {
     })
 }
 
-// --- History & Introspection ---
+# --- History & Introspection ---
 
 pub fn get_history(instance) => instance.history
 
@@ -153,7 +153,7 @@ pub fn state_duration(instance) => {
     datetime.diff(datetime.now(), datetime.parse(last_entry.timestamp))
 }
 
-// --- Serialization ---
+# --- Serialization ---
 
 pub fn serialize(instance) => {
     json.encode({
@@ -178,9 +178,9 @@ pub fn visualize(machine) => {
     print("")
 }
 
-// ============================================================================
-// Demo 1: Vending Machine
-// ============================================================================
+# ============================================================================
+# Demo 1: Vending Machine
+# ============================================================================
 
 fn vending_machine_demo() => {
     print("\n" + "=".repeat(60))
@@ -258,9 +258,9 @@ fn get_item_price(item) => {
     }
 }
 
-// ============================================================================
-// Demo 2: Traffic Light Controller
-// ============================================================================
+# ============================================================================
+# Demo 2: Traffic Light Controller
+# ============================================================================
 
 fn traffic_light_demo() => {
     print("\n" + "=".repeat(60))
@@ -301,8 +301,8 @@ fn traffic_light_demo() => {
     
     print("\n--- Emergency override ---")
     light = light
-        |> send_event("TIMER", nil)  // green
-        |> send_event("EMERGENCY", nil)  // back to red
+        |> send_event("TIMER", nil) # green
+        |> send_event("EMERGENCY", nil) # back to red
     
     print("\n--- Malfunction and repair ---")
     light = light
@@ -318,7 +318,7 @@ fn traffic_light_demo() => {
     })
 }
 
-// --- Main ---
+# --- Main ---
 
 fn main() => {
     print("=== Arc State Machine Library Demo ===")

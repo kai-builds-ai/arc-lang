@@ -1,16 +1,16 @@
-// ============================================================================
-// Graph Data Structure in Arc
-// ============================================================================
-// Full-featured graph with adjacency list representation. Supports directed
-// and undirected graphs, weighted edges, BFS, DFS, topological sort,
-// cycle detection, and connected components.
-// Demonstrates: maps, lists, mutation, pattern matching, pipelines, closures,
-// recursion, string interpolation, destructuring, higher-order functions
-// ============================================================================
+# ============================================================================
+# Graph Data Structure in Arc
+# ============================================================================
+# Full-featured graph with adjacency list representation. Supports directed
+# and undirected graphs, weighted edges, BFS, DFS, topological sort,
+# cycle detection, and connected components.
+# Demonstrates: maps, lists, mutation, pattern matching, pipelines, closures,
+# recursion, string interpolation, destructuring, higher-order functions
+# ============================================================================
 
-import collections
+use collections
 
-// --- Graph Creation ---
+# --- Graph Creation ---
 
 pub fn create(directed) => {
     vertices: {},
@@ -23,7 +23,7 @@ pub fn create(directed) => {
 pub fn directed() => create(true)
 pub fn undirected() => create(false)
 
-// --- Vertex Operations ---
+# --- Vertex Operations ---
 
 pub fn add_vertex(g, id, data) {
     if g.vertices[id] != nil { ret g }
@@ -41,10 +41,10 @@ pub fn add_vertex(g, id, data) {
 pub fn remove_vertex(g, id) {
     if g.vertices[id] == nil { ret g }
 
-    // Remove all edges to/from this vertex
+    # Remove all edges to/from this vertex
     g.edges = g.edges |> filter(e => e.from != id and e.to != id)
 
-    // Remove from adjacency lists of other vertices
+    # Remove from adjacency lists of other vertices
     for vid in vertex_ids(g) {
         if vid != id {
             let v = g.vertices[vid]
@@ -65,10 +65,10 @@ pub fn vertex_ids(g) => g.vertices |> collections.keys()
 
 pub fn vertex_count(g) => g.vertex_count
 
-// --- Edge Operations ---
+# --- Edge Operations ---
 
 pub fn add_edge(g, from, to, weight) {
-    // Auto-create vertices if they don't exist
+    # Auto-create vertices if they don't exist
     if g.vertices[from] == nil { g = add_vertex(g, from, nil) }
     if g.vertices[to] == nil { g = add_vertex(g, to, nil) }
 
@@ -76,7 +76,7 @@ pub fn add_edge(g, from, to, weight) {
     g.edges = g.edges ++ [edge]
     g.edge_count = g.edge_count + 1
 
-    // Update adjacency
+    # Update adjacency
     g.vertices[from].adj = g.vertices[from].adj ++ [{to: to, weight: weight}]
     g.vertices[from].out_degree = g.vertices[from].out_degree + 1
     g.vertices[to].in_degree = g.vertices[to].in_degree + 1
@@ -127,7 +127,7 @@ pub fn weighted_neighbors(g, id) {
     g.vertices[id].adj
 }
 
-// --- Breadth-First Search ---
+# --- Breadth-First Search ---
 
 pub fn bfs(g, start) {
     let mut visited = {}
@@ -157,7 +157,7 @@ pub fn bfs(g, start) {
     {order: order, parent: parent, distance: distance}
 }
 
-// --- Depth-First Search ---
+# --- Depth-First Search ---
 
 pub fn dfs(g, start) {
     let mut visited = {}
@@ -185,7 +185,7 @@ pub fn dfs(g, start) {
     {order: order, pre_order: pre_order, post_order: post_order}
 }
 
-// DFS on entire graph (visits all components)
+# DFS on entire graph (visits all components)
 pub fn dfs_full(g) {
     let mut visited = {}
     let mut order = []
@@ -205,7 +205,7 @@ pub fn dfs_full(g) {
     order
 }
 
-// --- Topological Sort (Kahn's Algorithm) ---
+# --- Topological Sort (Kahn's Algorithm) ---
 
 pub fn topological_sort(g) {
     if not g.directed { ret {error: "Topological sort requires directed graph"} }
@@ -215,7 +215,7 @@ pub fn topological_sort(g) {
         in_deg[id] = g.vertices[id].in_degree
     }
 
-    // Find all vertices with no incoming edges
+    # Find all vertices with no incoming edges
     let mut queue = vertex_ids(g) |> filter(id => in_deg[id] == 0)
     let mut order = []
     let mut processed = 0
@@ -242,7 +242,7 @@ pub fn topological_sort(g) {
     }
 }
 
-// --- Cycle Detection ---
+# --- Cycle Detection ---
 
 pub fn has_cycle(g) {
     if g.directed {
@@ -253,14 +253,14 @@ pub fn has_cycle(g) {
 }
 
 fn has_cycle_directed(g) {
-    let mut color = {}  // white=unvisited, gray=in-progress, black=done
+    let mut color = {} # white=unvisited, gray=in-progress, black=done
     for id in vertex_ids(g) { color[id] = "white" }
 
     fn visit(node) {
         color[node] = "gray"
         for neighbor in neighbors(g, node) {
             match color[neighbor] {
-                "gray" => ret true,   // Back edge = cycle
+                "gray" => ret true, # Back edge = cycle
                 "white" => {
                     if visit(neighbor) { ret true }
                 },
@@ -288,7 +288,7 @@ fn has_cycle_undirected(g) {
             if visited[neighbor] != true {
                 if visit(neighbor, node) { ret true }
             } el if neighbor != parent {
-                ret true  // Visited neighbor that isn't parent = cycle
+                ret true # Visited neighbor that isn't parent = cycle
             }
         }
         false
@@ -302,7 +302,7 @@ fn has_cycle_undirected(g) {
     false
 }
 
-// --- Connected Components ---
+# --- Connected Components ---
 
 pub fn connected_components(g) {
     let mut visited = {}
@@ -327,7 +327,7 @@ pub fn connected_components(g) {
     components
 }
 
-// --- Shortest Path (Dijkstra) ---
+# --- Shortest Path (Dijkstra) ---
 
 pub fn dijkstra(g, start) {
     let mut dist = {}
@@ -375,7 +375,7 @@ pub fn reconstruct_path(result, target) {
     {path: path, distance: result.distances[target]}
 }
 
-// --- Graph Visualization (ASCII) ---
+# --- Graph Visualization (ASCII) ---
 
 pub fn to_string(g) {
     let mut lines = []
@@ -391,7 +391,7 @@ pub fn to_string(g) {
     lines |> join("\n")
 }
 
-// --- Utility ---
+# --- Utility ---
 
 fn any(lst, pred) => lst |> filter(pred) |> len() > 0
 fn find(lst, pred) {
@@ -406,12 +406,12 @@ fn join(lst, sep) => match lst {
     [x, ..rest] => "{x}{sep}{join(rest, sep)}"
 }
 
-// --- Test Suite ---
+# --- Test Suite ---
 
 pub fn run_tests() {
     print("=== Graph Tests ===\n")
 
-    // Undirected graph
+    # Undirected graph
     print("--- Undirected Graph ---")
     let mut ug = undirected()
     ug = add_edge(ug, "A", "B", 4)
@@ -436,7 +436,7 @@ pub fn run_tests() {
     let comps = connected_components(ug)
     print("Connected components: {comps}")
 
-    // Directed acyclic graph
+    # Directed acyclic graph
     print("\n--- Directed Acyclic Graph ---")
     let mut dag = directed()
     dag = add_edge(dag, "A", "B", 1)
@@ -451,7 +451,7 @@ pub fn run_tests() {
     print("Topological order: {topo.order}")
     print("Has cycle: {has_cycle(dag)}")
 
-    // Create a cycle
+    # Create a cycle
     print("\n--- Cycle Detection ---")
     let mut cyclic = directed()
     cyclic = add_edge(cyclic, "A", "B", 1)
@@ -465,7 +465,7 @@ pub fn run_tests() {
     ucyclic = add_edge(ucyclic, "C", "A", 1)
     print("Undirected cycle: {has_cycle(ucyclic)}")
 
-    // Weighted shortest path
+    # Weighted shortest path
     print("\n--- Dijkstra's Shortest Path ---")
     let mut wg = directed()
     wg = add_edge(wg, "S", "A", 7)
@@ -483,7 +483,7 @@ pub fn run_tests() {
         print("  S -> {target}: distance={p.distance}, path={p.path}")
     }
 
-    // Remove operations
+    # Remove operations
     print("\n--- Remove Operations ---")
     let mut rg = undirected()
     rg = add_edge(rg, "X", "Y", 1)
@@ -495,7 +495,7 @@ pub fn run_tests() {
     rg = remove_vertex(rg, "Z")
     print("After remove Z: vertices={vertex_ids(rg)}")
 
-    // Disconnected graph
+    # Disconnected graph
     print("\n--- Disconnected Graph ---")
     let mut disc = undirected()
     disc = add_edge(disc, "A", "B", 1)

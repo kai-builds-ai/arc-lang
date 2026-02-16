@@ -7,11 +7,10 @@ A complete walkthrough of every Arc feature with examples.
 ```arc
 let x = 42                      # immutable
 let mut count = 0                # mutable
-let name: String = "Arc"         # explicit type
 
 # Destructuring
 let {name, age} = getUser()      # map destructuring
-let [first, ..rest] = items      # list destructuring
+let [first, second] = items      # list destructuring
 ```
 
 Immutable by default. Use `mut` when you need to reassign.
@@ -25,7 +24,7 @@ For single-expression functions — no braces, no `return`:
 ```arc
 fn add(a, b) => a + b
 fn square(x) => x * x
-fn greet(name, greeting = "Hello") => "{greeting}, {name}!"
+fn greet(name) => "Hello, {name}!"
 ```
 
 ### Block Body
@@ -37,14 +36,6 @@ fn process(data) {
   let cleaned = data |> trim |> lowercase
   let parsed = parse(cleaned)
   parsed  # implicit return
-}
-```
-
-### Typed Functions
-
-```arc
-pub async fn fetchUser(id: Int) -> Result<User> {
-  @GET "api/users/{id}"
 }
 ```
 
@@ -69,25 +60,11 @@ match n {
   n => "other: {n}"
 }
 
-# Destructuring match
-match response {
-  {status: 200, body} => parse(body),
-  {status: 404} => nil,
-  {status: s} if s >= 500 => retry(),
-  _ => error("unexpected")
-}
-
-# Variant matching
-match result {
-  Ok(data) => process(data),
-  Err(msg) => log(msg)
-}
-
-# List matching
+# Wildcard / binding
 match items {
   [] => "empty",
   [x] => "single: {x}",
-  [first, ..rest] => "first: {first}, rest: {len(rest)}"
+  _ => "multiple items"
 }
 ```
 
@@ -140,7 +117,6 @@ let digits = 0..10                   # 0 to 9
 ```arc
 let evens = [x * 2 for x in 1..10]
 let squares = [x * x for x in 1..10 if x % 2 == 0]
-let lookup = {k: v * 2 for {k, v} in entries}
 ```
 
 ## String Interpolation
@@ -154,7 +130,7 @@ let math = "2 + 3 = {2 + 3}"
 let nested = "User: {user.name} ({user.age})"
 ```
 
-Use raw strings with backticks for no interpolation: `` `raw {not interpolated}` ``
+Use `\{` to escape braces in strings: `"literal \{braces\}"`
 
 ## Type System
 
@@ -199,25 +175,19 @@ No imports, no client setup, no serialization. Just call it.
 
 ## Error Handling
 
-### Error Propagation with `?`
+Arc uses map-based results for error handling:
 
 ```arc
-let data = readFile("config.json")?     # propagates error
-let config = parse(data)?
-```
+fn safe_divide(a, b) {
+  if b == 0 { {ok: false, error: "division by zero"} }
+  el { {ok: true, value: a / b} }
+}
 
-### Nil Coalescing
-
-```arc
-let name = user?.name ? "Anonymous"
-```
-
-### Pattern Matching Errors
-
-```arc
-match fetchUser(id) {
-  Ok(user) => greet(user),
-  Err(msg) => print("Error: {msg}")
+let result = safe_divide(10, 3)
+if result.ok {
+  print("Result: {result.value}")
+} el {
+  print("Error: {result.error}")
 }
 ```
 
@@ -269,7 +239,7 @@ if ready {
 ```arc
 for item in items { process(item) }
 for i in 0..10 { print(i) }
-for {name, age} in users { print("{name}: {age}") }
+for user in users { print("{user.name}: {user.age}") }
 ```
 
 ### Do Loops

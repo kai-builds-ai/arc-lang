@@ -1,17 +1,17 @@
-// =============================================================================
-// url-shortener.arc — URL Shortener Service
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, import, @GET/@POST, closures,
-// higher-order functions, string interpolation, crypto, datetime, collections,
-// json, async/await, pattern matching
-// =============================================================================
+# =============================================================================
+# url-shortener.arc — URL Shortener Service
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, import, @GET/@POST, closures,
+# higher-order functions, string interpolation, crypto, datetime, collections,
+# json, async/await, pattern matching
+# =============================================================================
 
-import crypto
-import datetime
-import collections
-import json
+use crypto
+use datetime
+use collections
+use json
 
-// --- URL record ---
+# --- URL record ---
 pub struct UrlRecord {
   short_code: str,
   original_url: str,
@@ -22,7 +22,7 @@ pub struct UrlRecord {
   mut total_clicks: int,
 }
 
-// --- Click event ---
+# --- Click event ---
 pub struct ClickEvent {
   timestamp: datetime,
   referrer: str,
@@ -30,7 +30,7 @@ pub struct ClickEvent {
   ip: str,
 }
 
-// --- URL Store ---
+# --- URL Store ---
 pub struct UrlStore {
   mut urls: map,
   mut code_to_url: map,
@@ -53,7 +53,7 @@ pub fn new_store(base_url: str) -> UrlStore {
   }
 }
 
-// --- Generate short code from URL ---
+# --- Generate short code from URL ---
 fn generate_code(url: str, length: int) -> str {
   let hash = crypto::sha256(url + "{datetime::now()}")
   let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -67,7 +67,7 @@ fn generate_code(url: str, length: int) -> str {
     |> str::join("")
 }
 
-// --- Custom code validation ---
+# --- Custom code validation ---
 fn validate_code(code: str) -> { valid: bool, error: str? } {
   if str::len(code) < 3 {
     ret { valid: false, error: "Code must be at least 3 characters" }
@@ -82,10 +82,10 @@ fn validate_code(code: str) -> { valid: bool, error: str? } {
   if !valid_chars {
     ret { valid: false, error: "Code contains invalid characters" }
   }
-  { valid: true, error: null }
+  { valid: true, error: nil }
 }
 
-// --- Rate limiting ---
+# --- Rate limiting ---
 fn check_rate_limit(store: mut UrlStore, ip: str) -> bool {
   let now_ms = datetime::to_epoch_ms(datetime::now())
   let window_start = now_ms - store.rate_limit_window_ms
@@ -95,36 +95,36 @@ fn check_rate_limit(store: mut UrlStore, ip: str) -> bool {
   if len(valid) >= store.rate_limit_max {
     store.rate_limits = store.rate_limits |> map::set(ip, valid)
     false
-  } else {
+  } el {
     store.rate_limits = store.rate_limits |> map::set(ip, valid |> append(now_ms))
     true
   }
 }
 
-// --- Shorten a URL ---
+# --- Shorten a URL ---
 pub fn shorten(store: mut UrlStore, url: str, opts: map) -> { short_url: str, code: str } {
   let ip = opts["ip"] ?? "unknown"
 
-  // Rate limit check
+  # Rate limit check
   if !check_rate_limit(store, ip) {
     panic("Rate limit exceeded. Try again later.")
   }
 
-  // Check if URL already shortened
+  # Check if URL already shortened
   let existing = store.urls[url]
-  if existing != null && opts["force"] != true {
+  if existing != nil && opts["force"] != true {
     ret {
       short_url: "{store.base_url}/{existing.short_code}",
       code: existing.short_code,
     }
   }
 
-  // Generate or use custom code
+  # Generate or use custom code
   let code = match opts["custom_code"] {
-    null => {
+    nil => {
       let mut candidate = generate_code(url, store.code_length)
       let mut attempts = 0
-      while store.code_to_url[candidate] != null && attempts < 10 {
+      while store.code_to_url[candidate] != nil && attempts < 10 {
         candidate = generate_code(url + "{attempts}", store.code_length)
         attempts = attempts + 1
       }
@@ -135,7 +135,7 @@ pub fn shorten(store: mut UrlStore, url: str, opts: map) -> { short_url: str, co
       if !validation.valid {
         panic("Invalid custom code: {validation.error}")
       }
-      if store.code_to_url[custom] != null {
+      if store.code_to_url[custom] != nil {
         panic("Code '{custom}' is already taken")
       }
       custom
@@ -164,25 +164,25 @@ pub fn shorten(store: mut UrlStore, url: str, opts: map) -> { short_url: str, co
 }
 
 fn map_optional(value: any, transform: fn) -> any {
-  if value != null { transform(value) } else { null }
+  if value != nil { transform(value) } el { nil }
 }
 
-// --- Resolve a short code ---
+# --- Resolve a short code ---
 pub fn resolve(store: mut UrlStore, code: str, click_info: map) -> str? {
   let url = store.code_to_url[code]
-  if url == null { ret null }
+  if url == nil { ret nil }
 
   let record = store.urls[url]
 
-  // Check expiration
-  if record.expires_at != null && datetime::is_after(datetime::now(), record.expires_at) {
-    // Expired — clean up
+  # Check expiration
+  if record.expires_at != nil && datetime::is_after(datetime::now(), record.expires_at) {
+    # Expired — clean up
     store.urls = store.urls |> map::remove(url)
     store.code_to_url = store.code_to_url |> map::remove(code)
-    ret null
+    ret nil
   }
 
-  // Record click
+  # Record click
   let click = ClickEvent {
     timestamp: datetime::now(),
     referrer: click_info["referrer"] ?? "direct",
@@ -196,31 +196,31 @@ pub fn resolve(store: mut UrlStore, code: str, click_info: map) -> str? {
   url
 }
 
-// --- Analytics ---
+# --- Analytics ---
 pub fn get_analytics(store: UrlStore, code: str) -> map? {
   let url = store.code_to_url[code]
-  if url == null { ret null }
+  if url == nil { ret nil }
 
   let record = store.urls[url]
   let clicks = record.clicks
 
-  // Clicks by date
+  # Clicks by date
   let by_date = clicks
     |> map(fn(c) => datetime::format(c.timestamp, "YYYY-MM-DD"))
     |> collections::group_by(fn(d) => d)
     |> map::map_values(fn(dates) => len(dates))
 
-  // Clicks by referrer
+  # Clicks by referrer
   let by_referrer = clicks
     |> collections::group_by(fn(c) => c.referrer)
     |> map::map_values(fn(refs) => len(refs))
 
-  // Unique visitors (by IP)
+  # Unique visitors (by IP)
   let unique_ips = clicks
     |> map(fn(c) => c.ip)
     |> collections::unique()
 
-  // Click timeline (last 7 days)
+  # Click timeline (last 7 days)
   let week_ago = datetime::now() |> datetime::add_days(-7)
   let recent = clicks |> filter(fn(c) => datetime::is_after(c.timestamp, week_ago))
 
@@ -235,11 +235,11 @@ pub fn get_analytics(store: UrlStore, code: str) -> map? {
     "recent_clicks_7d": len(recent),
     "last_click": if len(clicks) > 0 {
       datetime::to_iso(clicks[len(clicks) - 1].timestamp)
-    } else { null },
+    } el { nil },
   }
 }
 
-// --- List all URLs ---
+# --- List all URLs ---
 pub fn list_urls(store: UrlStore) -> list {
   store.urls |> map::values() |> map(fn(record) => {
     {
@@ -251,17 +251,17 @@ pub fn list_urls(store: UrlStore) -> list {
   }) |> collections::sort_by(fn(a, b) => b["clicks"] - a["clicks"])
 }
 
-// --- Delete a short URL ---
+# --- Delete a short URL ---
 pub fn delete_url(store: mut UrlStore, code: str) -> bool {
   let url = store.code_to_url[code]
-  if url == null { ret false }
+  if url == nil { ret false }
 
   store.urls = store.urls |> map::remove(url)
   store.code_to_url = store.code_to_url |> map::remove(code)
   true
 }
 
-// --- Export/Import ---
+# --- Export/Import ---
 pub fn export_json(store: UrlStore) -> str {
   let data = store.urls |> map::values() |> map(fn(r) => {
     {
@@ -274,7 +274,7 @@ pub fn export_json(store: UrlStore) -> str {
   json::stringify(data, 2)
 }
 
-// --- HTTP API (using Arc decorators) ---
+# --- HTTP API (using Arc decorators) ---
 @POST("/api/shorten")
 pub async fn api_shorten(req: Request) -> Response {
   let body = await req.json()
@@ -293,7 +293,7 @@ pub async fn api_analytics(req: Request) -> Response {
   let analytics = get_analytics(global_store, code)
 
   match analytics {
-    null => Response::json({ "error": "Not found" }, 404)
+    nil => Response::json({ "error": "Not found" }, 404)
     _ => Response::json(analytics, 200)
   }
 }
@@ -308,16 +308,16 @@ pub async fn api_redirect(req: Request) -> Response {
   })
 
   match url {
-    null => Response::json({ "error": "URL not found or expired" }, 404)
+    nil => Response::json({ "error": "URL not found or expired" }, 404)
     _ => Response::redirect(url, 302)
   }
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   let mut store = new_store("https://short.arc")
 
-  // Shorten some URLs
+  # Shorten some URLs
   let r1 = shorten(store, "https://example.com/very/long/path/to/page", { "ip": "192.168.1.1" })
   print("Shortened: {r1.short_url}")
 
@@ -333,10 +333,10 @@ fn main() {
   })
   print("Expiring: {r3.short_url}")
 
-  // Simulate clicks
+  # Simulate clicks
   range(0, 5) |> each(fn(i) {
     resolve(store, r1.code, {
-      "referrer": if i % 2 == 0 { "google.com" } else { "twitter.com" },
+      "referrer": if i % 2 == 0 { "google.com" } el { "twitter.com" },
       "ip": "10.0.0.{i}",
     })
   })
@@ -345,20 +345,20 @@ fn main() {
     resolve(store, r2.code, { "referrer": "github.com" })
   })
 
-  // Analytics
+  # Analytics
   print("\n=== Analytics: {r1.code} ===")
   let analytics = get_analytics(store, r1.code)
   print("  Total clicks: {analytics["total_clicks"]}")
   print("  Unique visitors: {analytics["unique_visitors"]}")
   print("  By referrer: {analytics["clicks_by_referrer"]}")
 
-  // List all
+  # List all
   print("\n=== All URLs ===")
   list_urls(store) |> each(fn(entry) {
     print("  [{entry["code"]}] {entry["url"]} — {entry["clicks"]} clicks")
   })
 
-  // Export
+  # Export
   print("\n=== Export ===")
   print(export_json(store))
 }

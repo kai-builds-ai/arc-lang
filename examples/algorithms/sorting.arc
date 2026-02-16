@@ -1,18 +1,18 @@
-// ============================================================================
-// Sorting Algorithms in Arc
-// ============================================================================
-// Implements six classic sorting algorithms: bubble sort, selection sort,
-// insertion sort, merge sort, quick sort, and heap sort. Each is a pub fn.
-// Includes benchmarking utilities to compare performance.
-// Demonstrates: recursion, pattern matching, pipelines, closures, mutation,
-// list comprehensions, destructuring, string interpolation, higher-order fns
-// ============================================================================
+# ============================================================================
+# Sorting Algorithms in Arc
+# ============================================================================
+# Implements six classic sorting algorithms: bubble sort, selection sort,
+# insertion sort, merge sort, quick sort, and heap sort. Each is a pub fn.
+# Includes benchmarking utilities to compare performance.
+# Demonstrates: recursion, pattern matching, pipelines, closures, mutation,
+# list comprehensions, destructuring, string interpolation, higher-order fns
+# ============================================================================
 
-import collections
-import datetime
+use collections
+use datetime
 
-// --- Bubble Sort ---
-// Repeatedly swap adjacent elements if they are in the wrong order.
+# --- Bubble Sort ---
+# Repeatedly swap adjacent elements if they are in the wrong order.
 
 pub fn bubble_sort(lst) {
     let mut arr = lst |> collections.to_list()
@@ -27,14 +27,14 @@ pub fn bubble_sort(lst) {
                 swapped = true
             }
         }
-        // Early termination if no swaps occurred
+        # Early termination if no swaps occurred
         if not swapped { break }
     }
     arr
 }
 
-// --- Selection Sort ---
-// Find the minimum element and place it at the beginning, repeat.
+# --- Selection Sort ---
+# Find the minimum element and place it at the beginning, repeat.
 
 pub fn selection_sort(lst) {
     let mut arr = lst |> collections.to_list()
@@ -55,8 +55,8 @@ pub fn selection_sort(lst) {
     arr
 }
 
-// --- Insertion Sort ---
-// Build sorted array one element at a time by inserting into correct position.
+# --- Insertion Sort ---
+# Build sorted array one element at a time by inserting into correct position.
 
 pub fn insertion_sort(lst) => match lst {
     [] => [],
@@ -79,7 +79,7 @@ pub fn insertion_sort(lst) => match lst {
     }
 }
 
-// Functional insertion sort using recursion
+# Functional insertion sort using recursion
 pub fn insertion_sort_rec(lst) => match lst {
     [] => [],
     [x, ..rest] => insert_into_sorted(x, insertion_sort_rec(rest))
@@ -94,8 +94,8 @@ fn insert_into_sorted(x, sorted) => match sorted {
     }
 }
 
-// --- Merge Sort ---
-// Divide the list in half, sort each half, then merge.
+# --- Merge Sort ---
+# Divide the list in half, sort each half, then merge.
 
 pub fn merge_sort(lst) => match lst {
     [] => [],
@@ -118,7 +118,7 @@ fn merge(a, b) => match [a, b] {
     }
 }
 
-// Bottom-up merge sort (iterative)
+# Bottom-up merge sort (iterative)
 pub fn merge_sort_iterative(lst) {
     let n = len(lst)
     if n <= 1 { ret lst }
@@ -144,8 +144,8 @@ pub fn merge_sort_iterative(lst) {
     arr
 }
 
-// --- Quick Sort ---
-// Partition around a pivot element, recursively sort partitions.
+# --- Quick Sort ---
+# Partition around a pivot element, recursively sort partitions.
 
 pub fn quick_sort(lst) => match lst {
     [] => [],
@@ -158,7 +158,7 @@ pub fn quick_sort(lst) => match lst {
     }
 }
 
-// Quick sort with custom comparator
+# Quick sort with custom comparator
 pub fn quick_sort_by(lst, cmp) => match lst {
     [] => [],
     [pivot, ..rest] => {
@@ -169,7 +169,7 @@ pub fn quick_sort_by(lst, cmp) => match lst {
     }
 }
 
-// Three-way partition quick sort (Dutch National Flag)
+# Three-way partition quick sort (Dutch National Flag)
 pub fn quick_sort_3way(lst) => match lst {
     [] => [],
     [x] => [x],
@@ -182,14 +182,14 @@ pub fn quick_sort_3way(lst) => match lst {
     }
 }
 
-// --- Heap Sort ---
-// Build a max-heap, then repeatedly extract the maximum.
+# --- Heap Sort ---
+# Build a max-heap, then repeatedly extract the maximum.
 
 pub fn heap_sort(lst) {
     let mut arr = lst |> collections.to_list()
     let n = len(arr)
 
-    // Build max heap
+    # Build max heap
     let mut i = n / 2 - 1
     loop {
         if i < 0 { break }
@@ -197,15 +197,15 @@ pub fn heap_sort(lst) {
         i = i - 1
     }
 
-    // Extract elements from heap one by one
+    # Extract elements from heap one by one
     let mut end = n - 1
     loop {
         if end <= 0 { break }
-        // Swap root (max) with last element
+        # Swap root (max) with last element
         let temp = arr[0]
         arr[0] = arr[end]
         arr[end] = temp
-        // Heapify reduced heap
+        # Heapify reduced heap
         heapify(arr, end, 0)
         end = end - 1
     }
@@ -232,12 +232,12 @@ fn heapify(arr, n, i) {
     }
 }
 
-// --- Utility Functions ---
+# --- Utility Functions ---
 
 fn min(a, b) => if a < b { a } el { b }
 fn max(a, b) => if a > b { a } el { b }
 
-// Generate a random-ish list for benchmarking
+# Generate a random-ish list for benchmarking
 fn generate_test_data(size) {
     let mut data = []
     let mut seed = 42
@@ -248,7 +248,7 @@ fn generate_test_data(size) {
     data
 }
 
-// Benchmark a sorting function
+# Benchmark a sorting function
 fn benchmark(name, sort_fn, data) {
     let start = datetime.now()
     let result = sort_fn(data)
@@ -264,7 +264,7 @@ pub fn is_sorted(lst) => match lst {
     [a, b, ..rest] => if a <= b { is_sorted([b] ++ rest) } el { false }
 }
 
-// --- Benchmarking Suite ---
+# --- Benchmarking Suite ---
 
 pub fn run_benchmarks() {
     let sizes = [100, 500, 1000]
@@ -281,7 +281,7 @@ pub fn run_benchmarks() {
         benchmark("Heap Sort     ", heap_sort, data)
     }
 
-    // Test edge cases
+    # Test edge cases
     print("\n=== Edge Cases ===")
     let empty = []
     let single = [42]
@@ -308,7 +308,7 @@ pub fn run_benchmarks() {
         print("[{algo.name}] All edge cases passed ✓")
     }
 
-    // Custom comparator demo
+    # Custom comparator demo
     print("\n=== Custom Sort ===")
     let words = ["banana", "apple", "cherry", "date", "elderberry"]
     let by_length = quick_sort_by(words, (a, b) => len(a) - len(b))
@@ -322,5 +322,5 @@ fn assert(cond, msg) {
     if not cond { error("Assertion failed: {msg}") }
 }
 
-// Run everything
+# Run everything
 run_benchmarks()

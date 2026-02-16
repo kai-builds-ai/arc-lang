@@ -1,14 +1,14 @@
-// =============================================================================
-// rate-limiter.arc — Rate Limiting Library
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, import, datetime, collections,
-// closures, higher-order functions, string interpolation, pattern matching, map
-// =============================================================================
+# =============================================================================
+# rate-limiter.arc — Rate Limiting Library
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, import, datetime, collections,
+# closures, higher-order functions, string interpolation, pattern matching, map
+# =============================================================================
 
-import datetime
-import collections
+use datetime
+use collections
 
-// --- Rate limit result ---
+# --- Rate limit result ---
 pub struct RateLimitResult {
   allowed: bool,
   remaining: int,
@@ -16,11 +16,11 @@ pub struct RateLimitResult {
   retry_after_ms: int,
 }
 
-// --- Token Bucket Algorithm ---
+# --- Token Bucket Algorithm ---
 pub struct TokenBucket {
   mut buckets: map,
   capacity: int,
-  refill_rate: float,   // tokens per second
+  refill_rate: float, # tokens per second
   refill_interval_ms: int,
 }
 
@@ -40,7 +40,7 @@ pub fn token_bucket_check(limiter: mut TokenBucket, key: str) -> RateLimitResult
     "last_refill": now,
   }
 
-  // Calculate tokens to add based on elapsed time
+  # Calculate tokens to add based on elapsed time
   let elapsed_ms = datetime::diff_ms(now, bucket["last_refill"])
   let new_tokens = (elapsed_ms |> to_float()) / 1000.0 * limiter.refill_rate
   let current_tokens = math::min(
@@ -49,7 +49,7 @@ pub fn token_bucket_check(limiter: mut TokenBucket, key: str) -> RateLimitResult
   )
 
   if current_tokens >= 1.0 {
-    // Allow request, consume a token
+    # Allow request, consume a token
     limiter.buckets = limiter.buckets |> map::set(key, {
       "tokens": current_tokens - 1.0,
       "last_refill": now,
@@ -62,8 +62,8 @@ pub fn token_bucket_check(limiter: mut TokenBucket, key: str) -> RateLimitResult
       reset_at: now |> datetime::add_ms(limiter.refill_interval_ms),
       retry_after_ms: 0,
     }
-  } else {
-    // Deny request
+  } el {
+    # Deny request
     let wait_ms = ((1.0 - current_tokens) / limiter.refill_rate * 1000.0) |> to_int()
     limiter.buckets = limiter.buckets |> map::set(key, {
       "tokens": current_tokens,
@@ -79,7 +79,7 @@ pub fn token_bucket_check(limiter: mut TokenBucket, key: str) -> RateLimitResult
   }
 }
 
-// --- Sliding Window Algorithm ---
+# --- Sliding Window Algorithm ---
 pub struct SlidingWindow {
   mut windows: map,
   max_requests: int,
@@ -99,12 +99,12 @@ pub fn sliding_window_check(limiter: mut SlidingWindow, key: str) -> RateLimitRe
   let now_ms = datetime::to_epoch_ms(now)
   let window_start = now_ms - limiter.window_ms
 
-  // Get existing timestamps, filter expired
+  # Get existing timestamps, filter expired
   let timestamps = limiter.windows[key] ?? []
   let valid = timestamps |> filter(fn(ts) => ts > window_start)
 
   if len(valid) < limiter.max_requests {
-    // Allow and record
+    # Allow and record
     let updated = valid |> append(now_ms)
     limiter.windows = limiter.windows |> map::set(key, updated)
 
@@ -115,8 +115,8 @@ pub fn sliding_window_check(limiter: mut SlidingWindow, key: str) -> RateLimitRe
       reset_at: now |> datetime::add_ms(limiter.window_ms),
       retry_after_ms: 0,
     }
-  } else {
-    // Deny — find when oldest will expire
+  } el {
+    # Deny — find when oldest will expire
     let oldest = valid[0]
     let retry_after = (oldest + limiter.window_ms) - now_ms
 
@@ -131,7 +131,7 @@ pub fn sliding_window_check(limiter: mut SlidingWindow, key: str) -> RateLimitRe
   }
 }
 
-// --- Fixed Window Algorithm ---
+# --- Fixed Window Algorithm ---
 pub struct FixedWindow {
   mut windows: map,
   max_requests: int,
@@ -164,7 +164,7 @@ pub fn fixed_window_check(limiter: mut FixedWindow, key: str) -> RateLimitResult
       reset_at: reset_at,
       retry_after_ms: 0,
     }
-  } else {
+  } el {
     let retry_after = window_end_ms - now_ms
 
     RateLimitResult {
@@ -176,7 +176,7 @@ pub fn fixed_window_check(limiter: mut FixedWindow, key: str) -> RateLimitResult
   }
 }
 
-// --- Cleanup expired entries ---
+# --- Cleanup expired entries ---
 pub fn cleanup_sliding(limiter: mut SlidingWindow) -> int {
   let now_ms = datetime::to_epoch_ms(datetime::now())
   let window_start = now_ms - limiter.window_ms
@@ -189,7 +189,7 @@ pub fn cleanup_sliding(limiter: mut SlidingWindow) -> int {
     if len(valid) == 0 {
       limiter.windows = limiter.windows |> map::remove(key)
       removed = removed + 1
-    } else {
+    } el {
       limiter.windows = limiter.windows |> map::set(key, valid)
     }
   })
@@ -215,7 +215,7 @@ pub fn cleanup_fixed(limiter: mut FixedWindow) -> int {
   removed
 }
 
-// --- Middleware-style rate limiter ---
+# --- Middleware-style rate limiter ---
 pub struct RateLimiterMiddleware {
   mut limiter: any,
   algorithm: str,
@@ -266,23 +266,23 @@ pub fn check_request(mw: mut RateLimiterMiddleware, request: map) -> RateLimitRe
   result
 }
 
-// --- Format result for headers ---
+# --- Format result for headers ---
 pub fn to_headers(result: RateLimitResult) -> map {
   {
     "X-RateLimit-Remaining": "{result.remaining}",
     "X-RateLimit-Reset": "{datetime::to_epoch_ms(result.reset_at)}",
-    "Retry-After": if result.allowed { "" } else { "{result.retry_after_ms / 1000}" },
+    "Retry-After": if result.allowed { "" } el { "{result.retry_after_ms / 1000}" },
   }
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   print("=== Token Bucket Demo ===")
   let mut tb = new_token_bucket(5, 2.0)
 
   range(0, 8) |> each(fn(i) {
     let result = token_bucket_check(tb, "user:alice")
-    let status = if result.allowed { "✓ ALLOWED" } else { "✗ DENIED" }
+    let status = if result.allowed { "✓ ALLOWED" } el { "✗ DENIED" }
     print("  Request {i + 1}: {status} (remaining: {result.remaining})")
   })
 
@@ -291,7 +291,7 @@ fn main() {
 
   range(0, 5) |> each(fn(i) {
     let result = sliding_window_check(sw, "api:bob")
-    let status = if result.allowed { "✓ ALLOWED" } else { "✗ DENIED" }
+    let status = if result.allowed { "✓ ALLOWED" } el { "✗ DENIED" }
     print("  Request {i + 1}: {status} (remaining: {result.remaining})")
   })
 
@@ -300,7 +300,7 @@ fn main() {
 
   range(0, 5) |> each(fn(i) {
     let result = fixed_window_check(fw, "endpoint:charlie")
-    let status = if result.allowed { "✓ ALLOWED" } else { "✗ DENIED" }
+    let status = if result.allowed { "✓ ALLOWED" } el { "✗ DENIED" }
     let headers = to_headers(result)
     print("  Request {i + 1}: {status} | Headers: {headers}")
   })
@@ -325,7 +325,7 @@ fn main() {
 
   requests |> each(fn(req) {
     let result = check_request(mw, req)
-    let status = if result.allowed { "✓" } else { "✗" }
+    let status = if result.allowed { "✓" } el { "✗" }
     print("  {status} {req["ip"]} -> {req["path"]}")
   })
 }

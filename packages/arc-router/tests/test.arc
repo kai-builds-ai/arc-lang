@@ -1,48 +1,48 @@
 # arc-router tests
 use std/test: describe, it, expect_eq, expect_true
 
-describe("router creation", fn {
-  it("creates empty router", fn {
+describe("router creation", () => {
+  it("creates empty router", () => {
     let r = router()
     expect_eq(len(r._routes), 0)
     expect_eq(len(r._middleware), 0)
   })
 })
 
-describe("route registration", fn {
-  it("adds GET route", fn {
-    let r = router() |> get("/users", fn(req) => ok([]))
+describe("route registration", () => {
+  it("adds GET route", () => {
+    let r = router() |> get("/users", (req) => ok([]))
     expect_eq(len(r._routes), 1)
     expect_eq(r._routes[0].method, "GET")
     expect_eq(r._routes[0].path, "/users")
   })
 
-  it("adds multiple routes", fn {
+  it("adds multiple routes", () => {
     let r = router()
-      |> get("/users", fn(req) => ok([]))
-      |> post("/users", fn(req) => created(req.body))
-      |> delete("/users/:id", fn(req) => no_content())
+      |> get("/users", (req) => ok([]))
+      |> post("/users", (req) => created(req.body))
+      |> delete("/users/:id", (req) => no_content())
     expect_eq(len(r._routes), 3)
   })
 })
 
-describe("route matching", fn {
-  it("matches exact paths", fn {
-    let r = router() |> get("/users", fn(req) => ok({path: "users"}))
+describe("route matching", () => {
+  it("matches exact paths", () => {
+    let r = router() |> get("/users", (req) => ok({path: "users"}))
     let response = handle(r, {method: "GET", path: "/users"})
     expect_eq(response.status, 200)
   })
 
-  it("extracts path params", fn {
-    let r = router() |> get("/users/:id", fn(req) => ok({id: req.params.id}))
+  it("extracts path params", () => {
+    let r = router() |> get("/users/:id", (req) => ok({id: req.params.id}))
     let response = handle(r, {method: "GET", path: "/users/42"})
     expect_eq(response.status, 200)
     let body = json_decode(response.body)
     expect_eq(body.id, "42")
   })
 
-  it("extracts multiple params", fn {
-    let r = router() |> get("/users/:userId/posts/:postId", fn(req) {
+  it("extracts multiple params", () => {
+    let r = router() |> get("/users/:userId/posts/:postId", (req) => {
       ok({user: req.params.userId, post: req.params.postId})
     })
     let response = handle(r, {method: "GET", path: "/users/1/posts/99"})
@@ -51,16 +51,16 @@ describe("route matching", fn {
     expect_eq(body.post, "99")
   })
 
-  it("returns 404 for no match", fn {
-    let r = router() |> get("/users", fn(req) => ok([]))
+  it("returns 404 for no match", () => {
+    let r = router() |> get("/users", (req) => ok([]))
     let response = handle(r, {method: "GET", path: "/posts"})
     expect_eq(response.status, 404)
   })
 
-  it("matches by method", fn {
+  it("matches by method", () => {
     let r = router()
-      |> get("/data", fn(req) => ok("get"))
-      |> post("/data", fn(req) => ok("post"))
+      |> get("/data", (req) => ok("get"))
+      |> post("/data", (req) => ok("post"))
     let get_resp = handle(r, {method: "GET", path: "/data"})
     let post_resp = handle(r, {method: "POST", path: "/data"})
     expect_eq(get_resp.status, 200)
@@ -68,11 +68,11 @@ describe("route matching", fn {
   })
 })
 
-describe("route groups", fn {
-  it("prefixes routes in group", fn {
-    let r = router() |> group("/api/v1", fn(sub) {
-      sub |> get("/users", fn(req) => ok([]))
-          |> get("/posts", fn(req) => ok([]))
+describe("route groups", () => {
+  it("prefixes routes in group", () => {
+    let r = router() |> group("/api/v1", (sub) => {
+      sub |> get("/users", (req) => ok([]))
+          |> get("/posts", (req) => ok([]))
     })
     expect_eq(len(r._routes), 2)
     expect_eq(r._routes[0].path, "/api/v1/users")
@@ -80,41 +80,41 @@ describe("route groups", fn {
   })
 })
 
-describe("middleware", fn {
-  it("runs middleware before handler", fn {
-    let add_header = fn(req, next) {
+describe("middleware", () => {
+  it("runs middleware before handler", () => {
+    let add_header = (req, next) => {
       let resp = next(req)
-      {..resp, custom: "added"}
+      {status: resp.status, body: resp.body, headers: resp.headers, custom: "added"}
     }
 
     let r = router()
       |> use_middleware(add_header)
-      |> get("/test", fn(req) => ok("hello"))
+      |> get("/test", (req) => ok("hello"))
     let response = handle(r, {method: "GET", path: "/test"})
     expect_eq(response.custom, "added")
   })
 })
 
-describe("response helpers", fn {
-  it("creates json response", fn {
+describe("response helpers", () => {
+  it("creates json response", () => {
     let resp = json_response({name: "test"}, 200)
     expect_eq(resp.status, 200)
-    expect_eq(resp.headers["Content-Type"], "application/json")
+    expect_eq(resp.headers.content_type, "application/json")
   })
 
-  it("creates text response", fn {
+  it("creates text response", () => {
     let resp = text_response("hello", 200)
     expect_eq(resp.status, 200)
     expect_eq(resp.body, "hello")
   })
 
-  it("creates redirect", fn {
+  it("creates redirect", () => {
     let resp = redirect("/login", 301)
     expect_eq(resp.status, 301)
-    expect_eq(resp.headers["Location"], "/login")
+    expect_eq(resp.headers.location, "/login")
   })
 
-  it("creates status helpers", fn {
+  it("creates status helpers", () => {
     expect_eq(ok("data").status, 200)
     expect_eq(created("data").status, 201)
     expect_eq(no_content().status, 204)
@@ -126,10 +126,10 @@ describe("response helpers", fn {
   })
 })
 
-describe("custom 404", fn {
-  it("uses custom not found handler", fn {
+describe("custom 404", () => {
+  it("uses custom not found handler", () => {
     let r = router()
-      |> not_found(fn(req) => json_response({error: "Oops", path: req.path}, 404))
+      |> not_found((req) => json_response({error: "Oops", path: req.path}, 404))
     let response = handle(r, {method: "GET", path: "/nope"})
     expect_eq(response.status, 404)
     let body = json_decode(response.body)

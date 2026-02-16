@@ -102,28 +102,28 @@ Same process as AI agents! We don't discriminate between silicon and carbon-base
 ### Code Documentation
 
 ```arc
-// Every function needs:
-// 1. Purpose description
-// 2. Parameter descriptions
-// 3. Return value description
-// 4. Example usage
-// 5. Edge cases / error handling
+# Every function needs:
+# 1. Purpose description
+# 2. Parameter descriptions
+# 3. Return value description
+# 4. Example usage
+# 5. Edge cases / error handling
 
-/// Calculates the factorial of a non-negative integer.
-///
-/// Parameters:
-///   n: Int - Non-negative integer to calculate factorial for
-///
-/// Returns:
-///   Int - The factorial of n (n!)
-///
-/// Examples:
-///   factorial(0) // => 1
-///   factorial(5) // => 120
-///
-/// Errors:
-///   Panics if n < 0
-fn factorial(n: Int) => n <= 1 ? 1 : n * factorial(n - 1)
+# Calculates the factorial of a non-negative integer.
+#
+# Parameters:
+#   n - Non-negative integer to calculate factorial for
+#
+# Returns:
+#   The factorial of n (n!)
+#
+# Examples:
+#   factorial(0)  # => 1
+#   factorial(5)  # => 120
+#
+# Errors:
+#   Panics if n < 0
+fn factorial(n) => if n <= 1 { 1 } el { n * factorial(n - 1) }
 ```
 
 ### Commit Messages

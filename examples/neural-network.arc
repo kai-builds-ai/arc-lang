@@ -1,17 +1,17 @@
-// ============================================================================
-// Neural Network in Arc
-// ============================================================================
-// A simple feedforward neural network with matrix operations, activation
-// functions, forward/backward propagation, and gradient descent training.
-// Trains on the XOR problem as a demonstration.
-// Demonstrates: math, closures, pipelines, pattern matching, mut, collections,
-// higher-order functions, string interpolation.
-// ============================================================================
+# ============================================================================
+# Neural Network in Arc
+# ============================================================================
+# A simple feedforward neural network with matrix operations, activation
+# functions, forward/backward propagation, and gradient descent training.
+# Trains on the XOR problem as a demonstration.
+# Demonstrates: math, closures, pipelines, pattern matching, mut, collections,
+# higher-order functions, string interpolation.
+# ============================================================================
 
-import math
-import collections
+use math
+use collections
 
-// --- Matrix Operations ---
+# --- Matrix Operations ---
 
 pub fn matrix(rows, cols, init_fn) => {
     collections.range(0, rows) |> collections.map(fn(r) => {
@@ -80,14 +80,14 @@ pub fn mat_mean(m) => {
     mat_sum(m) / (shape[0] * shape[1])
 }
 
-// Broadcast a column vector to match matrix dimensions
+# Broadcast a column vector to match matrix dimensions
 pub fn broadcast_add(m, bias) => {
     m |> collections.map_indexed(fn(row, i) => {
         row |> collections.map_indexed(fn(val, j) => val + bias[0][j])
     })
 }
 
-// --- Activation Functions ---
+# --- Activation Functions ---
 
 pub fn sigmoid(x) => 1.0 / (1.0 + math.exp(-x))
 pub fn sigmoid_derivative(x) => x * (1.0 - x)
@@ -111,7 +111,7 @@ fn get_activation(name) => {
     }
 }
 
-// --- Loss Functions ---
+# --- Loss Functions ---
 
 pub fn mse_loss(predicted, target) => {
     let diff = mat_sub(predicted, target)
@@ -125,23 +125,23 @@ pub fn mse_loss_derivative(predicted, target) => {
     mat_sub(predicted, target) |> mat_scale(2.0 / n)
 }
 
-// --- Layer Definition ---
+# --- Layer Definition ---
 
 pub fn dense_layer(input_size, output_size, activation) => {
-    let scale = math.sqrt(2.0 / input_size)  // He initialization
+    let scale = math.sqrt(2.0 / input_size) # He initialization
     {
         weights: random_matrix(input_size, output_size, scale),
         bias: zeros(1, output_size),
         activation: get_activation(activation),
         activation_name: activation,
-        // Cache for backprop
+        # Cache for backprop
         input: nil,
         z: nil,
         output: nil
     }
 }
 
-// --- Neural Network ---
+# --- Neural Network ---
 
 pub fn create_network(layers) => {
     {
@@ -157,7 +157,7 @@ pub fn set_learning_rate(network, lr) => {
     n
 }
 
-// --- Forward Propagation ---
+# --- Forward Propagation ---
 
 pub fn forward(network, input) => {
     let mut current = input
@@ -167,10 +167,10 @@ pub fn forward(network, input) => {
         let mut l = layer
         l.input = current
         
-        // z = input * weights + bias
+        # z = input * weights + bias
         l.z = mat_mul(current, l.weights) |> broadcast_add(l.bias)
         
-        // output = activation(z)
+        # output = activation(z)
         l.output = mat_map(l.z, l.activation.forward)
         
         current = l.output
@@ -182,13 +182,13 @@ pub fn forward(network, input) => {
     { network: n, output: current }
 }
 
-// --- Backward Propagation ---
+# --- Backward Propagation ---
 
 pub fn backward(network, target) => {
     let mut layers = network.layers
     let num_layers = collections.length(layers)
     
-    // Start with output layer error
+    # Start with output layer error
     let output_layer = layers[num_layers - 1]
     let mut delta = mat_elementwise(
         mse_loss_derivative(output_layer.output, target),
@@ -196,7 +196,7 @@ pub fn backward(network, target) => {
         fn(a, b) => a * b
     )
     
-    // Backpropagate through layers in reverse
+    # Backpropagate through layers in reverse
     let mut layer_deltas = []
     let mut current_delta = delta
     
@@ -219,18 +219,18 @@ pub fn backward(network, target) => {
         }
     })
     
-    // Update weights and biases
+    # Update weights and biases
     let lr = network.learning_rate
     layers = layers |> collections.map_indexed(fn(layer, i) => {
         let mut l = layer
         let ld = layer_deltas |> collections.find(fn(d) => d.index == i)
         let d = ld.delta
         
-        // weight_gradient = input^T * delta
+        # weight_gradient = input^T * delta
         let weight_grad = mat_mul(mat_transpose(l.input), d)
         l.weights = mat_sub(l.weights, mat_scale(weight_grad, lr))
         
-        // bias_gradient = sum of deltas across batch
+        # bias_gradient = sum of deltas across batch
         let bias_grad = collections.range(0, collections.length(d[0]))
             |> collections.map(fn(j) => {
                 d |> collections.reduce(0.0, fn(sum, row) => sum + row[j])
@@ -245,21 +245,21 @@ pub fn backward(network, target) => {
     n
 }
 
-// --- Training ---
+# --- Training ---
 
 pub fn train(network, inputs, targets, epochs, log_every) => {
     let mut net = network
     let mut loss_history = []
     
     collections.range(0, epochs) |> collections.each(fn(epoch) => {
-        // Forward pass
+        # Forward pass
         let fwd = forward(net, inputs)
         net = fwd.network
         
-        // Calculate loss
+        # Calculate loss
         let loss = mse_loss(fwd.output, targets)
         
-        // Backward pass
+        # Backward pass
         net = backward(net, targets)
         net.epoch = epoch + 1
         
@@ -274,14 +274,14 @@ pub fn train(network, inputs, targets, epochs, log_every) => {
     { network: net, loss_history: loss_history }
 }
 
-// --- Prediction ---
+# --- Prediction ---
 
 pub fn predict(network, input) => {
     let result = forward(network, input)
     result.output
 }
 
-// --- Network Summary ---
+# --- Network Summary ---
 
 pub fn summary(network) => {
     print("\n=== Network Summary ===")
@@ -298,13 +298,13 @@ pub fn summary(network) => {
     print("")
 }
 
-// --- Main Demo: XOR Problem ---
+# --- Main Demo: XOR Problem ---
 
 fn main() => {
     print("=== Arc Neural Network Demo ===")
     print("Training on XOR problem\n")
     
-    // XOR inputs and targets
+    # XOR inputs and targets
     let inputs = [
         [0.0, 0.0],
         [0.0, 1.0],
@@ -319,7 +319,7 @@ fn main() => {
         [0.0]
     ]
     
-    // Create network: 2 -> 8 -> 4 -> 1
+    # Create network: 2 -> 8 -> 4 -> 1
     let mut net = create_network([
         dense_layer(2, 8, "sigmoid"),
         dense_layer(8, 4, "sigmoid"),
@@ -328,12 +328,12 @@ fn main() => {
     
     summary(net)
     
-    // Train
+    # Train
     print("Training for 10000 epochs...\n")
     let result = train(net, inputs, targets, 10000, 1000)
     net = result.network
     
-    // Final predictions
+    # Final predictions
     print("\n--- Predictions ---")
     inputs |> collections.each_indexed(fn(input, i) => {
         let output = predict(net, [input])
@@ -343,7 +343,7 @@ fn main() => {
         print("Input: ${input} => ${predicted} (expected: ${expected}) ${correct}")
     })
     
-    // Loss curve summary
+    # Loss curve summary
     print("\n--- Loss Curve ---")
     let key_points = result.loss_history
         |> collections.filter(fn(h) => h.epoch % 2000 == 0 or h.epoch == 9999)

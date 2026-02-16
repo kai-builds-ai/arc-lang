@@ -1,24 +1,24 @@
-// =============================================================================
-// cron-parser.arc — Cron Expression Parser & Scheduler
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, import, regex, datetime,
-// closures, higher-order functions, string interpolation, pattern matching
-// =============================================================================
+# =============================================================================
+# cron-parser.arc — Cron Expression Parser & Scheduler
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, import, regex, datetime,
+# closures, higher-order functions, string interpolation, pattern matching
+# =============================================================================
 
-import regex
-import datetime
-import collections
+use regex
+use datetime
+use collections
 
-// --- Cron field types ---
+# --- Cron field types ---
 pub enum CronValue {
   Any,
   Exact(int),
   Range(int, int),
-  Step(int, int),     // start, step
+  Step(int, int), # start, step
   List(list),
 }
 
-// --- Parsed cron expression ---
+# --- Parsed cron expression ---
 pub struct CronExpr {
   minute: list,
   hour: list,
@@ -28,7 +28,7 @@ pub struct CronExpr {
   raw: str,
 }
 
-// --- Named constants ---
+# --- Named constants ---
 let MONTH_NAMES = {
   "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6,
   "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
@@ -46,7 +46,7 @@ let FIELD_RANGES = [
   { "name": "day_of_week", "min": 0, "max": 6 },
 ]
 
-// --- Predefined expressions ---
+# --- Predefined expressions ---
 let PRESETS = {
   "@yearly":   "0 0 1 1 *",
   "@annually": "0 0 1 1 *",
@@ -57,7 +57,7 @@ let PRESETS = {
   "@hourly":   "0 * * * *",
 }
 
-// --- Replace month/day names with numbers ---
+# --- Replace month/day names with numbers ---
 fn replace_names(field: str, idx: int) -> str {
   let mut result = field |> str::to_upper()
 
@@ -65,7 +65,7 @@ fn replace_names(field: str, idx: int) -> str {
     MONTH_NAMES |> map::entries() |> each(fn(entry) {
       result = result |> str::replace(entry.key, "{entry.value}")
     })
-  } else if idx == 4 {
+  } el if idx == 4 {
     DAY_NAMES |> map::entries() |> each(fn(entry) {
       result = result |> str::replace(entry.key, "{entry.value}")
     })
@@ -74,12 +74,12 @@ fn replace_names(field: str, idx: int) -> str {
   result
 }
 
-// --- Parse a single cron field into expanded values ---
+# --- Parse a single cron field into expanded values ---
 fn parse_field(field: str, field_idx: int) -> list {
   let range = FIELD_RANGES[field_idx]
   let cleaned = replace_names(field, field_idx)
 
-  // Handle comma-separated list
+  # Handle comma-separated list
   let parts = cleaned |> str::split(",")
 
   let mut values = []
@@ -92,24 +92,24 @@ fn parse_field(field: str, field_idx: int) -> list {
 }
 
 fn parse_field_part(part: str, min_val: int, max_val: int) -> list {
-  // Wildcard
+  # Wildcard
   if part == "*" {
     ret range(min_val, max_val + 1) |> to_list()
   }
 
-  // Step: */n or start/n or start-end/n
+  # Step: */n or start/n or start-end/n
   let step_match = regex::capture(part, "^(.+)/(\\d+)$")
-  if step_match != null {
+  if step_match != nil {
     let base = step_match[1]
     let step = int::parse(step_match[2])
 
     let (start, end) = if base == "*" {
       (min_val, max_val)
-    } else {
+    } el {
       let range_match = regex::capture(base, "^(\\d+)-(\\d+)$")
-      if range_match != null {
+      if range_match != nil {
         (int::parse(range_match[1]), int::parse(range_match[2]))
-      } else {
+      } el {
         (int::parse(base), max_val)
       }
     }
@@ -123,19 +123,19 @@ fn parse_field_part(part: str, min_val: int, max_val: int) -> list {
     ret vals
   }
 
-  // Range: start-end
+  # Range: start-end
   let range_match = regex::capture(part, "^(\\d+)-(\\d+)$")
-  if range_match != null {
+  if range_match != nil {
     let start = int::parse(range_match[1])
     let end = int::parse(range_match[2])
     ret range(start, end + 1) |> to_list()
   }
 
-  // Exact value
+  # Exact value
   [int::parse(part)]
 }
 
-// --- Parse a full cron expression ---
+# --- Parse a full cron expression ---
 pub fn parse(expr: str) -> CronExpr {
   let resolved = PRESETS[expr] ?? expr
   let fields = resolved |> str::trim() |> str::split_whitespace()
@@ -154,13 +154,13 @@ pub fn parse(expr: str) -> CronExpr {
   }
 }
 
-// --- Check if a datetime matches a cron expression ---
+# --- Check if a datetime matches a cron expression ---
 pub fn matches(cron: CronExpr, dt: datetime) -> bool {
   let minute = datetime::minute(dt)
   let hour = datetime::hour(dt)
   let day = datetime::day(dt)
   let month = datetime::month(dt)
-  let weekday = datetime::weekday(dt) // 0=Sunday
+  let weekday = datetime::weekday(dt) # 0=Sunday
 
   (cron.minute |> contains(minute)) &&
   (cron.hour |> contains(hour)) &&
@@ -169,29 +169,29 @@ pub fn matches(cron: CronExpr, dt: datetime) -> bool {
   (cron.day_of_week |> contains(weekday))
 }
 
-// --- Calculate next run time ---
+# --- Calculate next run time ---
 pub fn next_run(cron: CronExpr, from: datetime) -> datetime {
   let mut dt = from |> datetime::add_minutes(1)
-  // Zero out seconds
+  # Zero out seconds
   dt = dt |> datetime::set_seconds(0)
 
   let mut iterations = 0
-  let max_iterations = 525600 // 1 year of minutes
+  let max_iterations = 525600 # 1 year of minutes
 
   while iterations < max_iterations {
     if matches(cron, dt) {
       ret dt
     }
 
-    // Smart skip: if month doesn't match, jump to next valid month
+    # Smart skip: if month doesn't match, jump to next valid month
     let current_month = datetime::month(dt)
     if !(cron.month |> contains(current_month)) {
       let next_month = cron.month |> find_next_value(current_month)
-      if next_month != null {
+      if next_month != nil {
         dt = dt |> datetime::set_month(next_month) |> datetime::set_day(1)
           |> datetime::set_hour(0) |> datetime::set_minute(0)
-      } else {
-        // Wrap to next year
+      } el {
+        # Wrap to next year
         dt = dt |> datetime::add_years(1) |> datetime::set_month(cron.month[0])
           |> datetime::set_day(1) |> datetime::set_hour(0) |> datetime::set_minute(0)
       }
@@ -209,7 +209,7 @@ fn find_next_value(values: list, current: int) -> int? {
   values |> find_by(fn(v) => v > current)
 }
 
-// --- Calculate next N run times ---
+# --- Calculate next N run times ---
 pub fn next_runs(cron: CronExpr, from: datetime, count: int) -> list {
   let mut runs = []
   let mut current = from
@@ -223,7 +223,7 @@ pub fn next_runs(cron: CronExpr, from: datetime, count: int) -> list {
   runs
 }
 
-// --- Human-readable description ---
+# --- Human-readable description ---
 pub fn describe(cron: CronExpr) -> str {
   let minute_desc = describe_field(cron.minute, "minute", 0, 59)
   let hour_desc = describe_field(cron.hour, "hour", 0, 23)
@@ -233,14 +233,14 @@ pub fn describe(cron: CronExpr) -> str {
 
   let mut parts = []
 
-  // Time description
+  # Time description
   if len(cron.minute) == 1 && len(cron.hour) == 1 {
     let h = cron.hour[0]
     let m = cron.minute[0]
-    let period = if h >= 12 { "PM" } else { "AM" }
-    let display_h = if h > 12 { h - 12 } else if h == 0 { 12 } else { h }
+    let period = if h >= 12 { "PM" } el { "AM" }
+    let display_h = if h > 12 { h - 12 } el if h == 0 { 12 } el { h }
     parts = parts |> append("At {display_h}:{m |> str::pad_left(2, '0')} {period}")
-  } else {
+  } el {
     if minute_desc != "every minute" {
       parts = parts |> append(minute_desc)
     }
@@ -260,17 +260,17 @@ pub fn describe(cron: CronExpr) -> str {
   }
 
   if len(parts) == 0 { "Every minute" }
-  else { parts |> str::join(", ") }
+  el { parts |> str::join(", ") }
 }
 
 fn describe_field(values: list, name: str, min_val: int, max_val: int) -> str {
   if len(values) == (max_val - min_val + 1) {
     "every {name}"
-  } else if len(values) == 1 {
+  } el if len(values) == 1 {
     "{name} {values[0]}"
-  } else if is_consecutive(values) {
+  } el if is_consecutive(values) {
     "{name} {values[0]} through {values[len(values) - 1]}"
-  } else {
+  } el {
     "{name} {values |> map(fn(v) => "{v}") |> str::join(", ")}"
   }
 }
@@ -279,13 +279,13 @@ fn describe_month_field(values: list) -> str {
   let names = ["", "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"]
   if len(values) == 12 { "every month" }
-  else { values |> map(fn(v) => names[v]) |> str::join(", ") }
+  el { values |> map(fn(v) => names[v]) |> str::join(", ") }
 }
 
 fn describe_dow_field(values: list) -> str {
   let names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
   if len(values) == 7 { "every day of the week" }
-  else { values |> map(fn(v) => names[v]) |> str::join(", ") }
+  el { values |> map(fn(v) => names[v]) |> str::join(", ") }
 }
 
 fn is_consecutive(values: list) -> bool {
@@ -293,7 +293,7 @@ fn is_consecutive(values: list) -> bool {
   range(1, len(values)) |> all(fn(i) => values[i] == values[i - 1] + 1)
 }
 
-// --- Validate cron expression ---
+# --- Validate cron expression ---
 pub fn validate(expr: str) -> { valid: bool, error: str? } {
   let resolved = PRESETS[expr] ?? expr
   let fields = resolved |> str::trim() |> str::split_whitespace()
@@ -317,12 +317,12 @@ pub fn validate(expr: str) -> { valid: bool, error: str? } {
 
   if len(errors) > 0 {
     { valid: false, error: errors |> str::join("; ") }
-  } else {
-    { valid: true, error: null }
+  } el {
+    { valid: true, error: nil }
   }
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   let expressions = [
     "*/15 * * * *",

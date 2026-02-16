@@ -1,23 +1,23 @@
-// ============================================================================
-// Snake Game Logic in Arc
-// ============================================================================
-// Complete snake game: grid world, snake body as list, direction handling
-// with pattern matching, food spawning, collision detection, score tracking,
-// and a simulation game loop with ASCII rendering.
-// Demonstrates: mutation, pattern matching, closures, pipelines, lists, maps,
-// string interpolation, recursion, higher-order functions
-// ============================================================================
+# ============================================================================
+# Snake Game Logic in Arc
+# ============================================================================
+# Complete snake game: grid world, snake body as list, direction handling
+# with pattern matching, food spawning, collision detection, score tracking,
+# and a simulation game loop with ASCII rendering.
+# Demonstrates: mutation, pattern matching, closures, pipelines, lists, maps,
+# string interpolation, recursion, higher-order functions
+# ============================================================================
 
-import collections
+use collections
 
-// --- Constants ---
+# --- Constants ---
 
 let EMPTY = 0
 let SNAKE = 1
 let FOOD = 2
 let WALL = 3
 
-// --- Direction ---
+# --- Direction ---
 
 pub fn direction(name) => match name {
     "up"    => {dx: 0, dy: -1},
@@ -37,7 +37,7 @@ pub fn opposite(dir) => match dir {
 
 pub fn is_opposite(d1, d2) => d1.dx == -d2.dx and d1.dy == -d2.dy
 
-// --- Game State ---
+# --- Game State ---
 
 pub fn new_game(width, height) {
     let mid_x = width / 2
@@ -63,7 +63,7 @@ pub fn new_game(width, height) {
     state
 }
 
-// --- Pseudo-Random Number Generator ---
+# --- Pseudo-Random Number Generator ---
 
 fn next_random(state) {
     state.seed = (state.seed * 1103515245 + 12345) % 2147483648
@@ -75,10 +75,10 @@ fn random_range(state, min_val, max_val) {
     min_val + (r % (max_val - min_val))
 }
 
-// --- Food Spawning ---
+# --- Food Spawning ---
 
 fn spawn_food(state) {
-    // Find all empty cells
+    # Find all empty cells
     let snake_set = state.snake |> map(s => "{s.x},{s.y}")
 
     let mut attempts = 0
@@ -100,10 +100,10 @@ fn spawn_food(state) {
 
 fn contains(lst, item) => lst |> filter(x => x == item) |> len() > 0
 
-// --- Movement ---
+# --- Movement ---
 
 pub fn change_direction(state, new_dir) {
-    // Prevent 180-degree turns
+    # Prevent 180-degree turns
     if is_opposite(state.direction, new_dir) {
         ret state
     }
@@ -120,14 +120,14 @@ pub fn tick(state) {
         y: head.y + state.direction.dy
     }
 
-    // Check wall collision
+    # Check wall collision
     if new_head.x < 0 or new_head.x >= state.width or
        new_head.y < 0 or new_head.y >= state.height {
         state.alive = false
         ret state
     }
 
-    // Check self collision (skip tail if not growing, as it will move)
+    # Check self collision (skip tail if not growing, as it will move)
     let check_body = if state.grow_pending > 0 {
         state.snake
     } el {
@@ -141,17 +141,17 @@ pub fn tick(state) {
         }
     }
 
-    // Move snake
+    # Move snake
     state.snake = [new_head] ++ state.snake
 
-    // Check food
+    # Check food
     if state.food != nil and new_head.x == state.food.x and new_head.y == state.food.y {
         state.score = state.score + 10
         state.grow_pending = state.grow_pending + 1
         state = spawn_food(state)
     }
 
-    // Remove tail unless growing
+    # Remove tail unless growing
     if state.grow_pending > 0 {
         state.grow_pending = state.grow_pending - 1
     } el {
@@ -162,14 +162,14 @@ pub fn tick(state) {
     state
 }
 
-// --- AI Snake (simple greedy) ---
+# --- AI Snake (simple greedy) ---
 
 pub fn ai_direction(state) {
     let head = state.snake[0]
     let food = state.food
     if food == nil { ret state.direction }
 
-    // Prioritize moves toward food
+    # Prioritize moves toward food
     let mut candidates = []
 
     if food.x > head.x { candidates = candidates ++ [direction("right")] }
@@ -177,7 +177,7 @@ pub fn ai_direction(state) {
     if food.y > head.y { candidates = candidates ++ [direction("down")] }
     if food.y < head.y { candidates = candidates ++ [direction("up")] }
 
-    // Filter out moves that would kill us
+    # Filter out moves that would kill us
     let safe = candidates |> filter(d => {
         let nx = head.x + d.dx
         let ny = head.y + d.dy
@@ -186,7 +186,7 @@ pub fn ai_direction(state) {
 
     match len(safe) {
         0 => {
-            // Try any safe direction
+            # Try any safe direction
             let all_dirs = ["up", "down", "left", "right"] |> map(direction)
             let any_safe = all_dirs |> filter(d => {
                 let nx = head.x + d.dx
@@ -210,7 +210,7 @@ fn is_safe(state, x, y) {
     true
 }
 
-// --- ASCII Rendering ---
+# --- ASCII Rendering ---
 
 pub fn render(state) {
     let mut grid = []
@@ -222,18 +222,18 @@ pub fn render(state) {
         grid = grid ++ [row]
     }
 
-    // Draw food
+    # Draw food
     if state.food != nil {
         grid[state.food.y][state.food.x] = "★"
     }
 
-    // Draw snake body
+    # Draw snake body
     for i in 1..len(state.snake) {
         let seg = state.snake[i]
         grid[seg.y][seg.x] = "○"
     }
 
-    // Draw snake head
+    # Draw snake head
     let head = state.snake[0]
     let head_char = match state.direction {
         {dx: 1}  => "▶",
@@ -246,7 +246,7 @@ pub fn render(state) {
         grid[head.y][head.x] = head_char
     }
 
-    // Print border and grid
+    # Print border and grid
     let border = "+" ++ "-".repeat(state.width * 2 + 1) ++ "+"
     print(border)
     for row in grid {
@@ -263,7 +263,7 @@ fn join(lst, sep) => match lst {
     [x, ..rest] => "{x}{sep}{join(rest, sep)}"
 }
 
-// --- Game Simulation ---
+# --- Game Simulation ---
 
 pub fn simulate(width, height, max_ticks) {
     let mut state = new_game(width, height)
@@ -276,12 +276,12 @@ pub fn simulate(width, height, max_ticks) {
     loop {
         if not state.alive or tick_count >= max_ticks { break }
 
-        // AI chooses direction
+        # AI chooses direction
         let new_dir = ai_direction(state)
         state = change_direction(state, new_dir)
         state = tick(state)
 
-        // Render every 5 ticks
+        # Render every 5 ticks
         if tick_count % 5 == 0 {
             print("\n--- Tick {tick_count} ---")
             render(state)
@@ -306,7 +306,7 @@ pub fn simulate(width, height, max_ticks) {
     }
 }
 
-// --- Multiple Runs ---
+# --- Multiple Runs ---
 
 pub fn run_multiple(n, width, height, max_ticks) {
     let mut results = []
@@ -332,6 +332,6 @@ pub fn run_multiple(n, width, height, max_ticks) {
 fn sum(lst) => lst |> reduce(0, (a, b) => a + b)
 fn max(a, b) => if a > b { a } el { b }
 
-// --- Run ---
+# --- Run ---
 
 simulate(12, 8, 50)

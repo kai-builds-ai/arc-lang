@@ -1,14 +1,14 @@
-// =============================================================================
-// markdown-parser.arc — Markdown to HTML Converter
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, import, regex, closures,
-// higher-order functions, string interpolation, pattern matching, collections
-// =============================================================================
+# =============================================================================
+# markdown-parser.arc — Markdown to HTML Converter
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, import, regex, closures,
+# higher-order functions, string interpolation, pattern matching, collections
+# =============================================================================
 
-import regex
-import collections
+use regex
+use collections
 
-// --- Block types ---
+# --- Block types ---
 pub enum Block {
   Heading(int, str),
   Paragraph(str),
@@ -21,7 +21,7 @@ pub enum Block {
   Image(str, str),
 }
 
-// --- Parse markdown into blocks ---
+# --- Parse markdown into blocks ---
 pub fn parse_blocks(markdown: str) -> list {
   let lines = markdown |> str::split("\n")
   let mut blocks = []
@@ -31,23 +31,23 @@ pub fn parse_blocks(markdown: str) -> list {
     let line = lines[i]
     let trimmed = line |> str::trim()
 
-    // Blank line
+    # Blank line
     if trimmed == "" {
       blocks = blocks |> append(Block::BlankLine)
       i = i + 1
       continue
     }
 
-    // Horizontal rule
+    # Horizontal rule
     if regex::matches(trimmed, "^(---+|\\*\\*\\*+|___+)$") {
       blocks = blocks |> append(Block::HorizontalRule)
       i = i + 1
       continue
     }
 
-    // Headings (# to ######)
+    # Headings (# to ######)
     let heading_match = regex::capture(line, "^(#{1,6})\\s+(.+)$")
-    if heading_match != null {
+    if heading_match != nil {
       let level = heading_match[1] |> str::len()
       let text = heading_match[2]
       blocks = blocks |> append(Block::Heading(level, text))
@@ -55,7 +55,7 @@ pub fn parse_blocks(markdown: str) -> list {
       continue
     }
 
-    // Code block (fenced with ```)
+    # Code block (fenced with ```)
     if regex::matches(trimmed, "^```") {
       let lang = trimmed |> str::slice(3, str::len(trimmed)) |> str::trim()
       let mut code_lines = []
@@ -65,14 +65,14 @@ pub fn parse_blocks(markdown: str) -> list {
         code_lines = code_lines |> append(lines[i])
         i = i + 1
       }
-      i = i + 1 // skip closing ```
+      i = i + 1 # skip closing ```
 
       let code = code_lines |> str::join("\n")
       blocks = blocks |> append(Block::CodeBlock(lang, code))
       continue
     }
 
-    // Blockquote
+    # Blockquote
     if regex::matches(trimmed, "^>\\s*") {
       let mut quote_lines = []
       while i < len(lines) && regex::matches(lines[i] |> str::trim(), "^>") {
@@ -86,7 +86,7 @@ pub fn parse_blocks(markdown: str) -> list {
       continue
     }
 
-    // Unordered list
+    # Unordered list
     if regex::matches(trimmed, "^[-\\*\\+]\\s+") {
       let mut items = []
       while i < len(lines) && regex::matches(lines[i] |> str::trim(), "^[-\\*\\+]\\s+") {
@@ -99,7 +99,7 @@ pub fn parse_blocks(markdown: str) -> list {
       continue
     }
 
-    // Ordered list
+    # Ordered list
     if regex::matches(trimmed, "^\\d+\\.\\s+") {
       let mut items = []
       while i < len(lines) && regex::matches(lines[i] |> str::trim(), "^\\d+\\.\\s+") {
@@ -112,15 +112,15 @@ pub fn parse_blocks(markdown: str) -> list {
       continue
     }
 
-    // Image (standalone)
+    # Image (standalone)
     let img_match = regex::capture(trimmed, "^!\\[([^\\]]*)\\]\\(([^\\)]+)\\)$")
-    if img_match != null {
+    if img_match != nil {
       blocks = blocks |> append(Block::Image(img_match[1], img_match[2]))
       i = i + 1
       continue
     }
 
-    // Paragraph (collect consecutive non-special lines)
+    # Paragraph (collect consecutive non-special lines)
     let mut para_lines = []
     while i < len(lines) {
       let l = lines[i] |> str::trim()
@@ -136,30 +136,30 @@ pub fn parse_blocks(markdown: str) -> list {
   blocks
 }
 
-// --- Parse inline elements ---
+# --- Parse inline elements ---
 pub fn parse_inline(text: str) -> str {
   text
-    // Code spans (before other formatting)
+    # Code spans (before other formatting)
     |> replace_pattern("`([^`]+)`", fn(m) => "<code>{m[1]}</code>")
-    // Images
+    # Images
     |> replace_pattern("!\\[([^\\]]*)\\]\\(([^\\)]+)\\)", fn(m) => {
       "<img src=\"{m[2]}\" alt=\"{m[1]}\" />"
     })
-    // Links
+    # Links
     |> replace_pattern("\\[([^\\]]+)\\]\\(([^\\)]+)\\)", fn(m) => {
       "<a href=\"{m[2]}\">{m[1]}</a>"
     })
-    // Bold + Italic
+    # Bold + Italic
     |> replace_pattern("\\*\\*\\*([^\\*]+)\\*\\*\\*", fn(m) => "<strong><em>{m[1]}</em></strong>")
-    // Bold
+    # Bold
     |> replace_pattern("\\*\\*([^\\*]+)\\*\\*", fn(m) => "<strong>{m[1]}</strong>")
     |> replace_pattern("__([^_]+)__", fn(m) => "<strong>{m[1]}</strong>")
-    // Italic
+    # Italic
     |> replace_pattern("\\*([^\\*]+)\\*", fn(m) => "<em>{m[1]}</em>")
     |> replace_pattern("_([^_]+)_", fn(m) => "<em>{m[1]}</em>")
-    // Strikethrough
+    # Strikethrough
     |> replace_pattern("~~([^~]+)~~", fn(m) => "<del>{m[1]}</del>")
-    // Line breaks
+    # Line breaks
     |> str::replace("  \n", "<br />\n")
 }
 
@@ -167,7 +167,7 @@ fn replace_pattern(text: str, pattern: str, replacer: fn) -> str {
   regex::replace_all(text, pattern, replacer)
 }
 
-// --- Escape HTML entities ---
+# --- Escape HTML entities ---
 pub fn escape_html(text: str) -> str {
   text
     |> str::replace("&", "&amp;")
@@ -176,7 +176,7 @@ pub fn escape_html(text: str) -> str {
     |> str::replace("\"", "&quot;")
 }
 
-// --- Convert a block to HTML ---
+# --- Convert a block to HTML ---
 pub fn block_to_html(block: Block) -> str {
   match block {
     Block::Heading(level, text) => {
@@ -190,7 +190,7 @@ pub fn block_to_html(block: Block) -> str {
     }
     Block::CodeBlock(lang, code) => {
       let escaped = escape_html(code)
-      let lang_attr = if lang != "" { " class=\"language-{lang}\"" } else { "" }
+      let lang_attr = if lang != "" { " class=\"language-{lang}\"" } el { "" }
       "<pre><code{lang_attr}>{escaped}</code></pre>"
     }
     Block::Blockquote(text) => {
@@ -220,7 +220,7 @@ pub fn block_to_html(block: Block) -> str {
   }
 }
 
-// --- Main conversion function ---
+# --- Main conversion function ---
 pub fn to_html(markdown: str) -> str {
   let blocks = parse_blocks(markdown)
   blocks
@@ -229,7 +229,7 @@ pub fn to_html(markdown: str) -> str {
     |> str::join("\n\n")
 }
 
-// --- Full HTML document wrapper ---
+# --- Full HTML document wrapper ---
 pub fn to_html_document(markdown: str, title: str) -> str {
   let body = to_html(markdown)
   "<!DOCTYPE html>
@@ -253,7 +253,7 @@ pub fn to_html_document(markdown: str, title: str) -> str {
 </html>"
 }
 
-// --- Table of contents generator ---
+# --- Table of contents generator ---
 pub fn extract_toc(markdown: str) -> list {
   let blocks = parse_blocks(markdown)
   blocks
@@ -277,7 +277,7 @@ pub fn toc_to_html(toc: list) -> str {
   "<nav>\n<ul>\n{items |> str::join("\n")}\n</ul>\n</nav>"
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   let markdown = "# Welcome to Arc
 

@@ -1,15 +1,15 @@
-// =============================================================================
-// json-query.arc — A jq-like JSON Query Language
-// =============================================================================
-// Demonstrates: fn, let, mut, match, |>, =>, pub, import, string interpolation,
-// closures, higher-order functions, collections, regex, pattern matching
-// =============================================================================
+# =============================================================================
+# json-query.arc — A jq-like JSON Query Language
+# =============================================================================
+# Demonstrates: fn, let, mut, match, |>, =>, pub, import, string interpolation,
+# closures, higher-order functions, collections, regex, pattern matching
+# =============================================================================
 
-import json
-import regex
-import collections
+use json
+use regex
+use collections
 
-// --- Token types for query parsing ---
+# --- Token types for query parsing ---
 pub enum TokenType {
   Dot,
   BracketOpen,
@@ -25,7 +25,7 @@ pub enum TokenType {
   String(str),
 }
 
-// --- Tokenizer: breaks query string into tokens ---
+# --- Tokenizer: breaks query string into tokens ---
 pub fn tokenize(query: str) -> list {
   let mut tokens = []
   let mut i = 0
@@ -60,7 +60,7 @@ pub fn tokenize(query: str) -> list {
       }
       ' ' => { i = i + 1 }
       _ => {
-        // Parse identifiers or numbers
+        # Parse identifiers or numbers
         let is_digit = regex::matches(str::from_char(ch), "^[0-9]$")
         let is_alpha = regex::matches(str::from_char(ch), "^[a-zA-Z_]$")
 
@@ -71,7 +71,7 @@ pub fn tokenize(query: str) -> list {
             i = i + 1
           }
           tokens = tokens |> append(TokenType::Number(int::parse(num_str)))
-        } else if is_alpha {
+        } el if is_alpha {
           let mut ident = ""
           while i < len(chars) && regex::matches(str::from_char(chars[i]), "^[a-zA-Z_0-9]$") {
             ident = "{ident}{chars[i]}"
@@ -83,7 +83,7 @@ pub fn tokenize(query: str) -> list {
             "filter" => tokens = tokens |> append(TokenType::Filter)
             _ => tokens = tokens |> append(TokenType::Identifier(ident))
           }
-        } else {
+        } el {
           i = i + 1
         }
       }
@@ -92,7 +92,7 @@ pub fn tokenize(query: str) -> list {
   tokens
 }
 
-// --- AST nodes for parsed queries ---
+# --- AST nodes for parsed queries ---
 pub enum QueryExpr {
   Root,
   Field(str),
@@ -106,7 +106,7 @@ pub enum QueryExpr {
   Identity,
 }
 
-// --- Parse tokens into a query expression tree ---
+# --- Parse tokens into a query expression tree ---
 pub fn parse(tokens: list) -> QueryExpr {
   let mut expr = QueryExpr::Root
   let mut i = 0
@@ -122,7 +122,7 @@ pub fn parse(tokens: list) -> QueryExpr {
             TokenType::Wildcard => QueryExpr::WildcardAccess
             _ => QueryExpr::Identity
           }
-        } else {
+        } el {
           QueryExpr::Identity
         }
       }
@@ -130,7 +130,7 @@ pub fn parse(tokens: list) -> QueryExpr {
         i = i + 1
         let inner = match tokens[i] {
           TokenType::Number(n) => {
-            // Check for slice notation
+            # Check for slice notation
             if i + 1 < len(tokens) && tokens[i + 1] == TokenType::Colon {
               i = i + 2
               let end = match tokens[i] {
@@ -138,20 +138,20 @@ pub fn parse(tokens: list) -> QueryExpr {
                 _ => -1
               }
               QueryExpr::Slice(n, end)
-            } else {
+            } el {
               QueryExpr::Index(n)
             }
           }
           TokenType::Wildcard => QueryExpr::WildcardAccess
           _ => QueryExpr::Identity
         }
-        i = i + 1 // skip closing bracket
+        i = i + 1 # skip closing bracket
         inner
       }
       TokenType::Pipe => {
         i = i + 1
         let right = parse(tokens |> collections::slice(i, len(tokens)))
-        i = len(tokens) // consume rest
+        i = len(tokens) # consume rest
         QueryExpr::Pipe(expr, right)
       }
       _ => QueryExpr::Identity
@@ -159,7 +159,7 @@ pub fn parse(tokens: list) -> QueryExpr {
 
     expr = if expr == QueryExpr::Root {
       next_expr
-    } else {
+    } el {
       match next_expr {
         QueryExpr::Identity => expr
         _ => QueryExpr::Pipe(expr, next_expr)
@@ -170,7 +170,7 @@ pub fn parse(tokens: list) -> QueryExpr {
   expr
 }
 
-// --- Execute a query expression against JSON data ---
+# --- Execute a query expression against JSON data ---
 pub fn execute(data: any, expr: QueryExpr) -> any {
   match expr {
     QueryExpr::Root => data
@@ -178,13 +178,13 @@ pub fn execute(data: any, expr: QueryExpr) -> any {
     QueryExpr::Field(name) => {
       match data {
         map => data[name]
-        _ => null
+        _ => nil
       }
     }
     QueryExpr::Index(i) => {
       match data {
         list => data[i]
-        _ => null
+        _ => nil
       }
     }
     QueryExpr::WildcardAccess => {
@@ -195,7 +195,7 @@ pub fn execute(data: any, expr: QueryExpr) -> any {
       }
     }
     QueryExpr::Slice(start, end) => {
-      let actual_end = if end == -1 { len(data) } else { end }
+      let actual_end = if end == -1 { len(data) } el { end }
       data |> collections::slice(start, actual_end)
     }
     QueryExpr::Pipe(left, right) => {
@@ -214,7 +214,7 @@ pub fn execute(data: any, expr: QueryExpr) -> any {
   }
 }
 
-// --- High-level query function ---
+# --- High-level query function ---
 pub fn query(json_str: str, query_str: str) -> any {
   let data = json::parse(json_str)
   let tokens = tokenize(query_str)
@@ -222,7 +222,7 @@ pub fn query(json_str: str, query_str: str) -> any {
   execute(data, expr)
 }
 
-// --- Built-in transformation functions ---
+# --- Built-in transformation functions ---
 pub fn jq_length(data: any) -> int {
   match data {
     list => data |> len()
@@ -272,17 +272,17 @@ pub fn jq_group_by(data: list, key: str) -> map {
 pub fn jq_sort_by(data: list, key: str) -> list {
   data |> collections::sort_by(fn(a, b) => {
     if a[key] < b[key] { -1 }
-    else if a[key] > b[key] { 1 }
-    else { 0 }
+    el if a[key] > b[key] { 1 }
+    el { 0 }
   })
 }
 
-// --- Pretty printer for query results ---
+# --- Pretty printer for query results ---
 pub fn pretty_print(data: any, indent: int) -> str {
   let spaces = " " |> str::repeat(indent)
   match data {
-    null => "null"
-    bool => if data { "true" } else { "false" }
+    nil => "nil"
+    bool => if data { "true" } el { "false" }
     int => "{data}"
     float => "{data}"
     str => "\"{data}\""
@@ -300,7 +300,7 @@ pub fn pretty_print(data: any, indent: int) -> str {
   }
 }
 
-// --- Demo ---
+# --- Demo ---
 fn main() {
   let sample_json = json::stringify({
     "users": [
@@ -312,19 +312,19 @@ fn main() {
     "metadata": { "total": 4, "version": "1.0" }
   })
 
-  // Query: get all user names
+  # Query: get all user names
   let names = query(sample_json, ".users[*].name")
   print("All names: {pretty_print(names, 0)}")
 
-  // Query: get first user
+  # Query: get first user
   let first = query(sample_json, ".users[0]")
   print("First user: {pretty_print(first, 0)}")
 
-  // Query: get metadata version
+  # Query: get metadata version
   let ver = query(sample_json, ".metadata.version")
   print("Version: {ver}")
 
-  // Programmatic operations
+  # Programmatic operations
   let data = json::parse(sample_json)
   let admins = data["users"]
     |> filter(fn(u) => u["role"] == "admin")

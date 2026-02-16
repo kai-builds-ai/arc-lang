@@ -1,15 +1,15 @@
-// ============================================================================
-// Conway's Game of Life in Arc
-// ============================================================================
-// A cellular automaton simulation with grid management, neighbor counting,
-// pattern matching for cell state transitions, and ASCII rendering.
-// Demonstrates: 2D lists, closures, pattern matching, pipelines, mut, loops.
-// ============================================================================
+# ============================================================================
+# Conway's Game of Life in Arc
+# ============================================================================
+# A cellular automaton simulation with grid management, neighbor counting,
+# pattern matching for cell state transitions, and ASCII rendering.
+# Demonstrates: 2D lists, closures, pattern matching, pipelines, mut, loops.
+# ============================================================================
 
-import collections
-import math
+use collections
+use math
 
-// --- Grid Creation ---
+# --- Grid Creation ---
 
 pub fn create_grid(width, height, default_val) => {
     collections.range(0, height)
@@ -39,7 +39,7 @@ pub fn set_cell(grid, x, y, val) => {
     })
 }
 
-// --- Neighbor Counting ---
+# --- Neighbor Counting ---
 
 let NEIGHBOR_OFFSETS = [
     [-1, -1], [0, -1], [1, -1],
@@ -53,17 +53,17 @@ pub fn count_neighbors(grid, x, y) => {
     |> collections.reduce(0, fn(sum, v) => sum + v)
 }
 
-// --- Cell State Transitions (the core rules) ---
+# --- Cell State Transitions (the core rules) ---
 
 pub fn next_cell_state(alive, neighbors) => {
     match [alive, neighbors] {
-        [1, 2] => 1,   // alive with 2 neighbors: survive
-        [_, 3] => 1,   // any cell with 3 neighbors: alive (birth or survive)
-        _ => 0          // all other cases: dead
+        [1, 2] => 1, # alive with 2 neighbors: survive
+        [_, 3] => 1, # any cell with 3 neighbors: alive (birth or survive)
+        _ => 0 # all other cases: dead
     }
 }
 
-// --- Generation Stepping ---
+# --- Generation Stepping ---
 
 pub fn next_generation(grid) => {
     let h = grid_height(grid)
@@ -78,7 +78,7 @@ pub fn next_generation(grid) => {
     })
 }
 
-// --- ASCII Rendering ---
+# --- ASCII Rendering ---
 
 pub fn render(grid, alive_char, dead_char) => {
     let border = "+" + "-".repeat(grid_width(grid) * 2 + 1) + "+"
@@ -93,7 +93,7 @@ pub fn render(grid, alive_char, dead_char) => {
 
 pub fn render_simple(grid) => render(grid, "█", "·")
 
-// --- Statistics ---
+# --- Statistics ---
 
 pub fn population(grid) => {
     grid
@@ -107,7 +107,7 @@ pub fn density(grid) => {
     pop / total
 }
 
-// --- Common Patterns ---
+# --- Common Patterns ---
 
 pub fn place_pattern(grid, pattern, offset_x, offset_y) => {
     pattern |> collections.reduce_indexed(grid, fn(g, row, dy) => {
@@ -120,7 +120,7 @@ pub fn place_pattern(grid, pattern, offset_x, offset_y) => {
     })
 }
 
-// Classic patterns
+# Classic patterns
 pub fn glider() => [
     [0, 1, 0],
     [0, 0, 1],
@@ -171,7 +171,7 @@ pub fn glider_gun() => [
     [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 ]
 
-// --- Simulation Runner ---
+# --- Simulation Runner ---
 
 pub fn simulate(grid, generations, print_every) => {
     let mut current = grid
@@ -205,7 +205,7 @@ pub fn simulate(grid, generations, print_every) => {
     { final_grid: current, history: history }
 }
 
-// --- Pattern Detection ---
+# --- Pattern Detection ---
 
 pub fn detect_steady_state(history, window) => {
     match collections.length(history) < window {
@@ -214,20 +214,20 @@ pub fn detect_steady_state(history, window) => {
             let recent = history |> collections.take_last(window)
             let pops = recent |> collections.map(fn(h) => h.population)
             let unique_pops = pops |> collections.unique()
-            collections.length(unique_pops) <= 2  // oscillator or still life
+            collections.length(unique_pops) <= 2 # oscillator or still life
         }
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Conway's Game of Life in Arc ===\n")
     
-    // Create a 30x20 grid
+    # Create a 30x20 grid
     let mut grid = create_grid(30, 20, 0)
     
-    // Place some patterns
+    # Place some patterns
     grid = grid
         |> place_pattern(glider(), 1, 1)
         |> place_pattern(blinker(), 15, 5)
@@ -238,10 +238,10 @@ fn main() => {
     print("Initial population: ${population(grid)}")
     print("Grid density: ${density(grid)}")
     
-    // Run simulation
+    # Run simulation
     let result = simulate(grid, 50, 10)
     
-    // Analyze results
+    # Analyze results
     print("\n--- Population History ---")
     result.history
     |> collections.filter(fn(h) => h.generation % 5 == 0)
@@ -253,7 +253,7 @@ fn main() => {
     let is_steady = detect_steady_state(result.history, 10)
     print("\nSteady state detected: ${is_steady}")
     
-    // Try the pulsar pattern
+    # Try the pulsar pattern
     print("\n\n=== Pulsar Pattern ===")
     let mut pulsar_grid = create_grid(20, 20, 0)
     pulsar_grid = pulsar_grid |> place_pattern(pulsar(), 3, 3)

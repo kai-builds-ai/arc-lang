@@ -1,17 +1,17 @@
-// ============================================================================
-// Dynamic Programming in Arc
-// ============================================================================
-// Classic DP problems: fibonacci, knapsack, LCS, edit distance, coin change,
-// matrix chain multiplication, longest increasing subsequence.
-// Each with memoized and/or tabulated versions.
-// Demonstrates: recursion, maps, mutation, pattern matching, pipelines,
-// closures, list comprehensions, string interpolation, higher-order functions
-// ============================================================================
+# ============================================================================
+# Dynamic Programming in Arc
+# ============================================================================
+# Classic DP problems: fibonacci, knapsack, LCS, edit distance, coin change,
+# matrix chain multiplication, longest increasing subsequence.
+# Each with memoized and/or tabulated versions.
+# Demonstrates: recursion, maps, mutation, pattern matching, pipelines,
+# closures, list comprehensions, string interpolation, higher-order functions
+# ============================================================================
 
-import collections
+use collections
 
-// --- Memoization Helper ---
-// Generic memoizer: wraps any function with a cache.
+# --- Memoization Helper ---
+# Generic memoizer: wraps any function with a cache.
 
 pub fn memoize(f) {
     let mut cache = {}
@@ -24,16 +24,16 @@ pub fn memoize(f) {
     }
 }
 
-// --- Fibonacci ---
+# --- Fibonacci ---
 
-// Naive recursive (exponential time)
+# Naive recursive (exponential time)
 pub fn fib_naive(n) => match n {
     0 => 0,
     1 => 1,
     n => fib_naive(n - 1) + fib_naive(n - 2)
 }
 
-// Memoized recursive
+# Memoized recursive
 pub fn fib_memo(n) {
     let mut memo = {}
     fn helper(n) {
@@ -49,7 +49,7 @@ pub fn fib_memo(n) {
     helper(n)
 }
 
-// Tabulated bottom-up
+# Tabulated bottom-up
 pub fn fib_tab(n) {
     if n <= 1 { ret n }
     let mut dp = [0, 1]
@@ -59,7 +59,7 @@ pub fn fib_tab(n) {
     dp[n]
 }
 
-// Space-optimized O(1) space
+# Space-optimized O(1) space
 pub fn fib_optimal(n) {
     if n <= 1 { ret n }
     let mut a = 0
@@ -72,7 +72,7 @@ pub fn fib_optimal(n) {
     b
 }
 
-// --- 0/1 Knapsack ---
+# --- 0/1 Knapsack ---
 
 pub fn knapsack(weights, values, capacity) {
     let n = len(weights)
@@ -97,10 +97,10 @@ pub fn knapsack(weights, values, capacity) {
     solve(0, capacity)
 }
 
-// Knapsack with item tracking
+# Knapsack with item tracking
 pub fn knapsack_items(weights, values, capacity) {
     let n = len(weights)
-    // Build DP table
+    # Build DP table
     let mut dp = []
     for i in 0..(n + 1) {
         let mut row = []
@@ -122,7 +122,7 @@ pub fn knapsack_items(weights, values, capacity) {
         }
     }
 
-    // Backtrack to find items
+    # Backtrack to find items
     let mut items = []
     let mut w = capacity
     for i in range(n, 0, -1) {
@@ -135,7 +135,7 @@ pub fn knapsack_items(weights, values, capacity) {
     {max_value: dp[n][capacity], items: items}
 }
 
-// --- Longest Common Subsequence ---
+# --- Longest Common Subsequence ---
 
 pub fn lcs(a, b) {
     let m = len(a)
@@ -157,12 +157,12 @@ pub fn lcs(a, b) {
     solve(0, 0)
 }
 
-// LCS with actual subsequence reconstruction
+# LCS with actual subsequence reconstruction
 pub fn lcs_string(a, b) {
     let m = len(a)
     let n = len(b)
 
-    // Build table
+    # Build table
     let mut dp = []
     for i in 0..(m + 1) {
         let mut row = []
@@ -180,7 +180,7 @@ pub fn lcs_string(a, b) {
         }
     }
 
-    // Reconstruct
+    # Reconstruct
     let mut result = []
     let mut i = m
     let mut j = n
@@ -200,7 +200,7 @@ pub fn lcs_string(a, b) {
     {length: dp[m][n], subsequence: result}
 }
 
-// --- Edit Distance (Levenshtein) ---
+# --- Edit Distance (Levenshtein) ---
 
 pub fn edit_distance(a, b) {
     let m = len(a)
@@ -216,9 +216,9 @@ pub fn edit_distance(a, b) {
         let result = match a[i - 1] == b[j - 1] {
             true => solve(i - 1, j - 1),
             false => 1 + min3(
-                solve(i - 1, j),      // delete
-                solve(i, j - 1),      // insert
-                solve(i - 1, j - 1)   // replace
+                solve(i - 1, j), # delete
+                solve(i, j - 1), # insert
+                solve(i - 1, j - 1) # replace
             )
         }
         memo[key] = result
@@ -227,7 +227,7 @@ pub fn edit_distance(a, b) {
     solve(m, n)
 }
 
-// Edit distance with operation tracking
+# Edit distance with operation tracking
 pub fn edit_distance_ops(a, b) {
     let m = len(a)
     let n = len(b)
@@ -252,7 +252,7 @@ pub fn edit_distance_ops(a, b) {
         }
     }
 
-    // Backtrack operations
+    # Backtrack operations
     let mut ops = []
     let mut i = m
     let mut j = n
@@ -277,7 +277,7 @@ pub fn edit_distance_ops(a, b) {
     {distance: dp[m][n], operations: ops}
 }
 
-// --- Coin Change ---
+# --- Coin Change ---
 
 pub fn coin_change(coins, amount) {
     let mut memo = {}
@@ -299,7 +299,7 @@ pub fn coin_change(coins, amount) {
     if result >= 999999999 { -1 } el { result }
 }
 
-// Coin change with coin tracking
+# Coin change with coin tracking
 pub fn coin_change_coins(coins, amount) {
     let mut dp = []
     let mut used = []
@@ -330,7 +330,7 @@ pub fn coin_change_coins(coins, amount) {
     {count: dp[amount], coins: result_coins}
 }
 
-// --- Matrix Chain Multiplication ---
+# --- Matrix Chain Multiplication ---
 
 pub fn matrix_chain(dims) {
     let n = len(dims) - 1
@@ -352,7 +352,7 @@ pub fn matrix_chain(dims) {
     solve(0, n - 1)
 }
 
-// Matrix chain with optimal parenthesization
+# Matrix chain with optimal parenthesization
 pub fn matrix_chain_order(dims) {
     let n = len(dims) - 1
     let mut dp = []
@@ -390,7 +390,7 @@ pub fn matrix_chain_order(dims) {
     {cost: dp[0][n - 1], order: parenthesize(0, n - 1)}
 }
 
-// --- Longest Increasing Subsequence ---
+# --- Longest Increasing Subsequence ---
 
 pub fn lis(arr) {
     let n = len(arr)
@@ -408,7 +408,7 @@ pub fn lis(arr) {
     dp |> reduce(0, max)
 }
 
-// LIS with sequence reconstruction
+# LIS with sequence reconstruction
 pub fn lis_sequence(arr) {
     let n = len(arr)
     if n == 0 { ret {length: 0, sequence: []} }
@@ -429,13 +429,13 @@ pub fn lis_sequence(arr) {
         }
     }
 
-    // Find the index of maximum length
+    # Find the index of maximum length
     let mut max_idx = 0
     for i in 1..n {
         if dp[i] > dp[max_idx] { max_idx = i }
     }
 
-    // Reconstruct
+    # Reconstruct
     let mut seq = []
     let mut idx = max_idx
     loop {
@@ -447,14 +447,14 @@ pub fn lis_sequence(arr) {
     {length: dp[max_idx], sequence: seq}
 }
 
-// O(n log n) LIS using patience sorting
+# O(n log n) LIS using patience sorting
 pub fn lis_fast(arr) {
     let n = len(arr)
     if n == 0 { ret 0 }
     let mut tails = []
 
     for x in arr {
-        // Binary search for insertion point
+        # Binary search for insertion point
         let mut lo = 0
         let mut hi = len(tails)
         loop {
@@ -471,7 +471,7 @@ pub fn lis_fast(arr) {
     len(tails)
 }
 
-// --- Utility ---
+# --- Utility ---
 
 fn min(a, b) => if a < b { a } el { b }
 fn max(a, b) => if a > b { a } el { b }
@@ -488,12 +488,12 @@ fn range(start, stop, step) {
     result
 }
 
-// --- Test Suite ---
+# --- Test Suite ---
 
 pub fn run_tests() {
     print("=== Dynamic Programming Tests ===\n")
 
-    // Fibonacci
+    # Fibonacci
     print("--- Fibonacci ---")
     let fibs = 0..12 |> map(fib_optimal)
     print("First 12: {fibs}")
@@ -501,7 +501,7 @@ pub fn run_tests() {
     assert(fib_tab(20) == 6765, "fib(20)")
     print("✓ Fibonacci tests passed\n")
 
-    // Knapsack
+    # Knapsack
     print("--- 0/1 Knapsack ---")
     let weights = [2, 3, 4, 5]
     let values = [3, 4, 5, 6]
@@ -512,7 +512,7 @@ pub fn run_tests() {
     print("Items selected: {ks2.items} -> value={ks2.max_value}")
     print("✓ Knapsack tests passed\n")
 
-    // LCS
+    # LCS
     print("--- Longest Common Subsequence ---")
     let lcs1 = lcs_string("ABCBDAB", "BDCAB")
     print("LCS of ABCBDAB, BDCAB: '{lcs1.subsequence}' (length={lcs1.length})")
@@ -520,7 +520,7 @@ pub fn run_tests() {
     print("LCS of AGGTAB, GXTXAYB: '{lcs2.subsequence}' (length={lcs2.length})")
     print("✓ LCS tests passed\n")
 
-    // Edit Distance
+    # Edit Distance
     print("--- Edit Distance ---")
     let ed1 = edit_distance("kitten", "sitting")
     print("Distance kitten->sitting: {ed1}")
@@ -529,7 +529,7 @@ pub fn run_tests() {
     print("Operations: {ed2.operations}")
     print("✓ Edit distance tests passed\n")
 
-    // Coin Change
+    # Coin Change
     print("--- Coin Change ---")
     let cc1 = coin_change([1, 5, 10, 25], 36)
     print("Min coins for 36¢: {cc1}")
@@ -539,7 +539,7 @@ pub fn run_tests() {
     print("Min coins for 11 with [3,7]: {cc3}")
     print("✓ Coin change tests passed\n")
 
-    // Matrix Chain
+    # Matrix Chain
     print("--- Matrix Chain Multiplication ---")
     let dims = [30, 35, 15, 5, 10, 20, 25]
     let mc = matrix_chain(dims)
@@ -548,7 +548,7 @@ pub fn run_tests() {
     print("Optimal order: {mc2.order} (cost={mc2.cost})")
     print("✓ Matrix chain tests passed\n")
 
-    // LIS
+    # LIS
     print("--- Longest Increasing Subsequence ---")
     let arr = [10, 9, 2, 5, 3, 7, 101, 18]
     let lis1 = lis(arr)

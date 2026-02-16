@@ -1,20 +1,20 @@
-// ============================================================================
-// HTTP Server Framework in Arc
-// ============================================================================
-// A full HTTP server with request parsing, route matching, middleware pipeline,
-// JSON helpers, static file serving, and CORS support.
-// Demonstrates: @GET/@POST decorators, async/await, regex, pattern matching,
-// closures, pipelines, pub, string interpolation, higher-order functions.
-// ============================================================================
+# ============================================================================
+# HTTP Server Framework in Arc
+# ============================================================================
+# A full HTTP server with request parsing, route matching, middleware pipeline,
+# JSON helpers, static file serving, and CORS support.
+# Demonstrates: @GET/@POST decorators, async/await, regex, pattern matching,
+# closures, pipelines, pub, string interpolation, higher-order functions.
+# ============================================================================
 
-import net
-import regex
-import json
-import collections
-import io
-import datetime
+use net
+use regex
+use json
+use collections
+use io
+use datetime
 
-// --- HTTP Request Parsing ---
+# --- HTTP Request Parsing ---
 
 pub fn parse_request(raw) => {
     let lines = raw |> split("\r\n")
@@ -28,7 +28,7 @@ pub fn parse_request(raw) => {
             let full_path = parts[2]
             let version = parts[3]
             
-            // Parse path and query string
+            # Parse path and query string
             let path_parts = full_path |> split("?")
             let path = path_parts[0]
             let query = match collections.length(path_parts) > 1 {
@@ -36,7 +36,7 @@ pub fn parse_request(raw) => {
                 false => {}
             }
             
-            // Parse headers
+            # Parse headers
             let header_lines = lines
                 |> collections.skip(1)
                 |> collections.take_while(fn(line) => line != "")
@@ -49,7 +49,7 @@ pub fn parse_request(raw) => {
                 }
             })
             
-            // Parse body
+            # Parse body
             let body_start = collections.index_of(lines, "") + 1
             let body = match body_start < collections.length(lines) {
                 true => lines |> collections.skip(body_start) |> collections.join("\r\n"),
@@ -86,7 +86,7 @@ fn url_decode(s) => {
     |> regex.replace_all(r"%([0-9A-Fa-f]{2})", fn(m) => char_from_hex(m[1]))
 }
 
-// --- HTTP Response Builder ---
+# --- HTTP Response Builder ---
 
 pub fn response(status, body, headers) => {
     let status_text = match status {
@@ -140,7 +140,7 @@ pub fn not_found(message) => {
     json_response(404, { error: message or "Not Found" })
 }
 
-// --- Router ---
+# --- Router ---
 
 pub fn router() => {
     {
@@ -179,7 +179,7 @@ pub fn put(router, pattern, handler) => add_route(router, "PUT", pattern, handle
 
 pub fn delete(router, pattern, handler) => add_route(router, "DELETE", pattern, handler)
 
-// --- Middleware ---
+# --- Middleware ---
 
 pub fn use_middleware(router, middleware_fn) => {
     let mut r = router
@@ -187,7 +187,7 @@ pub fn use_middleware(router, middleware_fn) => {
     r
 }
 
-// Common middleware
+# Common middleware
 
 pub fn cors_middleware(allowed_origins) => fn(req, next) => {
     let origin = collections.get(req.headers, "origin", "*")
@@ -262,7 +262,7 @@ fn add_header(response_str, key, value) => {
     response_str |> regex.replace(r"\r\n\r\n", "\r\n${key}: ${value}\r\n\r\n")
 }
 
-// --- Static File Serving ---
+# --- Static File Serving ---
 
 pub fn static_files(directory, prefix) => fn(req, next) => {
     match req.path |> starts_with(prefix) {
@@ -299,7 +299,7 @@ fn guess_mime(path) => {
     }
 }
 
-// --- Route Matching and Dispatch ---
+# --- Route Matching and Dispatch ---
 
 fn match_route(router, req) => {
     router.routes |> collections.find(fn(route) => {
@@ -321,7 +321,7 @@ pub fn dispatch(router, raw_request) => {
     match req {
         { error: e } => json_response(400, { error: e }),
         _ => {
-            // Build middleware chain
+            # Build middleware chain
             let handler = fn(req) => {
                 let route = match_route(router, req)
                 match route {
@@ -335,7 +335,7 @@ pub fn dispatch(router, raw_request) => {
                 }
             }
             
-            // Apply middleware in reverse order (outermost first)
+            # Apply middleware in reverse order (outermost first)
             let chain = router.middleware
                 |> collections.reverse()
                 |> collections.reduce(handler, fn(next, mw) => {
@@ -347,7 +347,7 @@ pub fn dispatch(router, raw_request) => {
     }
 }
 
-// --- Server ---
+# --- Server ---
 
 pub async fn listen(router, host, port) => {
     print("Arc HTTP server starting on ${host}:${port}...")
@@ -356,7 +356,7 @@ pub async fn listen(router, host, port) => {
     
     loop {
         let conn = await server.accept()
-        // Handle each connection concurrently
+        # Handle each connection concurrently
         async {
             let raw = await conn.read()
             let response = dispatch(router, raw)
@@ -366,12 +366,12 @@ pub async fn listen(router, host, port) => {
     }
 }
 
-// --- Main Demo ---
+# --- Main Demo ---
 
 fn main() => {
     print("=== Arc HTTP Server Demo ===\n")
     
-    // In-memory data store
+    # In-memory data store
     let mut items = [
         { id: 1, name: "Widget", price: 9.99 },
         { id: 2, name: "Gadget", price: 24.99 },
@@ -422,7 +422,7 @@ fn main() => {
             items_count: collections.length(items)
         }))
     
-    // Demo: simulate request dispatch
+    # Demo: simulate request dispatch
     print("Simulating requests:\n")
     
     let test_requests = [
