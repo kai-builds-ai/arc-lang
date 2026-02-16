@@ -34,6 +34,8 @@ export declare class Parser {
     private parsePrefix;
     private parseStringInterp;
     private parseListOrComprehension;
+    private isMapStart;
+    private parseMapEntry;
     private parseMapOrBlock;
     private parseIf;
     private parseMatch;

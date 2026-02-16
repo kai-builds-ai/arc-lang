@@ -167,9 +167,14 @@ export function lint(source, options) {
                 break;
             case "MapLiteral":
                 for (const entry of expr.entries) {
-                    if (typeof entry.key !== "string")
+                    if (entry.spread) {
+                        analyzeExpr(entry.spread, scope);
+                        continue;
+                    }
+                    if (entry.key && typeof entry.key !== "string")
                         analyzeExpr(entry.key, scope);
-                    analyzeExpr(entry.value, scope);
+                    if (entry.value)
+                        analyzeExpr(entry.value, scope);
                 }
                 break;
             case "ListComprehension": {
@@ -317,10 +322,20 @@ export function lint(source, options) {
                 analyzeExpr(stmt.iterable, scope);
                 const forScope = new LintScope(scope);
                 scope.children.push(forScope);
-                forScope.define(stmt.variable, {
-                    name: stmt.variable, loc: stmt.loc, mutable: false,
-                    used: false, mutated: false, kind: "loop-var"
-                });
+                if (typeof stmt.variable === "string") {
+                    forScope.define(stmt.variable, {
+                        name: stmt.variable, loc: stmt.loc, mutable: false,
+                        used: false, mutated: false, kind: "loop-var"
+                    });
+                }
+                else {
+                    for (const n of stmt.variable.names) {
+                        forScope.define(n, {
+                            name: n, loc: stmt.loc, mutable: false,
+                            used: false, mutated: false, kind: "loop-var"
+                        });
+                    }
+                }
                 analyzeExpr(stmt.body, forScope);
                 // Check empty body
                 if (stmt.body.kind === "BlockExpr" && stmt.body.stmts.length === 0) {

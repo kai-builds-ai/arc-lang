@@ -2,7 +2,7 @@ export interface Loc {
     line: number;
     col: number;
 }
-export type Expr = IntLiteral | FloatLiteral | BoolLiteral | NilLiteral | StringLiteral | StringInterp | Identifier | BinaryExpr | UnaryExpr | CallExpr | MemberExpr | IndexExpr | PipelineExpr | IfExpr | MatchExpr | LambdaExpr | ListLiteral | MapLiteral | ListComprehension | ToolCallExpr | RangeExpr | BlockExpr | AsyncExpr | AwaitExpr | FetchExpr;
+export type Expr = IntLiteral | FloatLiteral | BoolLiteral | NilLiteral | StringLiteral | StringInterp | Identifier | BinaryExpr | UnaryExpr | CallExpr | MemberExpr | IndexExpr | PipelineExpr | IfExpr | MatchExpr | LambdaExpr | ListLiteral | MapLiteral | ListComprehension | ToolCallExpr | RangeExpr | BlockExpr | AsyncExpr | AwaitExpr | FetchExpr | SpreadExpr | OptionalMemberExpr | TryExpr;
 export interface IntLiteral {
     kind: "IntLiteral";
     value: number;
@@ -103,12 +103,19 @@ export interface ListLiteral {
     elements: Expr[];
     loc: Loc;
 }
+export interface SpreadExpr {
+    kind: "SpreadExpr";
+    expr: Expr;
+    loc: Loc;
+}
+export interface MapEntry {
+    key?: string | Expr;
+    value?: Expr;
+    spread?: Expr;
+}
 export interface MapLiteral {
     kind: "MapLiteral";
-    entries: {
-        key: string | Expr;
-        value: Expr;
-    }[];
+    entries: MapEntry[];
     loc: Loc;
 }
 export interface ListComprehension {
@@ -152,7 +159,18 @@ export interface FetchExpr {
     targets: Expr[];
     loc: Loc;
 }
-export type Pattern = WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern;
+export interface OptionalMemberExpr {
+    kind: "OptionalMemberExpr";
+    object: Expr;
+    property: string;
+    loc: Loc;
+}
+export interface TryExpr {
+    kind: "TryExpr";
+    expr: Expr;
+    loc: Loc;
+}
+export type Pattern = WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern | ConstructorPattern;
 export interface WildcardPattern {
     kind: "WildcardPattern";
     loc: Loc;
@@ -175,6 +193,12 @@ export interface ArrayPattern {
 export interface OrPattern {
     kind: "OrPattern";
     patterns: Pattern[];
+    loc: Loc;
+}
+export interface ConstructorPattern {
+    kind: "ConstructorPattern";
+    name: string;
+    args: Pattern[];
     loc: Loc;
 }
 export type Stmt = LetStmt | FnStmt | ForStmt | DoStmt | ExprStmt | UseStmt | TypeStmt | AssignStmt | MemberAssignStmt | IndexAssignStmt | RetStmt;
@@ -215,11 +239,18 @@ export interface DestructureTarget {
     kind: "DestructureTarget";
     type: "object" | "array";
     names: string[];
+    rest?: string;
+}
+export interface Param {
+    name: string;
+    default?: Expr;
+    rest?: boolean;
 }
 export interface FnStmt {
     kind: "FnStmt";
     name: string;
     params: string[];
+    richParams?: Param[];
     body: Expr;
     isAsync: boolean;
     pub: boolean;
@@ -227,7 +258,7 @@ export interface FnStmt {
 }
 export interface ForStmt {
     kind: "ForStmt";
-    variable: string;
+    variable: string | DestructureTarget;
     iterable: Expr;
     body: Expr;
     loc: Loc;

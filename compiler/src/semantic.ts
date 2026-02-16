@@ -169,8 +169,9 @@ export function analyze(program: AST.Program): Diagnostic[] {
 
       case "MapLiteral":
         for (const entry of expr.entries) {
-          if (typeof entry.key !== "string") analyzeExpr(entry.key, scope);
-          analyzeExpr(entry.value, scope);
+          if (entry.spread) { analyzeExpr(entry.spread, scope); continue; }
+          if (entry.key && typeof entry.key !== "string") analyzeExpr(entry.key as AST.Expr, scope);
+          if (entry.value) analyzeExpr(entry.value, scope);
         }
         break;
 
@@ -311,7 +312,13 @@ export function analyze(program: AST.Program): Diagnostic[] {
       case "ForStmt": {
         analyzeExpr(stmt.iterable, scope);
         const forScope = new Scope(scope);
-        forScope.define(stmt.variable, { mutable: false, kind: "loop-var" });
+        if (typeof stmt.variable === "string") {
+          forScope.define(stmt.variable, { mutable: false, kind: "loop-var" });
+        } else {
+          for (const n of stmt.variable.names) {
+            forScope.define(n, { mutable: false, kind: "loop-var" });
+          }
+        }
         analyzeExpr(stmt.body, forScope);
         break;
       }

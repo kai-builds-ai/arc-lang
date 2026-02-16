@@ -136,8 +136,27 @@ export class IRGenerator {
                 this.pushScope();
                 const elem = this.temp();
                 this.emit({ op: "index", dest: elem, obj: iter, idx: counter });
-                const loopVarName = this.defineVar(stmt.variable);
-                this.emit({ op: "store", name: loopVarName, src: elem });
+                if (typeof stmt.variable === "string") {
+                    const loopVarName = this.defineVar(stmt.variable);
+                    this.emit({ op: "store", name: loopVarName, src: elem });
+                }
+                else {
+                    // Destructuring — extract fields from elem
+                    const dt = stmt.variable;
+                    for (let j = 0; j < dt.names.length; j++) {
+                        const dest = this.temp();
+                        if (dt.type === "object") {
+                            this.emit({ op: "field", dest, obj: elem, prop: dt.names[j] });
+                        }
+                        else {
+                            const idx2 = this.temp();
+                            this.emit({ op: "const", dest: idx2, value: j });
+                            this.emit({ op: "index", dest, obj: elem, idx: idx2 });
+                        }
+                        const mangled = this.defineVar(dt.names[j]);
+                        this.emit({ op: "store", name: mangled, src: dest });
+                    }
+                }
                 this.lowerExpr(stmt.body);
                 this.popScope();
                 const next = this.temp();
@@ -402,6 +421,10 @@ export class IRGenerator {
                 this.emit({ op: "load", dest, name: `@fn:${fnName}` });
                 return dest;
             }
+            case "SpreadExpr": {
+                // In IR context, just lower the inner expression
+                return this.lowerExpr(expr.expr);
+            }
             case "ListLiteral": {
                 const elements = expr.elements.map(e => this.lowerExpr(e));
                 const dest = this.temp();
@@ -411,17 +434,23 @@ export class IRGenerator {
             case "MapLiteral": {
                 const keys = [];
                 const values = [];
+                // For simplicity in IR, spread is not fully supported — lower without spread
                 for (const entry of expr.entries) {
+                    if (entry.spread) {
+                        // TODO: spread in IR codegen
+                        continue;
+                    }
                     if (typeof entry.key === "string") {
                         const k = this.temp();
                         this.emit({ op: "const", dest: k, value: entry.key });
                         keys.push(k);
                     }
-                    else {
-                        // Expression key — lower it properly
+                    else if (entry.key) {
                         keys.push(this.lowerExpr(entry.key));
                     }
-                    values.push(this.lowerExpr(entry.value));
+                    if (entry.value) {
+                        values.push(this.lowerExpr(entry.value));
+                    }
                 }
                 const dest = this.temp();
                 this.emit({ op: "map", dest, keys, values });

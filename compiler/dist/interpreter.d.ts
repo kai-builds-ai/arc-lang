@@ -12,6 +12,7 @@ interface FnValue {
     __fn: true;
     name: string;
     params: string[];
+    richParams?: AST.Param[];
     body: AST.Expr;
     closure: Env;
 }

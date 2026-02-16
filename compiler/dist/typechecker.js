@@ -142,9 +142,14 @@ export function typecheck(program) {
                 break;
             case "MapLiteral":
                 for (const e of expr.entries) {
-                    if (typeof e.key !== "string")
+                    if (e.spread) {
+                        walkExpr(e.spread);
+                        continue;
+                    }
+                    if (e.key && typeof e.key !== "string")
                         walkExpr(e.key);
-                    walkExpr(e.value);
+                    if (e.value)
+                        walkExpr(e.value);
                 }
                 break;
             case "PipelineExpr":

@@ -221,8 +221,9 @@ function makePrelude(env: Env): void {
     chars: (s) => typeof s === "string" ? s.split("") : [],
     repeat: (s, n) => typeof s === "string" ? s.repeat(n as number) : s,
     slice: (v, start, end) => {
-      if (Array.isArray(v)) return v.slice(start as number, end as number ?? undefined);
-      if (typeof v === "string") return v.slice(start as number, end as number ?? undefined);
+      const endVal = (end === null || end === undefined) ? undefined : end as number;
+      if (Array.isArray(v)) return v.slice(start as number, endVal);
+      if (typeof v === "string") return v.slice(start as number, endVal);
       return null;
     },
     to_string: (v) => toStr(v),
@@ -464,6 +465,8 @@ function makePrelude(env: Env): void {
         const groups = match.slice(1).map(g => g ?? null) as Value[];
         m.set("groups", groups);
         results.push({ __map: true, entries: m } as MapValue);
+        // Prevent infinite loop on zero-length matches
+        if (match[0].length === 0) regex.lastIndex++;
       }
       return results;
     },
@@ -504,6 +507,8 @@ function makePrelude(env: Env): void {
         if (match.length > 1) {
           results.push(match.slice(1).map(g => g ?? null) as Value[]);
         }
+        // Prevent infinite loop on zero-length matches
+        if (match[0].length === 0) regex.lastIndex++;
       }
       return results;
     },

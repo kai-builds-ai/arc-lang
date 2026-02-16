@@ -56,27 +56,29 @@ export var TokenType;
     TokenType[TokenType["FatArrow"] = 49] = "FatArrow";
     TokenType[TokenType["Arrow"] = 50] = "Arrow";
     TokenType[TokenType["Question"] = 51] = "Question";
-    TokenType[TokenType["Range"] = 52] = "Range";
-    TokenType[TokenType["Concat"] = 53] = "Concat";
-    TokenType[TokenType["At"] = 54] = "At";
-    TokenType[TokenType["Hash"] = 55] = "Hash";
-    TokenType[TokenType["Assign"] = 56] = "Assign";
+    TokenType[TokenType["QuestionDot"] = 52] = "QuestionDot";
+    TokenType[TokenType["Range"] = 53] = "Range";
+    TokenType[TokenType["Concat"] = 54] = "Concat";
+    TokenType[TokenType["At"] = 55] = "At";
+    TokenType[TokenType["Hash"] = 56] = "Hash";
+    TokenType[TokenType["DotDotDot"] = 57] = "DotDotDot";
+    TokenType[TokenType["Assign"] = 58] = "Assign";
     // Delimiters
-    TokenType[TokenType["LParen"] = 57] = "LParen";
-    TokenType[TokenType["RParen"] = 58] = "RParen";
-    TokenType[TokenType["LBrace"] = 59] = "LBrace";
-    TokenType[TokenType["RBrace"] = 60] = "RBrace";
-    TokenType[TokenType["LBracket"] = 61] = "LBracket";
-    TokenType[TokenType["RBracket"] = 62] = "RBracket";
-    TokenType[TokenType["Comma"] = 63] = "Comma";
-    TokenType[TokenType["Colon"] = 64] = "Colon";
-    TokenType[TokenType["Dot"] = 65] = "Dot";
-    TokenType[TokenType["Semicolon"] = 66] = "Semicolon";
-    TokenType[TokenType["Newline"] = 67] = "Newline";
+    TokenType[TokenType["LParen"] = 59] = "LParen";
+    TokenType[TokenType["RParen"] = 60] = "RParen";
+    TokenType[TokenType["LBrace"] = 61] = "LBrace";
+    TokenType[TokenType["RBrace"] = 62] = "RBrace";
+    TokenType[TokenType["LBracket"] = 63] = "LBracket";
+    TokenType[TokenType["RBracket"] = 64] = "RBracket";
+    TokenType[TokenType["Comma"] = 65] = "Comma";
+    TokenType[TokenType["Colon"] = 66] = "Colon";
+    TokenType[TokenType["Dot"] = 67] = "Dot";
+    TokenType[TokenType["Semicolon"] = 68] = "Semicolon";
+    TokenType[TokenType["Newline"] = 69] = "Newline";
     // Regex
-    TokenType[TokenType["Regex"] = 68] = "Regex";
+    TokenType[TokenType["Regex"] = 70] = "Regex";
     // Special
-    TokenType[TokenType["EOF"] = 69] = "EOF";
+    TokenType[TokenType["EOF"] = 71] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.Fn, let: TokenType.Let, mut: TokenType.Mut, type: TokenType.Type,
@@ -384,6 +386,19 @@ export function lex(source) {
             advance();
             advance();
             tokens.push(tok(TokenType.Gte, ">=", sl, sc));
+            continue;
+        }
+        if (ch === "?" && peek(1) === ".") {
+            advance();
+            advance();
+            tokens.push(tok(TokenType.QuestionDot, "?.", sl, sc));
+            continue;
+        }
+        if (ch === "." && peek(1) === "." && peek(2) === ".") {
+            advance();
+            advance();
+            advance();
+            tokens.push(tok(TokenType.DotDotDot, "...", sl, sc));
             continue;
         }
         if (ch === "." && peek(1) === ".") {

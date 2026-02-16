@@ -191,8 +191,9 @@ export function format(source: string, options?: Partial<FormatOptions>): string
       case "MapLiteral": {
         if (expr.entries.length === 0) return "{}";
         const entries = expr.entries.map(e => {
-          const key = typeof e.key === "string" ? e.key : formatExpr(e.key, depth + 1);
-          return `${key}: ${formatExpr(e.value, depth + 1)}`;
+          if (e.spread) return `...${formatExpr(e.spread, depth + 1)}`;
+          const key = typeof e.key === "string" ? e.key : formatExpr(e.key as AST.Expr, depth + 1);
+          return `${key}: ${formatExpr(e.value!, depth + 1)}`;
         });
         const single = `{ ${entries.join(", ")} }`;
         if (single.length + depth * opts.indentSize <= opts.maxLineLength) return single;
@@ -221,6 +222,10 @@ export function format(source: string, options?: Partial<FormatOptions>): string
         const targets = expr.targets.map(t => formatExpr(t, depth)).join(", ");
         return `fetch [${targets}]`;
       }
+      case "SpreadExpr": return `...${formatExpr(expr.expr, depth)}`;
+      case "OptionalMemberExpr": return `${formatExpr(expr.object, depth)}?.${expr.property}`;
+      case "TryExpr": return `${formatExpr(expr.expr, depth)}?`;
+      default: return `/* unknown */`;
     }
   }
 
@@ -256,6 +261,8 @@ export function format(source: string, options?: Partial<FormatOptions>): string
       case "BindingPattern": return pat.name;
       case "ArrayPattern": return `[${pat.elements.map(formatPattern).join(", ")}]`;
       case "OrPattern": return pat.patterns.map(formatPattern).join(" | ");
+      case "ConstructorPattern": return `${pat.name}(${pat.args.map(formatPattern).join(", ")})`;
+      default: return "_";
     }
   }
 

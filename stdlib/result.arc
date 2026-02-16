@@ -31,7 +31,5 @@ pub fn flat_map_result(result, f) {
   }
 }
 
-# try_fn - wraps a function call in a Result
-pub fn try_fn(f) {
-  Ok(f())
-}
+# try_fn - wraps a function call in a Result (uses native error_try)
+pub fn try_fn(f) => error_try(f)

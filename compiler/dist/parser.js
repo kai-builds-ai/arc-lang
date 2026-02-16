@@ -117,13 +117,25 @@ export class Parser {
         else if (this.at(TokenType.LBracket)) {
             this.advance();
             const names = [];
+            let rest;
             while (!this.at(TokenType.RBracket)) {
+                if (this.at(TokenType.DotDotDot)) {
+                    this.advance();
+                    rest = this.expect(TokenType.Ident).value;
+                    // rest must be last
+                    if (this.at(TokenType.Comma))
+                        this.advance();
+                    break;
+                }
                 names.push(this.expect(TokenType.Ident).value);
                 if (this.at(TokenType.Comma))
                     this.advance();
             }
             this.expect(TokenType.RBracket);
-            name = { kind: "DestructureTarget", type: "array", names };
+            const target = { kind: "DestructureTarget", type: "array", names };
+            if (rest)
+                target.rest = rest;
+            name = target;
         }
         else {
             name = this.expect(TokenType.Ident).value;
@@ -151,8 +163,29 @@ export class Parser {
         const name = this.expect(TokenType.Ident).value;
         this.expect(TokenType.LParen);
         const params = [];
+        const richParams = [];
+        let hasRichParams = false;
         while (!this.at(TokenType.RParen)) {
-            params.push(this.expect(TokenType.Ident).value);
+            if (this.at(TokenType.DotDotDot)) {
+                this.advance();
+                const pname = this.expect(TokenType.Ident).value;
+                params.push(pname);
+                richParams.push({ name: pname, rest: true });
+                hasRichParams = true;
+                // rest must be last
+                break;
+            }
+            const pname = this.expect(TokenType.Ident).value;
+            params.push(pname);
+            if (this.at(TokenType.Assign)) {
+                this.advance();
+                const def = this.parseExpr();
+                richParams.push({ name: pname, default: def });
+                hasRichParams = true;
+            }
+            else {
+                richParams.push({ name: pname });
+            }
             if (this.at(TokenType.Comma))
                 this.advance();
         }
@@ -165,12 +198,40 @@ export class Parser {
         else {
             body = this.parseBlock();
         }
-        return { kind: "FnStmt", name, params, body, isAsync, pub, loc };
+        const stmt = { kind: "FnStmt", name, params, body, isAsync, pub, loc };
+        if (hasRichParams)
+            stmt.richParams = richParams;
+        return stmt;
     }
     parseFor() {
         const loc = this.loc();
         this.expect(TokenType.For);
-        const variable = this.expect(TokenType.Ident).value;
+        let variable;
+        if (this.at(TokenType.LBracket)) {
+            this.advance();
+            const names = [];
+            while (!this.at(TokenType.RBracket)) {
+                names.push(this.expect(TokenType.Ident).value);
+                if (this.at(TokenType.Comma))
+                    this.advance();
+            }
+            this.expect(TokenType.RBracket);
+            variable = { kind: "DestructureTarget", type: "array", names };
+        }
+        else if (this.at(TokenType.LBrace)) {
+            this.advance();
+            const names = [];
+            while (!this.at(TokenType.RBrace)) {
+                names.push(this.expect(TokenType.Ident).value);
+                if (this.at(TokenType.Comma))
+                    this.advance();
+            }
+            this.expect(TokenType.RBrace);
+            variable = { kind: "DestructureTarget", type: "object", names };
+        }
+        else {
+            variable = this.expect(TokenType.Ident).value;
+        }
         this.expect(TokenType.In);
         const iterable = this.parseExpr();
         const body = this.parseBlock();
@@ -412,6 +473,19 @@ export class Parser {
                 left = { kind: "MemberExpr", object: left, property: prop, loc: left.loc };
                 continue;
             }
+            // Postfix: optional chaining ?.
+            if (t.type === TokenType.QuestionDot) {
+                this.advance();
+                const prop = this.expect(TokenType.Ident).value;
+                left = { kind: "OptionalMemberExpr", object: left, property: prop, loc: left.loc };
+                continue;
+            }
+            // Postfix: try operator ?
+            if (t.type === TokenType.Question) {
+                this.advance();
+                left = { kind: "TryExpr", expr: left, loc: left.loc };
+                continue;
+            }
             // Binary operators
             const op = this.binaryOp();
             if (op) {
@@ -447,7 +521,9 @@ export class Parser {
             case TokenType.Range: return 8;
             case TokenType.Dot:
             case TokenType.LBracket:
-            case TokenType.LParen: return 10;
+            case TokenType.LParen:
+            case TokenType.QuestionDot:
+            case TokenType.Question: return 10;
             case TokenType.Pipe: return 0; // lowest
             default: return -1;
         }
@@ -637,7 +713,16 @@ export class Parser {
             this.advance();
             return { kind: "ListLiteral", elements: [], loc };
         }
-        const first = this.parseExpr();
+        // Check for spread as first element
+        let first;
+        if (this.at(TokenType.DotDotDot)) {
+            const spreadLoc = this.loc();
+            this.advance();
+            first = { kind: "SpreadExpr", expr: this.parseExpr(), loc: spreadLoc };
+        }
+        else {
+            first = this.parseExpr();
+        }
         // Check for list comprehension: [expr for x in iter if cond]
         if (this.at(TokenType.For)) {
             this.advance();
@@ -658,14 +743,82 @@ export class Parser {
             this.advance();
             if (this.at(TokenType.RBracket))
                 break;
-            elements.push(this.parseExpr());
+            if (this.at(TokenType.DotDotDot)) {
+                const spreadLoc = this.loc();
+                this.advance();
+                elements.push({ kind: "SpreadExpr", expr: this.parseExpr(), loc: spreadLoc });
+            }
+            else {
+                elements.push(this.parseExpr());
+            }
         }
         this.expect(TokenType.RBracket);
         return { kind: "ListLiteral", elements, loc };
     }
+    isMapStart() {
+        // Check if current position (after {) looks like a map entry
+        if (this.at(TokenType.Ident) && this.tokens[this.pos + 1]?.type === TokenType.Colon)
+            return true;
+        if (this.at(TokenType.String) && this.tokens[this.pos + 1]?.type === TokenType.Colon)
+            return true;
+        if (this.at(TokenType.Int) && this.tokens[this.pos + 1]?.type === TokenType.Colon)
+            return true;
+        if (this.at(TokenType.DotDotDot))
+            return true;
+        if (this.at(TokenType.LBracket)) {
+            // Computed key: [expr]: value — scan for ] then :
+            let depth = 1;
+            let j = this.pos + 1;
+            while (j < this.tokens.length && depth > 0) {
+                if (this.tokens[j].type === TokenType.LBracket)
+                    depth++;
+                if (this.tokens[j].type === TokenType.RBracket)
+                    depth--;
+                j++;
+            }
+            if (j < this.tokens.length && this.tokens[j].type === TokenType.Colon)
+                return true;
+        }
+        return false;
+    }
+    parseMapEntry() {
+        // Spread: ...expr
+        if (this.at(TokenType.DotDotDot)) {
+            this.advance();
+            const expr = this.parseExpr();
+            return { spread: expr };
+        }
+        // Computed key: [expr]: value
+        if (this.at(TokenType.LBracket)) {
+            this.advance();
+            const keyExpr = this.parseExpr();
+            this.expect(TokenType.RBracket);
+            this.expect(TokenType.Colon);
+            const value = this.parseExpr();
+            return { key: keyExpr, value };
+        }
+        // String key: "key": value
+        if (this.at(TokenType.String)) {
+            const key = this.advance().value;
+            this.expect(TokenType.Colon);
+            const value = this.parseExpr();
+            return { key, value };
+        }
+        // Int key: 0: value
+        if (this.at(TokenType.Int)) {
+            const key = this.advance().value;
+            this.expect(TokenType.Colon);
+            const value = this.parseExpr();
+            return { key, value };
+        }
+        // Ident key: name: value
+        const key = this.expect(TokenType.Ident).value;
+        this.expect(TokenType.Colon);
+        const value = this.parseExpr();
+        return { key, value };
+    }
     parseMapOrBlock() {
         const loc = this.loc();
-        // Peek ahead to determine if map literal (key: value) or block
         const saved = this.pos;
         this.advance(); // skip {
         // Empty braces = empty map
@@ -673,15 +826,10 @@ export class Parser {
             this.advance();
             return { kind: "MapLiteral", entries: [], loc };
         }
-        // Check if it's a map: identifier followed by colon
-        if (this.at(TokenType.Ident) && this.tokens[this.pos + 1]?.type === TokenType.Colon) {
-            // It's a map literal
+        if (this.isMapStart()) {
             const entries = [];
             while (!this.at(TokenType.RBrace) && !this.at(TokenType.EOF)) {
-                const key = this.expect(TokenType.Ident).value;
-                this.expect(TokenType.Colon);
-                const value = this.parseExpr();
-                entries.push({ key, value });
+                entries.push(this.parseMapEntry());
                 if (this.at(TokenType.Comma))
                     this.advance();
             }
@@ -795,6 +943,18 @@ export class Parser {
         }
         if (t.type === TokenType.Ident) {
             this.advance();
+            // Constructor pattern: Name(pat, pat, ...)
+            if (this.at(TokenType.LParen)) {
+                this.advance();
+                const args = [];
+                while (!this.at(TokenType.RParen) && !this.at(TokenType.EOF)) {
+                    args.push(this.parsePattern());
+                    if (this.at(TokenType.Comma))
+                        this.advance();
+                }
+                this.expect(TokenType.RParen);
+                return { kind: "ConstructorPattern", name: t.value, args, loc };
+            }
             return { kind: "BindingPattern", name: t.value, loc };
         }
         throw new ParseError(`Expected pattern, got ${TokenType[t.type]}`, loc);

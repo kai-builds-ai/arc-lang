@@ -148,8 +148,9 @@ export function typecheck(program: AST.Program): Diagnostic[] {
         break;
       case "MapLiteral":
         for (const e of expr.entries) {
-          if (typeof e.key !== "string") walkExpr(e.key);
-          walkExpr(e.value);
+          if (e.spread) { walkExpr(e.spread); continue; }
+          if (e.key && typeof e.key !== "string") walkExpr(e.key as AST.Expr);
+          if (e.value) walkExpr(e.value);
         }
         break;
       case "PipelineExpr":

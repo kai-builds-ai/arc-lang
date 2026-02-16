@@ -51,11 +51,11 @@ pub fn capture_all(pattern, text) {
 
 # Escapes all regex special characters in `text`
 pub fn escape(text) {
-  let specials = ["\\", ".", "^", "$", "*", "+", "?", "(", ")", "[", "]", "\{", "\}", "|"]
+  let specials = ["\\", ".", "^", "$", "*", "+", "?", "(", ")", "[", "]", "{", "}", "|"]
   let mut result = text
-  specials |> each(ch => {
+  for ch in specials {
     result = replace_all(ch, "\\" ++ ch, result)
-  })
+  }
   result
 }
 

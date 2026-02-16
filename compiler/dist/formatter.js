@@ -204,6 +204,8 @@ export function format(source, options) {
                 if (expr.entries.length === 0)
                     return "{}";
                 const entries = expr.entries.map(e => {
+                    if (e.spread)
+                        return `...${formatExpr(e.spread, depth + 1)}`;
                     const key = typeof e.key === "string" ? e.key : formatExpr(e.key, depth + 1);
                     return `${key}: ${formatExpr(e.value, depth + 1)}`;
                 });
@@ -235,6 +237,10 @@ export function format(source, options) {
                 const targets = expr.targets.map(t => formatExpr(t, depth)).join(", ");
                 return `fetch [${targets}]`;
             }
+            case "SpreadExpr": return `...${formatExpr(expr.expr, depth)}`;
+            case "OptionalMemberExpr": return `${formatExpr(expr.object, depth)}?.${expr.property}`;
+            case "TryExpr": return `${formatExpr(expr.expr, depth)}?`;
+            default: return `/* unknown */`;
         }
     }
     function formatBlockExpr(expr, depth) {
@@ -272,6 +278,8 @@ export function format(source, options) {
             case "BindingPattern": return pat.name;
             case "ArrayPattern": return `[${pat.elements.map(formatPattern).join(", ")}]`;
             case "OrPattern": return pat.patterns.map(formatPattern).join(" | ");
+            case "ConstructorPattern": return `${pat.name}(${pat.args.map(formatPattern).join(", ")})`;
+            default: return "_";
         }
     }
     function formatTypeExpr(t) {

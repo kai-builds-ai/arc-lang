@@ -199,8 +199,25 @@ export class IRGenerator {
         this.pushScope();
         const elem = this.temp();
         this.emit({ op: "index", dest: elem, obj: iter, idx: counter });
-        const loopVarName = this.defineVar(stmt.variable);
-        this.emit({ op: "store", name: loopVarName, src: elem });
+        if (typeof stmt.variable === "string") {
+          const loopVarName = this.defineVar(stmt.variable);
+          this.emit({ op: "store", name: loopVarName, src: elem });
+        } else {
+          // Destructuring — extract fields from elem
+          const dt = stmt.variable as AST.DestructureTarget;
+          for (let j = 0; j < dt.names.length; j++) {
+            const dest = this.temp();
+            if (dt.type === "object") {
+              this.emit({ op: "field", dest, obj: elem, prop: dt.names[j] });
+            } else {
+              const idx2 = this.temp();
+              this.emit({ op: "const", dest: idx2, value: j });
+              this.emit({ op: "index", dest, obj: elem, idx: idx2 });
+            }
+            const mangled = this.defineVar(dt.names[j]);
+            this.emit({ op: "store", name: mangled, src: dest });
+          }
+        }
 
         this.lowerExpr(stmt.body);
         this.popScope();
