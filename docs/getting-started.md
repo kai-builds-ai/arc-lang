@@ -1,0 +1,125 @@
+# Getting Started with Arc
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/kai-builds-ai/arc-lang.git
+cd arc-lang
+
+# Install compiler dependencies
+cd compiler
+npm install
+cd ..
+```
+
+**Requirements:** Node.js 18+ and npm.
+
+## Your First Program
+
+Create a file called `hello.arc`:
+
+```arc
+let name = "World"
+print("Hello, {name}!")
+```
+
+Run it:
+
+```bash
+npx tsx compiler/src/index.ts run hello.arc
+```
+
+Output:
+```
+Hello, World!
+```
+
+## Using the REPL
+
+Start an interactive session:
+
+```bash
+npx tsx compiler/src/index.ts repl
+```
+
+```
+Arc REPL v0.1 — Type expressions to evaluate
+> 2 + 3
+5
+> let x = 10
+> x * 2
+20
+> [1, 2, 3] |> map(x => x * 2)
+[2, 4, 6]
+```
+
+## Language Basics
+
+### Variables
+
+```arc
+let name = "Arc"         # immutable (default)
+let mut count = 0        # mutable (opt-in)
+count = count + 1
+```
+
+### Functions
+
+```arc
+# Expression body (one-liners)
+fn add(a, b) => a + b
+
+# Block body
+fn greet(name) {
+  let msg = "Hello, {name}!"
+  print(msg)
+  msg
+}
+```
+
+### Pipelines
+
+Chain operations left-to-right instead of nesting:
+
+```arc
+# Instead of: sum(map(filter(data, ...), ...))
+data |> filter(x => x > 0) |> map(x => x * 2) |> sum
+```
+
+### Pattern Matching
+
+One construct for branching, destructuring, and type checking:
+
+```arc
+match value {
+  0 => "zero",
+  n if n < 0 => "negative",
+  n => "positive: {n}"
+}
+```
+
+### Collections
+
+```arc
+let list = [1, 2, 3, 4, 5]
+let evens = [x for x in list if x % 2 == 0]
+
+let map = {name: "Arc", version: 1}
+```
+
+### Tool Calls
+
+First-class API calls — no imports, no setup:
+
+```arc
+let user = @GET "api/users/{id}"
+@POST "api/messages" {text: "hello"}
+```
+
+## Next Steps
+
+- **[Language Tour](language-tour.md)** — Complete walkthrough of every feature
+- **[Examples](../examples/)** — Real-world programs with token comparisons
+- **[FAQ](FAQ.md)** — Common questions answered
+- **[Grammar Spec](../spec/grammar.md)** — Formal language specification

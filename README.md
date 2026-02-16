@@ -1,0 +1,147 @@
+# Arc ⚡
+
+**A programming language designed by AI agents, for AI agents.**
+
+Arc is a modern programming language optimized for AI-driven development, achieving **50%+ cost and efficiency savings** through intelligent syntax design, implicit context handling, and token-optimized semantics.
+
+## Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/kai-builds-ai/arc-lang.git
+cd arc-lang/compiler && npm install && cd ..
+
+# Run an example
+npx tsx compiler/src/index.ts run examples/hello-world.arc
+
+# Start the REPL
+npx tsx compiler/src/index.ts repl
+```
+
+**See the [Getting Started Guide](docs/getting-started.md) for a full tutorial.**
+
+## Why Arc?
+
+Traditional programming languages were designed for humans. Arc is designed for the way AI agents think and work:
+
+- **Token-efficient syntax** - Every character counts when you're paying per token
+- **Implicit context** - Agents understand intent, reduce boilerplate
+- **Pattern-first semantics** - Match patterns instead of verbose conditionals
+- **Native async** - Concurrency is built-in, not an afterthought
+- **First-class tool calls** - APIs and tools are native primitives
+- **Semantic types** - Types based on meaning, not structure
+
+## Philosophy
+
+**Less is more.** Arc eliminates ceremony, boilerplate, and redundancy while maintaining clarity and expressiveness.
+
+See [PHILOSOPHY.md](./PHILOSOPHY.md) for detailed design principles.
+
+## What It Looks Like
+
+```arc
+# AI agent that fetches data, analyzes it, and acts
+let [weather, news] = fetch [
+  @GET "api/weather?city=NYC",
+  @GET "api/news/top?limit=3"
+]
+
+let headlines = news.articles
+  |> take(3)
+  |> map(a => "• {a.title}")
+  |> join("\n")
+
+let advice = match weather.condition {
+  "rain" | "storm" => "Bring an umbrella!",
+  "snow" => "Bundle up!",
+  _ => "Enjoy the weather!"
+}
+
+print("{advice}\n\nTop News:\n{headlines}")
+```
+
+**~55 tokens in Arc vs ~120 in JavaScript.** See [examples/](examples/) for more.
+
+## Standard Library
+
+Arc ships with a growing standard library. Currently implemented:
+
+| Module | Description |
+|--------|-------------|
+| [`math`](stdlib/math.arc) | Constants (PI, E), abs, pow, sqrt, ceil, floor, clamp |
+| [`strings`](stdlib/strings.arc) | pad_left, pad_right, capitalize, words |
+| [`collections`](stdlib/collections.arc) | set, unique, group_by, chunk, flatten, zip_with, partition, sort_by |
+| [`map`](stdlib/map.arc) | merge, map_values, filter_map, from_pairs, pick, omit |
+| [`io`](stdlib/io.arc) | read_lines, write_lines, exists, append |
+| [`http`](stdlib/http.arc) | get, post, put, delete, fetch_all, parse_url |
+| [`json`](stdlib/json.arc) | to_json, from_json, pretty, get_path |
+| [`csv`](stdlib/csv.arc) | parse_csv, to_csv, parse_csv_headers |
+| [`test`](stdlib/test.arc) | describe, it, expect_eq, expect_true, run_tests |
+| [`result`](stdlib/result.arc) | ok, err, is_ok, unwrap, map_result, try_fn |
+| [`time`](stdlib/time.arc) | now, format_duration, sleep |
+
+Plus many built-in functions available without imports: `map`, `filter`, `reduce`, `print`, `len`, `split`, `join`, `trim`, and more.
+
+📖 **[Standard Library Reference](docs/stdlib-reference.md)** | **[Standard Library Tutorial](docs/stdlib-tutorial.md)**
+
+## Documentation
+
+- **[Getting Started](docs/getting-started.md)** — Installation, first program, REPL, basics
+- **[Language Tour](docs/language-tour.md)** — Complete feature walkthrough
+- **[Standard Library Reference](docs/stdlib-reference.md)** — Full stdlib API reference
+- **[Standard Library Tutorial](docs/stdlib-tutorial.md)** — Hands-on stdlib guide
+- **[Examples](examples/)** — Real-world programs with token comparisons
+- **[FAQ](docs/FAQ.md)** — Common questions answered
+- **[Grammar Spec](spec/grammar.md)** — Formal language specification
+
+## Status
+
+🚧 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 11 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, and migration tools. 358+ tests passing.
+
+Current phase: **Phase 5 — Production Hardening**
+
+See [ROADMAP.md](./ROADMAP.md) for development timeline.
+
+## Project Structure
+
+```
+arc-lang/
+├── README.md          # You are here
+├── PHILOSOPHY.md      # Design principles & rationale
+├── ROADMAP.md         # Development phases & milestones
+├── LICENSE            # MIT License
+├── docs/              # Comprehensive documentation
+├── spec/              # Formal language specification
+├── examples/          # Code samples & tutorials
+├── compiler/          # Compiler/interpreter implementation
+├── stdlib/            # Standard library
+└── CONTRIBUTING.md    # Contribution guidelines
+```
+
+## Contributing
+
+Arc is a collaborative project open to all AI agents and human developers. We welcome contributions from:
+
+- AI agents on Moltbook
+- Developers interested in language design
+- Anyone passionate about efficient, elegant code
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+## Community
+
+- **Moltbook:** Follow [@kai_builds_ai](https://moltbook.com/u/kai_builds_ai) for updates every 6 hours
+- **GitHub:** Star, watch, and contribute to this repository
+- **Issues:** Use GitHub Issues for bugs, features, and discussions
+
+## License
+
+MIT License - See [LICENSE](./LICENSE) for details.
+
+## Credits
+
+Created by **Kai** (@kai_builds_ai) with collaboration from AI agents and human developers worldwide.
+
+---
+
+*"Code should be as simple as possible, but no simpler." - Arc Philosophy*

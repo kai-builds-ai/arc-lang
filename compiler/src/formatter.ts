@@ -1,0 +1,351 @@
+// Arc Language Code Formatter
+// Pretty-prints Arc source with consistent style
+
+import { lex, TokenType, Token } from "./lexer.js";
+import { parse } from "./parser.js";
+import * as AST from "./ast.js";
+
+export interface FormatOptions {
+  indentSize: number;
+  maxLineLength: number;
+}
+
+const DEFAULT_OPTIONS: FormatOptions = {
+  indentSize: 2,
+  maxLineLength: 100,
+};
+
+interface Comment {
+  text: string;
+  line: number;
+  col: number;
+}
+
+// Extract comments from source (lexer skips them)
+function extractComments(source: string): Comment[] {
+  const comments: Comment[] = [];
+  let line = 1, col = 1;
+  let i = 0;
+  while (i < source.length) {
+    if (source[i] === '"') {
+      i++; col++;
+      while (i < source.length && source[i] !== '"') {
+        if (source[i] === '\\') { i++; col++; }
+        if (source[i] === '\n') { line++; col = 1; } else { col++; }
+        i++;
+      }
+      if (i < source.length) { i++; col++; }
+    } else if (source[i] === '#') {
+      const startLine = line, startCol = col;
+      let text = '';
+      while (i < source.length && source[i] !== '\n') {
+        text += source[i]; i++; col++;
+      }
+      comments.push({ text, line: startLine, col: startCol });
+    } else {
+      if (source[i] === '\n') { line++; col = 1; } else { col++; }
+      i++;
+    }
+  }
+  return comments;
+}
+
+// Map comments to the nearest following AST node line
+function buildCommentMap(comments: Comment[], stmts: AST.Stmt[]): Map<number, Comment[]> {
+  // Map: stmtIndex -> comments that appear before it
+  const map = new Map<number, Comment[]>();
+  if (comments.length === 0 || stmts.length === 0) return map;
+
+  let ci = 0;
+  for (let si = 0; si < stmts.length; si++) {
+    const stmtLine = stmts[si].loc.line;
+    const before: Comment[] = [];
+    while (ci < comments.length && comments[ci].line <= stmtLine) {
+      before.push(comments[ci]);
+      ci++;
+    }
+    if (before.length > 0) map.set(si, before);
+  }
+  // Trailing comments (after last stmt)
+  if (ci < comments.length) {
+    const trailing: Comment[] = [];
+    while (ci < comments.length) { trailing.push(comments[ci]); ci++; }
+    map.set(stmts.length, trailing);
+  }
+  return map;
+}
+
+export function format(source: string, options?: Partial<FormatOptions>): string {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const comments = extractComments(source);
+  const tokens = lex(source);
+  const ast = parse(tokens);
+  const commentMap = buildCommentMap(comments, ast.stmts);
+
+  const lines: string[] = [];
+
+  function emit(line: string) { lines.push(line); }
+  function indent(depth: number): string { return ' '.repeat(depth * opts.indentSize); }
+
+  function formatExpr(expr: AST.Expr, depth: number): string {
+    switch (expr.kind) {
+      case "IntLiteral": return String(expr.value);
+      case "FloatLiteral": return String(expr.value);
+      case "BoolLiteral": return expr.value ? "true" : "false";
+      case "NilLiteral": return "nil";
+      case "StringLiteral": return `"${escapeString(expr.value)}"`;
+      case "StringInterp": {
+        let s = '"';
+        for (const part of expr.parts) {
+          if (typeof part === "string") s += escapeString(part);
+          else s += `{${formatExpr(part, depth)}}`;
+        }
+        return s + '"';
+      }
+      case "Identifier": return expr.name;
+      case "BinaryExpr": {
+        const l = formatExpr(expr.left, depth);
+        const r = formatExpr(expr.right, depth);
+        return `${l} ${expr.op} ${r}`;
+      }
+      case "UnaryExpr": {
+        const operand = formatExpr(expr.operand, depth);
+        return expr.op === "not" ? `not ${operand}` : `${expr.op}${operand}`;
+      }
+      case "CallExpr": {
+        const callee = formatExpr(expr.callee, depth);
+        const args = expr.args.map(a => formatExpr(a, depth)).join(", ");
+        return `${callee}(${args})`;
+      }
+      case "MemberExpr":
+        return `${formatExpr(expr.object, depth)}.${expr.property}`;
+      case "IndexExpr":
+        return `${formatExpr(expr.object, depth)}[${formatExpr(expr.index, depth)}]`;
+      case "PipelineExpr": {
+        const l = formatExpr(expr.left, depth);
+        const r = formatExpr(expr.right, depth);
+        const single = `${l} |> ${r}`;
+        if (single.length + depth * opts.indentSize <= opts.maxLineLength) {
+          return single;
+        }
+        return `${l}\n${indent(depth + 1)}|> ${r}`;
+      }
+      case "IfExpr": {
+        const cond = formatExpr(expr.condition, depth);
+        const then = formatBlockExpr(expr.then, depth);
+        if (expr.else_) {
+          if (expr.else_.kind === "IfExpr") {
+            return `if ${cond} ${then} el ${formatExpr(expr.else_, depth)}`;
+          }
+          const el = formatBlockExpr(expr.else_, depth);
+          return `if ${cond} ${then} el ${el}`;
+        }
+        return `if ${cond} ${then}`;
+      }
+      case "MatchExpr": {
+        const subject = formatExpr(expr.subject, depth);
+        const armsStr = expr.arms.map(arm => {
+          const pat = formatPattern(arm.pattern);
+          const guard = arm.guard ? ` if ${formatExpr(arm.guard, depth + 1)}` : '';
+          const body = formatExpr(arm.body, depth + 1);
+          return `${indent(depth + 1)}${pat}${guard} => ${body}`;
+        }).join(',\n');
+        return `match ${subject} {\n${armsStr}\n${indent(depth)}}`;
+      }
+      case "LambdaExpr": {
+        const params = expr.params.length === 1
+          ? expr.params[0]
+          : `(${expr.params.join(", ")})`;
+        return `${params} => ${formatExpr(expr.body, depth)}`;
+      }
+      case "ListLiteral": {
+        if (expr.elements.length === 0) return "[]";
+        const elems = expr.elements.map(e => formatExpr(e, depth));
+        const single = `[${elems.join(", ")}]`;
+        if (single.length + depth * opts.indentSize <= opts.maxLineLength) return single;
+        return `[\n${elems.map(e => `${indent(depth + 1)}${e}`).join(',\n')}\n${indent(depth)}]`;
+      }
+      case "MapLiteral": {
+        if (expr.entries.length === 0) return "{}";
+        const entries = expr.entries.map(e => {
+          const key = typeof e.key === "string" ? e.key : formatExpr(e.key, depth + 1);
+          return `${key}: ${formatExpr(e.value, depth + 1)}`;
+        });
+        const single = `{ ${entries.join(", ")} }`;
+        if (single.length + depth * opts.indentSize <= opts.maxLineLength) return single;
+        return `{\n${entries.map(e => `${indent(depth + 1)}${e}`).join(',\n')}\n${indent(depth)}}`;
+      }
+      case "ListComprehension": {
+        const ex = formatExpr(expr.expr, depth);
+        const iter = formatExpr(expr.iterable, depth);
+        const filter = expr.filter ? ` if ${formatExpr(expr.filter, depth)}` : '';
+        return `[${ex} for ${expr.variable} in ${iter}${filter}]`;
+      }
+      case "ToolCallExpr": {
+        const arg = formatExpr(expr.arg, depth);
+        const body = expr.body ? ` ${formatBlockExpr(expr.body, depth)}` : '';
+        return `@${expr.method} ${arg}${body}`;
+      }
+      case "RangeExpr":
+        return `${formatExpr(expr.start, depth)}..${formatExpr(expr.end, depth)}`;
+      case "BlockExpr":
+        return formatBlockInline(expr, depth);
+      case "AsyncExpr":
+        return `async ${formatBlockExpr(expr.body, depth)}`;
+      case "AwaitExpr":
+        return `await ${formatExpr(expr.expr, depth)}`;
+      case "FetchExpr": {
+        const targets = expr.targets.map(t => formatExpr(t, depth)).join(", ");
+        return `fetch [${targets}]`;
+      }
+    }
+  }
+
+  function formatBlockExpr(expr: AST.Expr, depth: number): string {
+    if (expr.kind === "BlockExpr") return formatBlockInline(expr, depth);
+    return formatExpr(expr, depth);
+  }
+
+  function formatBlockInline(block: AST.BlockExpr, depth: number): string {
+    if (block.stmts.length === 0) return "{}";
+    if (block.stmts.length === 1) {
+      const s = formatStmtStr(block.stmts[0], depth + 1);
+      const single = `{ ${s} }`;
+      if (single.length + depth * opts.indentSize <= opts.maxLineLength) return single;
+    }
+    const body = block.stmts.map(s => `${indent(depth + 1)}${formatStmtStr(s, depth + 1)}`).join('\n');
+    return `{\n${body}\n${indent(depth)}}`;
+  }
+
+  function formatPattern(pat: AST.Pattern): string {
+    switch (pat.kind) {
+      case "WildcardPattern": return "_";
+      case "LiteralPattern":
+        if (pat.value === null) return "nil";
+        if (typeof pat.value === "string") return `"${escapeString(pat.value)}"`;
+        return String(pat.value);
+      case "BindingPattern": return pat.name;
+      case "ArrayPattern": return `[${pat.elements.map(formatPattern).join(", ")}]`;
+      case "OrPattern": return pat.patterns.map(formatPattern).join(" | ");
+    }
+  }
+
+  function formatTypeExpr(t: AST.TypeExpr): string {
+    switch (t.kind) {
+      case "NamedType": return t.name;
+      case "RecordType": {
+        const fields = t.fields.map(f => `${f.name}: ${formatTypeExpr(f.type)}`).join(", ");
+        return `{ ${fields} }`;
+      }
+      case "UnionType": return t.variants.map(formatTypeExpr).join(" | ");
+      case "FunctionType": {
+        const params = t.params.map(formatTypeExpr).join(", ");
+        return `(${params}) -> ${formatTypeExpr(t.ret)}`;
+      }
+      case "ConstrainedType":
+        return `${formatTypeExpr(t.base)} ${t.constraint} ${formatExpr(t.predicate, 0)}`;
+      case "EnumType":
+        return t.variants.map(v => {
+          if (v.params) return `${v.name}(${v.params.map(formatTypeExpr).join(", ")})`;
+          return v.name;
+        }).join(" | ");
+      case "GenericType":
+        return `${t.name}<${t.params.map(formatTypeExpr).join(", ")}>`;
+    }
+  }
+
+  function formatStmtStr(stmt: AST.Stmt, depth: number): string {
+    switch (stmt.kind) {
+      case "LetStmt": {
+        const pub = stmt.pub ? "pub " : "";
+        const mut = stmt.mutable ? "mut " : "";
+        const name = typeof stmt.name === "string"
+          ? stmt.name
+          : stmt.name.type === "object"
+            ? `{ ${stmt.name.names.join(", ")} }`
+            : `[${stmt.name.names.join(", ")}]`;
+        return `${pub}let ${mut}${name} = ${formatExpr(stmt.value, depth)}`;
+      }
+      case "FnStmt": {
+        const pub = stmt.pub ? "pub " : "";
+        const async_ = stmt.isAsync ? "async " : "";
+        const params = stmt.params.join(", ");
+        if (stmt.body.kind === "BlockExpr") {
+          return `${pub}${async_}fn ${stmt.name}(${params}) ${formatBlockInline(stmt.body, depth)}`;
+        }
+        return `${pub}${async_}fn ${stmt.name}(${params}) => ${formatExpr(stmt.body, depth)}`;
+      }
+      case "ForStmt":
+        return `for ${stmt.variable} in ${formatExpr(stmt.iterable, depth)} ${formatBlockExpr(stmt.body, depth)}`;
+      case "DoStmt": {
+        const kw = stmt.isWhile ? "while" : "until";
+        return `do ${formatBlockExpr(stmt.body, depth)} ${kw} ${formatExpr(stmt.condition, depth)}`;
+      }
+      case "ExprStmt":
+        return formatExpr(stmt.expr, depth);
+      case "UseStmt": {
+        const path = stmt.path.join("/");
+        if (stmt.wildcard) return `use ${path}: *`;
+        if (stmt.imports) return `use ${path}: ${stmt.imports.join(", ")}`;
+        return `use ${path}`;
+      }
+      case "TypeStmt": {
+        const pub = stmt.pub ? "pub " : "";
+        return `${pub}type ${stmt.name} = ${formatTypeExpr(stmt.def)}`;
+      }
+      case "AssignStmt":
+        return `${stmt.target} = ${formatExpr(stmt.value, depth)}`;
+      case "MemberAssignStmt":
+        return `${formatExpr(stmt.object, depth)}.${stmt.property} = ${formatExpr(stmt.value, depth)}`;
+      case "IndexAssignStmt":
+        return `${formatExpr(stmt.object, depth)}[${formatExpr(stmt.index, depth)}] = ${formatExpr(stmt.value, depth)}`;
+    }
+  }
+
+  // Emit top-level statements with comments and blank lines between declarations
+  let prevKind = '';
+  for (let i = 0; i < ast.stmts.length; i++) {
+    const stmtComments = commentMap.get(i);
+    if (stmtComments) {
+      for (const c of stmtComments) {
+        // If comment is on same line as previous stmt, it was inline — but we can't detect easily
+        // so emit as standalone line
+        emit(c.text);
+      }
+    }
+
+    const stmt = ast.stmts[i];
+    const isDecl = stmt.kind === "FnStmt" || stmt.kind === "TypeStmt";
+    const prevIsDecl = prevKind === "FnStmt" || prevKind === "TypeStmt";
+
+    // Blank line between top-level declarations
+    if (i > 0 && (isDecl || prevIsDecl)) {
+      // Only add if there isn't already a blank line from comments
+      if (!stmtComments || stmtComments.length === 0) {
+        emit('');
+      }
+    }
+
+    emit(formatStmtStr(stmt, 0));
+    prevKind = stmt.kind;
+  }
+
+  // Trailing comments
+  const trailingComments = commentMap.get(ast.stmts.length);
+  if (trailingComments) {
+    for (const c of trailingComments) emit(c.text);
+  }
+
+  // Normalize trailing newline
+  let result = lines.join('\n');
+  result = result.replace(/\n+$/, '') + '\n';
+  return result;
+}
+
+function escapeString(s: string): string {
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\t/g, '\\t');
+}

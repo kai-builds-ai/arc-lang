@@ -1,0 +1,21 @@
+{
+  "name": "arc-lang",
+  "version": "0.5.0",
+  "description": "Arc programming language — designed by AI agents, for AI agents",
+  "type": "module",
+  "bin": {
+    "arc": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "tsc",
+    "run": "tsx src/index.ts run",
+    "parse": "tsx src/index.ts parse"
+  },
+  "dependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  }
+}

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arc ⚡ Playground</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">Arc <span class="bolt">⚡</span> Playground</div>
+      <div class="tagline">The language designed by AI, for AI</div>
+    </div>
+    <div class="header-right">
+      <select id="examples-select">
+        <option value="">Load Example...</option>
+      </select>
+      <button class="btn-run" id="run-btn">▶ Run</button>
+      <button class="btn-share" id="share-btn">🔗 Share</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="editor-pane">
+      <div class="pane-header">Editor <span style="float:right;opacity:0.6">Ctrl+Enter to run</span></div>
+      <div class="editor-container">
+        <div id="line-numbers">1</div>
+        <div class="code-wrapper">
+          <pre id="code-highlight" aria-hidden="true"></pre>
+          <textarea id="code-input" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="resize-handle" id="resize-handle"></div>
+
+    <div class="output-pane">
+      <div class="pane-header">Output</div>
+      <div class="output-container" id="output"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Arc Language — <a href="https://github.com/ArcLang/arc" target="_blank">GitHub</a> •
+    Open source • No install needed
+  </div>
+
+  <script src="arc-browser.js"></script>
+  <script src="examples.js"></script>
+  <script src="editor.js"></script>
+  <script>
+  (function() {
+    "use strict";
+
+    var outputEl = document.getElementById("output");
+    var runBtn = document.getElementById("run-btn");
+    var shareBtn = document.getElementById("share-btn");
+    var examplesSelect = document.getElementById("examples-select");
+    var resizeHandle = document.getElementById("resize-handle");
+    var editorPane = document.querySelector(".editor-pane");
+
+    // Populate examples dropdown
+    for (var i = 0; i < ARC_EXAMPLES.length; i++) {
+      var opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = ARC_EXAMPLES[i].title;
+      examplesSelect.appendChild(opt);
+    }
+
+    examplesSelect.addEventListener("change", function() {
+      if (this.value !== "") {
+        editorSetCode(ARC_EXAMPLES[parseInt(this.value)].code);
+        this.value = "";
+      }
+    });
+
+    // Load from URL hash
+    if (window.location.hash.length > 1) {
+      try {
+        var decoded = atob(window.location.hash.substring(1));
+        editorSetCode(decoded);
+      } catch (e) {}
+    } else {
+      // Default: first example
+      editorSetCode(ARC_EXAMPLES[0].code);
+    }
+
+    editorInit();
+
+    // Run
+    function runCode() {
+      outputEl.innerHTML = "";
+      var code = editorGetCode();
+      var lines = [];
+
+      var interp = new ArcInterpreter(function(msg) {
+        lines.push(msg);
+        var div = document.createElement("div");
+        div.className = "output-line";
+        div.textContent = msg;
+        outputEl.appendChild(div);
+      });
+
+      try {
+        var start = performance.now();
+        var result = interp.run(code);
+        var elapsed = (performance.now() - start).toFixed(1);
+
+        if (result !== null && result !== undefined) {
+          var div = document.createElement("div");
+          div.className = "output-line output-result";
+          div.textContent = "→ " + interp.display(result) + "  (" + elapsed + "ms)";
+          outputEl.appendChild(div);
+        } else if (lines.length > 0) {
+          var div2 = document.createElement("div");
+          div2.className = "output-line output-result";
+          div2.textContent = "✓ Done (" + elapsed + "ms)";
+          outputEl.appendChild(div2);
+        }
+      } catch (e) {
+        var div3 = document.createElement("div");
+        div3.className = "output-error";
+        if (e.line) {
+          div3.textContent = "Error (line " + e.line + "): " + e.message;
+        } else {
+          div3.textContent = "Error: " + (e.message || e);
+        }
+        outputEl.appendChild(div3);
+      }
+
+      outputEl.scrollTop = outputEl.scrollHeight;
+    }
+
+    runBtn.addEventListener("click", runCode);
+
+    // Share
+    shareBtn.addEventListener("click", function() {
+      var code = editorGetCode();
+      var encoded = btoa(code);
+      var url = window.location.origin + window.location.pathname + "#" + encoded;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() {
+          showToast("Link copied to clipboard!");
+        });
+      } else {
+        window.location.hash = encoded;
+        showToast("URL updated — copy from address bar");
+      }
+    });
+
+    function showToast(msg) {
+      var toast = document.createElement("div");
+      toast.className = "toast";
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 2000);
+    }
+
+    // Resize handle
+    var dragging = false;
+    resizeHandle.addEventListener("mousedown", function(e) {
+      dragging = true;
+      e.preventDefault();
+    });
+    document.addEventListener("mousemove", function(e) {
+      if (!dragging) return;
+      var pct = (e.clientX / window.innerWidth) * 100;
+      if (pct < 20 || pct > 80) return;
+      editorPane.style.flex = "0 0 " + pct + "%";
+    });
+    document.addEventListener("mouseup", function() { dragging = false; });
+
+  })();
+  </script>
+
+</body>
+</html>
