@@ -56,21 +56,21 @@ pub fn with_debug(client, enabled) {
 # --- Authentication ---
 
 pub fn with_bearer_token(client, token) {
-    client.auth = {type: "bearer", token: token}
+    client.auth = {kind: "bearer", token: token}
     client.headers["Authorization"] = "Bearer {token}"
     client
 }
 
 pub fn with_basic_auth(client, username, password) {
     let encoded = crypto.base64_encode("{username}:{password}")
-    client.auth = {type: "basic", username: username}
+    client.auth = {kind: "basic", username: username}
     client.headers["Authorization"] = "Basic {encoded}"
     client
 }
 
 pub fn with_api_key(client, key, header_name) {
     let name = header_name or "X-API-Key"
-    client.auth = {type: "api_key", header: name}
+    client.auth = {kind: "api_key", header: name}
     client.headers[name] = key
     client
 }
@@ -437,7 +437,7 @@ pub fn run() {
 
     print("Client configured:")
     print("  Base URL: {client.base_url}")
-    print("  Auth: {client.auth.type}")
+    print("  Auth: {client.auth.kind}")
     print("  Timeout: {client.timeout}ms")
     print("  Retries: {client.retries}")
     print("  Cache TTL: {client.cache.ttl}s")
@@ -458,7 +458,7 @@ pub fn run() {
     let batch_reqs = [
         {method: "GET", path: "/users", params: {limit: 10}},
         {method: "GET", path: "/posts", params: {limit: 5}},
-        {method: "POST", path: "/events", body: {type: "page_view", page: "/home"}}
+        {method: "POST", path: "/events", body: {kind: "page_view", page: "/home"}}
     ]
     print("Batch of {len(batch_reqs)} requests prepared")
 

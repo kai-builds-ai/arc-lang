@@ -16,6 +16,9 @@ A REST API handler with routing via pattern matching, middleware via pipelines, 
 ### 🤖 [Chat Bot](./chat-bot/)
 A conversational AI agent framework with a plugin architecture, middleware chains, session management, and rate limiting. 285 lines of Arc with 3 plugins (weather, search, jokes). Uses regex for intent parsing, crypto for session tokens, datetime for timestamps, parallel fetch for multi-source queries. ~50% fewer tokens than equivalent JS.
 
+### 📰 [News Digest](./news-digest/)
+A news aggregator CLI that fetches from multiple sources in parallel, deduplicates and categorizes articles, and produces a formatted digest. Demonstrates the full Arc development workflow: modules, parallel fetch, pattern matching, pipelines, Result error handling, and testing. ~590 tokens vs ~1,130 in JS (48% reduction).
+
 ### ⏰ [Task Scheduler](./task-scheduler/)
 A workflow orchestration engine with DAG dependency resolution (Kahn's algorithm), priority queues, cron scheduling, parallel execution with concurrency control, and retry with exponential backoff. Includes 3 workflow definitions (CI/CD deploy, ETL pipeline, health monitoring). ~480 lines of Arc vs ~1,435 in JS (66% reduction).
 

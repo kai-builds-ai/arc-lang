@@ -1,9 +1,5 @@
-# Mini AI Agent — THE showcase example for why Arc exists
-# Demonstrates: tool calls (@GET/@POST), pipelines, pattern matching,
-#   parallel fetch, async, destructuring, error handling
-# This is what Arc was built for: AI agents orchestrating APIs
-#
-# Token comparison: This agent in JS would be ~120 tokens. In Arc: ~55 tokens (~54% savings)
+# Mini AI Agent — Showcase for Arc's agent capabilities
+# Demonstrates: tool calls (@GET/@POST), pipelines, parallel fetch, pattern matching
 
 # Step 1: Gather data from multiple sources in parallel
 let [weather, news, calendar] = fetch [
@@ -19,20 +15,23 @@ let urgent_meetings = calendar.events
 
 let weather_summary = match weather.condition {
   "rain" | "storm" => "Bring an umbrella! {weather.condition} expected.",
-  "snow" => "Bundle up! Snow with {weather.temp}°F.",
-  _ => "Looking good: {weather.condition}, {weather.temp}°F."
+  "snow" => "Bundle up! Snow with {weather.temp}F.",
+  _ => "Looking good: {weather.condition}, {weather.temp}F."
 }
 
 let top_headlines = news.articles
   |> take(3)
-  |> map(a => "• {a.title}")
+  |> map(a => a.title)
   |> join("\n")
 
-# Step 3: Make decisions based on data
-let should_commute = match [weather.condition, len(urgent_meetings)] {
-  ["storm", _] => false,
-  [_, 0] => false,
-  _ => true
+# Step 3: Decisions
+let should_commute = if len(urgent_meetings) > 0 {
+  match weather.condition {
+    "storm" => false,
+    _ => true
+  }
+} el {
+  false
 }
 
 let commute_advice = if should_commute {
@@ -41,31 +40,22 @@ let commute_advice = if should_commute {
   "Work from home today."
 }
 
-# Step 4: Compose and deliver the briefing
-let briefing = "Good morning!
+# Step 4: Briefing
+print("Good morning!")
+print(weather_summary)
+print(commute_advice)
+print("Top News:")
+print(top_headlines)
 
-{weather_summary}
-
-{commute_advice}
-
-Top News:
-{top_headlines}
-
-Urgent Meetings:
-{urgent_meetings |> map(m => "• {m.time}: {m.title}") |> join("\n")}"
-
-print(briefing)
-
-# Step 5: Post summary to Slack
-@POST "api/slack/messages" {
-  channel: "daily-briefing",
-  text: briefing
+if len(urgent_meetings) > 0 {
+  print("Urgent Meetings:")
+  for m in urgent_meetings {
+    print("  {m.time}: {m.title}")
+  }
 }
 
-# Compare the equivalent JavaScript:
-# - 15+ lines of imports and setup
-# - Promise.all() with error handling
-# - Manual JSON parsing
-# - Template literal construction
-# - fetch() with headers, await, .json()
-# Arc: Just describe what you want. The language handles the rest.
+# Step 5: Post summary
+@POST "api/slack/messages" {
+  channel: "daily-briefing",
+  text: weather_summary ++ " " ++ commute_advice
+}

@@ -118,7 +118,7 @@ arc-lang/
 ├── LICENSE            # MIT License
 ├── docs/              # Comprehensive documentation
 ├── spec/              # Formal language specification
-├── examples/          # Code samples & tutorials
+├── examples/          # Code samples & learning examples
 ├── compiler/          # Compiler/interpreter implementation
 ├── stdlib/            # Standard library
 └── CONTRIBUTING.md    # Contribution guidelines

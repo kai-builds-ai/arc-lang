@@ -1,31 +1,24 @@
 # Word Frequency Counter
-# Demonstrates: maps, pipelines, string operations, sorting, comprehensions
+# Demonstrates: maps, pipelines, string operations, comprehensions
 
 let text = "the quick brown fox jumps over the lazy dog the fox the dog"
 
 # Split, normalize, count
-let words = text |> split(" ") |> map(lowercase)
+let words = text |> split(" ") |> map(lower)
 
 let mut counts = {}
 for w in words {
-  counts[w] = (counts[w] ? 0) + 1
+  let cur = if counts[w] != nil { counts[w] } el { 0 }
+  counts[w] = cur + 1
 }
 
 print("Word frequencies:")
-for {k, v} in counts {
-  let bar = ["#" for _ in 1..v+1] |> join("")
+let ks = keys(counts)
+for k in ks {
+  let v = counts[k]
+  let bar = repeat("#", v)
   print("  {k}: {v} {bar}")
 }
-
-# Top N words using pipeline
-fn top_words(counts, n) =>
-  counts
-    |> entries
-    |> sort_by(e => -e[1])
-    |> take(n)
-    |> map(e => "{e[0]} ({e[1]})")
-
-print("Top 3: {top_words(counts, 3)}")
 
 # Unique word count
 let unique = counts |> keys |> len

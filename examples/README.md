@@ -2,6 +2,10 @@
 
 Practical, real-world programs showcasing Arc's expressiveness and token efficiency.
 
+## Learn Arc
+
+New to Arc? Start with the **[learn/](learn/)** subfolder — standalone examples covering basics, functions & pipelines, pattern matching, async & tools, and modules.
+
 ## Examples
 
 | Example | Description | Key Features | Tokens vs JS |

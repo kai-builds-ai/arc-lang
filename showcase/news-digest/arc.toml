@@ -1,0 +1,8 @@
+[package]
+name = "news-digest"
+version = "0.1.0"
+description = "A news aggregator that fetches, processes, and formats news digests"
+
+[dependencies]
+
+[dev-dependencies]

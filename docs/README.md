@@ -8,18 +8,10 @@ Comprehensive documentation for the Arc ⚡ programming language.
 - **[Language Tour](language-tour.md)** — Complete walkthrough of all Arc features
 - **[FAQ](FAQ.md)** — Common questions answered
 
-## Tutorials
+## Learn by Example
 
-Step-by-step guides from beginner to advanced:
-
-1. [Hello World](tutorials/01-hello-world.md) — Your first Arc program
-2. [Functions & Pipelines](tutorials/02-functions-and-pipelines.md) — Core Arc patterns
-3. [Pattern Matching](tutorials/03-pattern-matching.md) — Deep dive into `match`
-4. [Async & Tools](tutorials/04-async-and-tools.md) — Agent-native features (`@GET`, `@POST`, parallel fetch)
-5. [Modules & Packages](tutorials/05-modules-and-packages.md) — Code organization and the package manager
-6. [Real-World Project](tutorials/06-real-world-project.md) — Build a complete application
-
-See the full [Tutorials Index](tutorials/README.md).
+- **[Learn Examples](../examples/learn/)** — Standalone code covering basics, functions, pattern matching, async, and modules
+- **[News Digest Showcase](../showcase/news-digest/)** — Complete project demonstrating the full Arc workflow
 
 ## Standard Library
 

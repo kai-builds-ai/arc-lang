@@ -1,265 +1,92 @@
-# ============================================================================
-# Conway's Game of Life in Arc
-# ============================================================================
-# A cellular automaton simulation with grid management, neighbor counting,
-# pattern matching for cell state transitions, and ASCII rendering.
-# Demonstrates: 2D lists, closures, pattern matching, pipelines, mut, loops.
-# ============================================================================
+# Conway's Game of Life
+# Demonstrates: nested lists, mutation, comprehensions, pipelines
 
-use collections
-use math
-
-# --- Grid Creation ---
-
-pub fn create_grid(width, height, default_val) => {
-    collections.range(0, height)
-    |> collections.map(fn(_) => collections.range(0, width) |> collections.map(fn(_) => default_val))
+fn make_grid(rows, cols) {
+  [
+    [0 for _ in 0..cols]
+    for _ in 0..rows
+  ]
 }
 
-pub fn grid_width(grid) => grid[0] |> collections.length()
-pub fn grid_height(grid) => grid |> collections.length()
-
-pub fn get_cell(grid, x, y) => {
-    let h = grid_height(grid)
-    let w = grid_width(grid)
-    match x >= 0 and x < w and y >= 0 and y < h {
-        true => grid[y][x],
-        false => 0
-    }
-}
-
-pub fn set_cell(grid, x, y, val) => {
-    grid |> collections.map_indexed(fn(row, ry) => {
-        match ry == y {
-            true => row |> collections.map_indexed(fn(cell, rx) => {
-                match rx == x { true => val, false => cell }
-            }),
-            false => row
+fn set_cell(grid, row, col, value) {
+  let mut new_grid = []
+  for r in 0..len(grid) {
+    if r == row {
+      let mut new_row = []
+      for c in 0..len(grid[r]) {
+        if c == col {
+          new_row = push(new_row, value)
+        } el {
+          new_row = push(new_row, grid[r][c])
         }
-    })
-}
-
-# --- Neighbor Counting ---
-
-let NEIGHBOR_OFFSETS = [
-    [-1, -1], [0, -1], [1, -1],
-    [-1,  0],          [1,  0],
-    [-1,  1], [0,  1], [1,  1]
-]
-
-pub fn count_neighbors(grid, x, y) => {
-    NEIGHBOR_OFFSETS
-    |> collections.map(fn(offset) => get_cell(grid, x + offset[0], y + offset[1]))
-    |> collections.reduce(0, fn(sum, v) => sum + v)
-}
-
-# --- Cell State Transitions (the core rules) ---
-
-pub fn next_cell_state(alive, neighbors) => {
-    match [alive, neighbors] {
-        [1, 2] => 1, # alive with 2 neighbors: survive
-        [_, 3] => 1, # any cell with 3 neighbors: alive (birth or survive)
-        _ => 0 # all other cases: dead
+      }
+      new_grid = push(new_grid, new_row)
+    } el {
+      new_grid = push(new_grid, grid[r])
     }
+  }
+  new_grid
 }
 
-# --- Generation Stepping ---
-
-pub fn next_generation(grid) => {
-    let h = grid_height(grid)
-    let w = grid_width(grid)
-    
-    collections.range(0, h) |> collections.map(fn(y) => {
-        collections.range(0, w) |> collections.map(fn(x) => {
-            let alive = get_cell(grid, x, y)
-            let neighbors = count_neighbors(grid, x, y)
-            next_cell_state(alive, neighbors)
-        })
-    })
+fn get_cell(grid, row, col) {
+  if row < 0 or row >= len(grid) { ret 0 }
+  if col < 0 or col >= len(grid[0]) { ret 0 }
+  grid[row][col]
 }
 
-# --- ASCII Rendering ---
-
-pub fn render(grid, alive_char, dead_char) => {
-    let border = "+" + "-".repeat(grid_width(grid) * 2 + 1) + "+"
-    let rows = grid |> collections.map(fn(row) => {
-        let cells = row
-            |> collections.map(fn(cell) => match cell { 1 => alive_char, _ => dead_char })
-            |> collections.join(" ")
-        "| ${cells} |"
-    })
-    [border] |> collections.concat(rows) |> collections.concat([border]) |> collections.join("\n")
-}
-
-pub fn render_simple(grid) => render(grid, "█", "·")
-
-# --- Statistics ---
-
-pub fn population(grid) => {
-    grid
-    |> collections.flat_map(fn(row) => row)
-    |> collections.reduce(0, fn(sum, cell) => sum + cell)
-}
-
-pub fn density(grid) => {
-    let total = grid_width(grid) * grid_height(grid)
-    let pop = population(grid)
-    pop / total
-}
-
-# --- Common Patterns ---
-
-pub fn place_pattern(grid, pattern, offset_x, offset_y) => {
-    pattern |> collections.reduce_indexed(grid, fn(g, row, dy) => {
-        row |> collections.reduce_indexed(g, fn(g2, cell, dx) => {
-            match cell {
-                1 => set_cell(g2, offset_x + dx, offset_y + dy, 1),
-                _ => g2
-            }
-        })
-    })
-}
-
-# Classic patterns
-pub fn glider() => [
-    [0, 1, 0],
-    [0, 0, 1],
-    [1, 1, 1]
-]
-
-pub fn blinker() => [
-    [1, 1, 1]
-]
-
-pub fn block() => [
-    [1, 1],
-    [1, 1]
-]
-
-pub fn beacon() => [
-    [1, 1, 0, 0],
-    [1, 1, 0, 0],
-    [0, 0, 1, 1],
-    [0, 0, 1, 1]
-]
-
-pub fn pulsar() => [
-    [0,0,1,1,1,0,0,0,1,1,1,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [1,0,0,0,0,1,0,1,0,0,0,0,1],
-    [1,0,0,0,0,1,0,1,0,0,0,0,1],
-    [1,0,0,0,0,1,0,1,0,0,0,0,1],
-    [0,0,1,1,1,0,0,0,1,1,1,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,1,1,1,0,0,0,1,1,1,0,0],
-    [1,0,0,0,0,1,0,1,0,0,0,0,1],
-    [1,0,0,0,0,1,0,1,0,0,0,0,1],
-    [1,0,0,0,0,1,0,1,0,0,0,0,1],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,1,1,1,0,0,0,1,1,1,0,0]
-]
-
-pub fn glider_gun() => [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-    [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-    [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-]
-
-# --- Simulation Runner ---
-
-pub fn simulate(grid, generations, print_every) => {
-    let mut current = grid
-    let mut gen = 0
-    let mut history = []
-    
-    loop {
-        match gen >= generations {
-            true => break,
-            false => {
-                match gen % print_every == 0 {
-                    true => {
-                        print("\n--- Generation ${gen} (population: ${population(current)}) ---")
-                        print(render_simple(current))
-                    },
-                    false => {}
-                }
-                
-                history = history |> collections.append({
-                    generation: gen,
-                    population: population(current),
-                    density: density(current)
-                })
-                
-                current = next_generation(current)
-                gen = gen + 1
-            }
-        }
+fn count_neighbors(grid, row, col) {
+  let mut count = 0
+  for dr in [-1, 0, 1] {
+    for dc in [-1, 0, 1] {
+      if dr != 0 or dc != 0 {
+        count = count + get_cell(grid, row + dr, col + dc)
+      }
     }
-    
-    { final_grid: current, history: history }
+  }
+  count
 }
 
-# --- Pattern Detection ---
-
-pub fn detect_steady_state(history, window) => {
-    match collections.length(history) < window {
-        true => false,
-        false => {
-            let recent = history |> collections.take_last(window)
-            let pops = recent |> collections.map(fn(h) => h.population)
-            let unique_pops = pops |> collections.unique()
-            collections.length(unique_pops) <= 2 # oscillator or still life
-        }
+fn step(grid) {
+  let rows = len(grid)
+  let cols = len(grid[0])
+  let mut new_grid = make_grid(rows, cols)
+  for r in 0..rows {
+    for c in 0..cols {
+      let neighbors = count_neighbors(grid, r, c)
+      let alive = grid[r][c]
+      let new_val = if alive == 1 {
+        if neighbors == 2 or neighbors == 3 { 1 } el { 0 }
+      } el {
+        if neighbors == 3 { 1 } el { 0 }
+      }
+      new_grid = set_cell(new_grid, r, c, new_val)
     }
+  }
+  new_grid
 }
 
-# --- Main Demo ---
-
-fn main() => {
-    print("=== Conway's Game of Life in Arc ===\n")
-    
-    # Create a 30x20 grid
-    let mut grid = create_grid(30, 20, 0)
-    
-    # Place some patterns
-    grid = grid
-        |> place_pattern(glider(), 1, 1)
-        |> place_pattern(blinker(), 15, 5)
-        |> place_pattern(beacon(), 20, 10)
-        |> place_pattern(block(), 25, 1)
-        |> place_pattern(glider(), 5, 10)
-    
-    print("Initial population: ${population(grid)}")
-    print("Grid density: ${density(grid)}")
-    
-    # Run simulation
-    let result = simulate(grid, 50, 10)
-    
-    # Analyze results
-    print("\n--- Population History ---")
-    result.history
-    |> collections.filter(fn(h) => h.generation % 5 == 0)
-    |> collections.each(fn(h) => {
-        let bar = "█".repeat(math.min(h.population, 40))
-        print("Gen ${h.generation}: ${bar} (${h.population})")
-    })
-    
-    let is_steady = detect_steady_state(result.history, 10)
-    print("\nSteady state detected: ${is_steady}")
-    
-    # Try the pulsar pattern
-    print("\n\n=== Pulsar Pattern ===")
-    let mut pulsar_grid = create_grid(20, 20, 0)
-    pulsar_grid = pulsar_grid |> place_pattern(pulsar(), 3, 3)
-    simulate(pulsar_grid, 6, 3)
-    
-    print("\nDone!")
+fn display(grid) {
+  for row in grid {
+    let line = row |> map(c => if c == 1 { "█" } el { "·" }) |> join("")
+    print(line)
+  }
+  print("")
 }
 
-main()
+# Initialize with a glider
+print("=== Game of Life ===")
+let mut grid = make_grid(8, 8)
+grid = set_cell(grid, 1, 2, 1)
+grid = set_cell(grid, 2, 3, 1)
+grid = set_cell(grid, 3, 1, 1)
+grid = set_cell(grid, 3, 2, 1)
+grid = set_cell(grid, 3, 3, 1)
+
+print("Generation 0:")
+display(grid)
+
+for gen in 1..5 {
+  grid = step(grid)
+  print("Generation {gen}:")
+  display(grid)
+}
