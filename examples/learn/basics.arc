@@ -15,7 +15,7 @@ print(count)    # 2
 let {name, age} = {name: "Alice", age: 30}
 print(name)    # "Alice"
 
-let [first, second, ..rest] = [1, 2, 3, 4, 5]
+let [first, second, ...rest] = [1, 2, 3, 4, 5]
 print(first)   # 1
 print(rest)    # [3, 4, 5]
 
@@ -39,7 +39,7 @@ split(s, ", ")  # ["Hello", "World!"]
 let numbers = [1, 2, 3, 4, 5]
 len(numbers)              # 5
 push(numbers, 6)          # [1, 2, 3, 4, 5, 6]
-[1, 2] ++ [3, 4]         # [1, 2, 3, 4]
+let combined = [1, 2] ++ [3, 4]  # [1, 2, 3, 4]
 reverse(numbers)          # [5, 4, 3, 2, 1]
 sort([3, 1, 4, 1, 5])    # [1, 1, 3, 4, 5]
 
@@ -62,5 +62,5 @@ for i in 1..4 {
 # --- Processing Example ---
 let nums = [4, -2, 7, 0, -1, 3, 8]
 let positives = nums |> filter(x => x > 0)
-let total = positives |> reduce(0, (sum, x) => sum + x)
+let total = positives |> reduce((sum, x) => sum + x, 0)
 print("Found {len(positives)} positives, sum = {total}")

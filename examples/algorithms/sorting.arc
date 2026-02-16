@@ -6,7 +6,7 @@ fn bubble_sort(arr) {
   let mut lst = arr
   let n = len(lst)
   for i in 0..n {
-    for j in 0..n-i-1 {
+    for j in 0..(n-i-1) {
       if lst[j] > lst[j+1] {
         let temp = lst[j]
         lst[j] = lst[j+1]
@@ -23,7 +23,7 @@ fn selection_sort(arr) {
   let n = len(lst)
   for i in 0..n {
     let mut min_idx = i
-    for j in i+1..n {
+    for j in (i+1)..n {
       if lst[j] < lst[min_idx] {
         min_idx = j
       }
@@ -40,14 +40,14 @@ fn selection_sort(arr) {
 # Counting sort (for positive integers)
 fn counting_sort(arr) {
   if len(arr) == 0 { ret [] }
-  let mx = arr |> reduce(0, (a, b) => max(a, b))
-  let mut count = [0 for _ in 0..mx+1]
+  let mx = arr |> reduce((a, b) => max(a, b), 0)
+  let mut count = [0 for _ in 0..(mx+1)]
   for x in arr {
     count[x] = count[x] + 1
   }
   let mut result = []
-  for i in 0..mx+1 {
-    for _ in 0..count[i] {
+  for i in 0..(mx+1) {
+    for _ in 0..(count[i]) {
       result = push(result, i)
     }
   }

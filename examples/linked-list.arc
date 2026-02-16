@@ -7,31 +7,31 @@ fn prepend(list, value) => node(value, list)
 
 fn ll_len(list) {
   if list == nil { ret 0 }
-  1 + ll_len(list.next)
+  ret 1 + ll_len(list.next)
 }
 
 fn ll_get(list, index) {
   if list == nil { ret nil }
   if index == 0 { ret list.value }
-  ll_get(list.next, index - 1)
+  ret ll_get(list.next, index - 1)
 }
 
 fn ll_append(list, value) {
   if list == nil { ret node(value, nil) }
-  node(list.value, ll_append(list.next, value))
+  ret node(list.value, ll_append(list.next, value))
 }
 
 fn ll_reverse(list) {
   fn go(curr, acc) {
     if curr == nil { ret acc }
-    go(curr.next, node(curr.value, acc))
+    ret go(curr.next, node(curr.value, acc))
   }
-  go(list, nil)
+  ret go(list, nil)
 }
 
 fn ll_to_list(ll) {
   if ll == nil { ret [] }
-  [ll.value] ++ ll_to_list(ll.next)
+  ret [ll.value] ++ ll_to_list(ll.next)
 }
 
 fn ll_from_list(lst) {
@@ -41,20 +41,20 @@ fn ll_from_list(lst) {
   for item in rev {
     result = prepend(result, item)
   }
-  result
+  ret result
 }
 
 fn ll_map(list, f) {
   if list == nil { ret nil }
-  node(f(list.value), ll_map(list.next, f))
+  ret node(f(list.value), ll_map(list.next, f))
 }
 
 fn ll_filter(list, pred) {
   if list == nil { ret nil }
   if pred(list.value) {
-    node(list.value, ll_filter(list.next, pred))
+    ret node(list.value, ll_filter(list.next, pred))
   } el {
-    ll_filter(list.next, pred)
+    ret ll_filter(list.next, pred)
   }
 }
 

@@ -11,91 +11,86 @@ let mood = match day {
 print(mood)    # "😤"
 
 # --- Match is an expression ---
+let status_code = 200
 let label = match status_code {
   200 => "OK",
   404 => "Not Found",
   500 => "Server Error",
   _ => "Unknown"
 }
+print(label)  # "OK"
 
 # --- Or Patterns ---
-match key {
-  "q" | "Q" | "quit" | "exit" => shutdown(),
-  "h" | "help" => show_help(),
-  _ => process(key)
+let key = "help"
+let result = match key {
+  "q" | "Q" | "quit" | "exit" => "shutdown",
+  "h" | "help" => "show help",
+  _ => "process"
 }
+print(result)  # "show help"
 
 # --- Guards ---
-match temperature {
+let temperature = 25
+let feel = match temperature {
   t if t > 40 => "dangerously hot",
   t if t > 30 => "hot",
   t if t > 20 => "pleasant",
   t if t > 10 => "cool",
   t => "cold ({t}°)"
 }
+print(feel)  # "pleasant"
 
-# --- Range Patterns ---
-match score {
-  90..101 => "A",
-  80..90 => "B",
-  70..80 => "C",
-  60..70 => "D",
+# --- Range Patterns (using guards) ---
+let score = 85
+let grade = match score {
+  s if s >= 90 => "A",
+  s if s >= 80 => "B",
+  s if s >= 70 => "C",
+  s if s >= 60 => "D",
   _ => "F"
 }
+print(grade)  # "B"
 
 # --- Map Destructuring ---
-match response {
-  {status: 200, body} => parse(body),
-  {status: 404} => nil,
-  {status: s} if s >= 500 => retry(),
-  _ => error("unexpected")
-}
+# (Map patterns not yet supported in match — use if/else for map matching)
 
 # --- List Destructuring ---
-match items {
+let items = [1, 2, 3, 4, 5]
+let desc = match items {
   [] => "empty list",
   [x] => "single item: {x}",
   [first, second] => "pair: {first}, {second}",
-  [head, ..tail] => "head: {head}, rest has {len(tail)} items"
+  _ => "list with {len(items)} items"
 }
+print(desc)  # "list with 5 items"
 
 # --- Nested Destructuring ---
-match event {
-  {type: "click", target: {id, class}} =>
-    print("Clicked #{id} (.{class})"),
-  {type: "keypress", key: "Enter"} =>
-    submit(),
-  _ => nil
-}
+# (Map patterns not yet supported in match)
 
 # --- Result Matching ---
-match fetch_data(url) {
-  Ok(data) => process(data),
-  Err("timeout") => retry(),
-  Err(msg) => print("Failed: {msg}")
+let result = Ok(42)
+let val = match result {
+  Ok(data) => "got: {data}",
+  Err(msg) => "failed: {msg}"
 }
+print(val)  # "got: 42"
 
 # --- API Response Handler ---
-fn handle_response(response) => match response {
-  {status: 200, body} => parse(body),
-  {status: 201, body} => {created: true, data: parse(body)},
-  {status: 400, body} => error("Bad request: {body}"),
-  {status: 401 | 403} => { redirect_to_login(); nil },
-  {status: 404} => nil,
-  {status: 500, url} => { print("Server error"); retry(url) },
-  {status: s} => error("Unexpected status: {s}")
-}
+# (Uses map destructuring patterns — not yet supported)
+# fn handle_response(response) => match response {
+#   {status: 200, body} => parse(body),
+#   ...
+# }
 
 # --- Command Parser ---
 fn parse_command(input) {
   let parts = input |> trim |> split(" ")
   match parts {
-    ["help"] => show_help(),
-    ["add", item] => add_item(item),
-    ["remove", item] => remove_item(item),
-    ["list"] => list_items(),
-    ["search", ..words] => search(words |> join(" ")),
-    [cmd, ..] => "Unknown command: {cmd}"
+    ["help"] => "show help",
+    ["add", item] => "add: {item}",
+    ["remove", item] => "remove: {item}",
+    ["list"] => "list items",
+    _ => "unknown command"
   }
 }
 
@@ -108,14 +103,11 @@ fn classify(x) => match x {
   _ => "large"
 }
 
-# --- Flat nested match ---
-fn handle(event) => match event {
-  {type: "user", action: "login", user} => log_login(user),
-  {type: "user", action: "logout", user} => log_logout(user),
-  {type: "system", level: "error", message} => alert(message),
-  {type: "system", message} => log(message),
-  {type: t} => print("Unknown event type: {t}")
-}
+print(classify(-5))   # "negative"
+print(classify(0))    # "zero"
+print(classify(7))    # "small"
+print(classify(50))   # "medium"
+print(classify(200))  # "large"
 
 # --- Exercises ---
 fn grade(score) => match score {
@@ -127,18 +119,10 @@ fn grade(score) => match score {
   _ => "F"
 }
 
-fn area(s) => match s {
-  {shape: "circle", radius: r} => 3.14159 * r * r,
-  {shape: "rect", width: w, height: h} => w * h,
-  {shape: "triangle", base: b, height: h} => b * h / 2,
-  {shape} => error("Unknown shape: {shape}")
-}
+print(grade(95))   # "A"
+print(grade(73))   # "C"
+print(grade(45))   # "F"
 
-fn calc(expr) => match expr {
-  {op: "+", a, b} => a + b,
-  {op: "-", a, b} => a - b,
-  {op: "*", a, b} => a * b,
-  {op: "/", a, b: 0} => error("divide by zero"),
-  {op: "/", a, b} => a / b,
-  {op} => "unknown op: {op}"
-}
+# --- Map-based exercises (map destructuring not yet supported) ---
+# fn area(s) => match s { ... }
+# fn calc(expr) => match expr { ... }
