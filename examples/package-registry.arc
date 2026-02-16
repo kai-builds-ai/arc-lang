@@ -38,9 +38,9 @@ pub fn version_to_string(v: SemVer) -> str {
 }
 
 pub fn compare_versions(a: SemVer, b: SemVer) -> int {
-  if a.major != b.major { return a.major - b.major }
-  if a.minor != b.minor { return a.minor - b.minor }
-  if a.patch != b.patch { return a.patch - b.patch }
+  if a.major != b.major { ret a.major - b.major }
+  if a.minor != b.minor { ret a.minor - b.minor }
+  if a.patch != b.patch { ret a.patch - b.patch }
   // Prerelease has lower precedence
   match (a.prerelease, b.prerelease) {
     (null, null) => 0
@@ -57,14 +57,14 @@ pub fn satisfies(version: SemVer, range: str) -> bool {
   // Exact match
   if regex::matches(trimmed, "^\\d+\\.\\d+\\.\\d+") && !str::contains(trimmed, " ") {
     let target = parse_version(trimmed)
-    return compare_versions(version, target) == 0
+    ret compare_versions(version, target) == 0
   }
 
   // Caret range: ^1.2.3
   let caret = regex::capture(trimmed, "^\\^(\\d+)\\.(\\d+)\\.(\\d+)$")
   if caret != null {
     let min = parse_version("{caret[1]}.{caret[2]}.{caret[3]}")
-    return version.major == min.major &&
+    ret version.major == min.major &&
       compare_versions(version, min) >= 0
   }
 
@@ -72,7 +72,7 @@ pub fn satisfies(version: SemVer, range: str) -> bool {
   let tilde = regex::capture(trimmed, "^~(\\d+)\\.(\\d+)\\.(\\d+)$")
   if tilde != null {
     let min = parse_version("{tilde[1]}.{tilde[2]}.{tilde[3]}")
-    return version.major == min.major &&
+    ret version.major == min.major &&
       version.minor == min.minor &&
       compare_versions(version, min) >= 0
   }
@@ -80,19 +80,19 @@ pub fn satisfies(version: SemVer, range: str) -> bool {
   // Greater than: >=1.2.3
   let gte = regex::capture(trimmed, "^>=(\\d+\\.\\d+\\.\\d+)$")
   if gte != null {
-    return compare_versions(version, parse_version(gte[1])) >= 0
+    ret compare_versions(version, parse_version(gte[1])) >= 0
   }
 
   // Wildcard: 1.2.* or 1.*
   let wildcard = regex::capture(trimmed, "^(\\d+)\\.(\\d+)\\.\\*$")
   if wildcard != null {
-    return version.major == int::parse(wildcard[1]) &&
+    ret version.major == int::parse(wildcard[1]) &&
       version.minor == int::parse(wildcard[2])
   }
 
   let major_wildcard = regex::capture(trimmed, "^(\\d+)\\.\\*$")
   if major_wildcard != null {
-    return version.major == int::parse(major_wildcard[1])
+    ret version.major == int::parse(major_wildcard[1])
   }
 
   false
@@ -178,12 +178,12 @@ pub fn publish(registry: mut Registry, name: str, version_str: str, metadata: ma
 // --- Resolve a version for a package ---
 pub fn resolve(registry: Registry, name: str, range: str) -> SemVer? {
   let pkg = registry.packages[name]
-  if pkg == null { return null }
+  if pkg == null { ret null }
 
   // Handle tag references
   if range == "latest" {
     let latest_str = pkg.tags["latest"]
-    if latest_str != null { return parse_version(latest_str) }
+    if latest_str != null { ret parse_version(latest_str) }
   }
 
   // Find best matching version (highest that satisfies)
@@ -219,7 +219,7 @@ fn build_dep_tree_recursive(registry: Registry, name: str, range: str, visited: 
   let version_key = "{name}@{version_to_string(version)}"
   if visited[version_key] != null {
     // Already resolved — return cached
-    return visited[version_key]
+    ret visited[version_key]
   }
 
   // Find the package version

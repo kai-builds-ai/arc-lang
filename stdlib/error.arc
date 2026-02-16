@@ -71,7 +71,7 @@ pub fn retry(f, max_attempts, delay_ms) {
   let mut last_result = nil
   while attempt < max_attempts {
     last_result = f()
-    if not is_error(last_result) { return last_result }
+    if not is_error(last_result) { ret last_result }
     attempt = attempt + 1
     if attempt < max_attempts { sleep(delay_ms) }
   }

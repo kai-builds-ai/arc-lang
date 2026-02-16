@@ -70,17 +70,17 @@ fn generate_code(url: str, length: int) -> str {
 // --- Custom code validation ---
 fn validate_code(code: str) -> { valid: bool, error: str? } {
   if str::len(code) < 3 {
-    return { valid: false, error: "Code must be at least 3 characters" }
+    ret { valid: false, error: "Code must be at least 3 characters" }
   }
   if str::len(code) > 20 {
-    return { valid: false, error: "Code must be at most 20 characters" }
+    ret { valid: false, error: "Code must be at most 20 characters" }
   }
   let valid_chars = code |> str::to_chars() |> all(fn(ch) => {
     (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
     (ch >= '0' && ch <= '9') || ch == '-' || ch == '_'
   })
   if !valid_chars {
-    return { valid: false, error: "Code contains invalid characters" }
+    ret { valid: false, error: "Code contains invalid characters" }
   }
   { valid: true, error: null }
 }
@@ -113,7 +113,7 @@ pub fn shorten(store: mut UrlStore, url: str, opts: map) -> { short_url: str, co
   // Check if URL already shortened
   let existing = store.urls[url]
   if existing != null && opts["force"] != true {
-    return {
+    ret {
       short_url: "{store.base_url}/{existing.short_code}",
       code: existing.short_code,
     }
@@ -170,7 +170,7 @@ fn map_optional(value: any, transform: fn) -> any {
 // --- Resolve a short code ---
 pub fn resolve(store: mut UrlStore, code: str, click_info: map) -> str? {
   let url = store.code_to_url[code]
-  if url == null { return null }
+  if url == null { ret null }
 
   let record = store.urls[url]
 
@@ -179,7 +179,7 @@ pub fn resolve(store: mut UrlStore, code: str, click_info: map) -> str? {
     // Expired — clean up
     store.urls = store.urls |> map::remove(url)
     store.code_to_url = store.code_to_url |> map::remove(code)
-    return null
+    ret null
   }
 
   // Record click
@@ -199,7 +199,7 @@ pub fn resolve(store: mut UrlStore, code: str, click_info: map) -> str? {
 // --- Analytics ---
 pub fn get_analytics(store: UrlStore, code: str) -> map? {
   let url = store.code_to_url[code]
-  if url == null { return null }
+  if url == null { ret null }
 
   let record = store.urls[url]
   let clicks = record.clicks
@@ -254,7 +254,7 @@ pub fn list_urls(store: UrlStore) -> list {
 // --- Delete a short URL ---
 pub fn delete_url(store: mut UrlStore, code: str) -> bool {
   let url = store.code_to_url[code]
-  if url == null { return false }
+  if url == null { ret false }
 
   store.urls = store.urls |> map::remove(url)
   store.code_to_url = store.code_to_url |> map::remove(code)

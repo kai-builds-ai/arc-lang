@@ -58,7 +58,7 @@ pub fn insert_at(list: mut LinkedList, index: int, value: any) -> LinkedList {
   }
 
   if index == 0 {
-    return prepend(list, value)
+    ret prepend(list, value)
   }
 
   let node = Node { value: value, next: null }
@@ -99,7 +99,7 @@ pub fn remove(list: mut LinkedList, value: any) -> bool {
       if list.head.value == value {
         list.head = list.head.next
         list.size = list.size - 1
-        return true
+        ret true
       }
 
       let mut current = list.head
@@ -107,7 +107,7 @@ pub fn remove(list: mut LinkedList, value: any) -> bool {
         if current.next.value == value {
           current.next = current.next.next
           list.size = list.size - 1
-          return true
+          ret true
         }
         current = current.next
       }
@@ -149,7 +149,7 @@ pub fn find(list: LinkedList, value: any) -> int {
 
   while current != null {
     if current.value == value {
-      return i
+      ret i
     }
     current = current.next
     i = i + 1
@@ -162,7 +162,7 @@ pub fn find_by(list: LinkedList, predicate: fn) -> any {
   let mut current = list.head
   while current != null {
     if predicate(current.value) {
-      return current.value
+      ret current.value
     }
     current = current.next
   }
@@ -277,7 +277,7 @@ pub fn from_list(arr: list) -> LinkedList {
 // --- Merge sort ---
 pub fn sort(list: mut LinkedList, compare: fn) -> LinkedList {
   if list.size <= 1 {
-    return list
+    ret list
   }
 
   // Split into two halves
@@ -356,7 +356,7 @@ pub fn has_cycle(list: LinkedList) -> bool {
   while fast != null && fast.next != null {
     slow = slow.next
     fast = fast.next.next
-    if slow == fast { return true }
+    if slow == fast { ret true }
   }
   false
 }

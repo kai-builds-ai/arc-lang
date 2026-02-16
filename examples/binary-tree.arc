@@ -161,10 +161,10 @@ fn check_balanced(node: TreeNode?) -> int {
     null => 0
     _ => {
       let left_h = check_balanced(node.left)
-      if left_h == -1 { return -1 }
+      if left_h == -1 { ret -1 }
 
       let right_h = check_balanced(node.right)
-      if right_h == -1 { return -1 }
+      if right_h == -1 { ret -1 }
 
       let diff = if left_h > right_h { left_h - right_h } else { right_h - left_h }
       if diff > 1 { -1 }
@@ -324,7 +324,7 @@ fn find_path(node: TreeNode?, value: int, path: mut list) -> bool {
     null => false
     _ => {
       path = path |> collections::append(node.value)
-      if node.value == value { return true }
+      if node.value == value { ret true }
       if value < node.value {
         find_path(node.left, value, path)
       } else {
@@ -379,8 +379,8 @@ fn validate_bst(node: TreeNode?, min_val: int?, max_val: int?) -> bool {
   match node {
     null => true
     _ => {
-      if min_val != null && node.value <= min_val { return false }
-      if max_val != null && node.value >= max_val { return false }
+      if min_val != null && node.value <= min_val { ret false }
+      if max_val != null && node.value >= max_val { ret false }
       validate_bst(node.left, min_val, node.value) &&
         validate_bst(node.right, node.value, max_val)
     }

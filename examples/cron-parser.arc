@@ -94,7 +94,7 @@ fn parse_field(field: str, field_idx: int) -> list {
 fn parse_field_part(part: str, min_val: int, max_val: int) -> list {
   // Wildcard
   if part == "*" {
-    return range(min_val, max_val + 1) |> to_list()
+    ret range(min_val, max_val + 1) |> to_list()
   }
 
   // Step: */n or start/n or start-end/n
@@ -120,7 +120,7 @@ fn parse_field_part(part: str, min_val: int, max_val: int) -> list {
       vals = vals |> append(v)
       v = v + step
     }
-    return vals
+    ret vals
   }
 
   // Range: start-end
@@ -128,7 +128,7 @@ fn parse_field_part(part: str, min_val: int, max_val: int) -> list {
   if range_match != null {
     let start = int::parse(range_match[1])
     let end = int::parse(range_match[2])
-    return range(start, end + 1) |> to_list()
+    ret range(start, end + 1) |> to_list()
   }
 
   // Exact value
@@ -180,7 +180,7 @@ pub fn next_run(cron: CronExpr, from: datetime) -> datetime {
 
   while iterations < max_iterations {
     if matches(cron, dt) {
-      return dt
+      ret dt
     }
 
     // Smart skip: if month doesn't match, jump to next valid month
@@ -289,7 +289,7 @@ fn describe_dow_field(values: list) -> str {
 }
 
 fn is_consecutive(values: list) -> bool {
-  if len(values) <= 1 { return true }
+  if len(values) <= 1 { ret true }
   range(1, len(values)) |> all(fn(i) => values[i] == values[i - 1] + 1)
 }
 
@@ -299,7 +299,7 @@ pub fn validate(expr: str) -> { valid: bool, error: str? } {
   let fields = resolved |> str::trim() |> str::split_whitespace()
 
   if len(fields) != 5 {
-    return { valid: false, error: "Expected 5 fields, got {len(fields)}" }
+    ret { valid: false, error: "Expected 5 fields, got {len(fields)}" }
   }
 
   let field_names = ["minute", "hour", "day of month", "month", "day of week"]
@@ -346,7 +346,7 @@ fn main() {
     let validation = validate(expr)
     if !validation.valid {
       print("  INVALID: {validation.error}")
-      return
+      ret
     }
 
     let cron = parse(expr)

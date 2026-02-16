@@ -48,7 +48,7 @@ async fn fetch_page(url, config) => {
     
     loop {
         match attempts >= config.retry_count {
-            true => return { error: last_error, url: url },
+            true => ret { error: last_error, url: url },
             false => {
                 attempts = attempts + 1
                 let result = await http.get(url, {
@@ -56,7 +56,7 @@ async fn fetch_page(url, config) => {
                     timeout: config.timeout_ms
                 })
                 match result {
-                    { status: 200, body: body } => return { ok: body, url: url },
+                    { status: 200, body: body } => ret { ok: body, url: url },
                     { status: 429 } => {
                         await http.sleep(config.delay_ms * attempts * 2)
                         last_error = "Rate limited"

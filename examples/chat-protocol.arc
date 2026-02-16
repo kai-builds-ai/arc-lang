@@ -352,7 +352,7 @@ fn handle_nick(server, old_nick, params) => {
     
     match collections.get(s.users, new_nick, nil) {
         nil => {},
-        _ => return { server: s, replies: [{ to: old_nick, message: format_message(s.name, "433", [old_nick, new_nick, "Nickname already in use"]) }] }
+        _ => ret { server: s, replies: [{ to: old_nick, message: format_message(s.name, "433", [old_nick, new_nick, "Nickname already in use"]) }] }
     }
     
     let user = collections.get(s.users, old_nick, nil)

@@ -267,13 +267,13 @@ pub fn run() -> { passed: int, failed: int, skipped: int, duration_ms: int } {
           status: TestStatus::Skipped("manually skipped"),
           duration_ms: 0,
         })
-        return
+        ret
       }
 
       // Only mode: skip non-only tests
       if RUNNER.only_mode && !test["only"] {
         skipped = skipped + 1
-        return
+        ret
       }
 
       // Before each hook

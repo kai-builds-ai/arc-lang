@@ -312,7 +312,7 @@ pub fn word_diff(old_text: str, new_text: str) -> str {
 pub fn similarity(old_text: str, new_text: str) -> float {
   let result = diff(old_text, new_text)
   let total = result.stats.additions + result.stats.deletions + result.stats.unchanged
-  if total == 0 { return 1.0 }
+  if total == 0 { ret 1.0 }
   (result.stats.unchanged |> to_float()) / (total |> to_float())
 }
 
@@ -322,7 +322,7 @@ fn main() {
   let message = \"Hello\"
   print(\"{message}, {name}!\")
   print(\"Welcome to Arc\")
-  return message
+  ret message
 }"
 
   let new_text = "fn greet(name: str, greeting: str) {
@@ -330,7 +330,7 @@ fn main() {
   print(\"{message}, {name}!\")
   print(\"Welcome to Arc v2\")
   log(\"Greeted {name}\")
-  return message
+  ret message
 }"
 
   print("=== Line Diff ===\n")

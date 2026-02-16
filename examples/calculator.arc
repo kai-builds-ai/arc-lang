@@ -329,11 +329,11 @@ pub fn evaluate(ast, env) => {
                         "-" => lr.result - rr.result,
                         "*" => lr.result * rr.result,
                         "/" => match rr.result == 0 {
-                            true => { return { error: "Division by zero", env: env } },
+                            true => { ret { error: "Division by zero", env: env } },
                             false => lr.result / rr.result
                         },
                         "^" => math.pow(lr.result, rr.result),
-                        _ => { return { error: "Unknown operator: ${op}", env: env } }
+                        _ => { ret { error: "Unknown operator: ${op}", env: env } }
                     }
                     { result: result, env: env }
                 }
