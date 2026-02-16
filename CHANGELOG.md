@@ -2,6 +2,41 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.4] — 2026-02-16
+
+### Fixed — 25 Bug Fixes (Deep Audit Round 2)
+
+**Interpreter & Parser (8 fixes):**
+- Exponentiation `**` now right-associative (`2 ** 3 ** 2` = 512, not 64)
+- Unary minus precedence fixed (`-x ** 2` = -4, not 4)
+- String interpolation with expressions now works (`"{x + y}"` no longer crashes)
+- `+` operator explicit string/number handling instead of JS coercion
+- `nil.foo` returns nil instead of crashing
+- Array patterns in match (`[a, b, c] =>`) now parse correctly
+- Negative number patterns in match (`-1 =>`) now parse correctly
+- Or-patterns in match (`1 | 2 =>`) now parse correctly
+
+**Lexer, Modules & Security (8 fixes):**
+- Added escape sequences: `\0`, `\r`, `\xNN`, `\uNNNN`, `\u{NNNN}`, `\{`
+- Empty interpolation `"{}"` no longer crashes
+- Interpolation brace counting now skips string literals
+- Circular imports now produce clear error instead of silent empty exports
+- **Security: `validateImport()` now checks correct `.path` property** (was checking non-existent `.module`, making import blocking completely non-functional)
+- Semver comparison handles partial versions and pre-release tags without NaN
+- Caret range `^0.x.y` now properly constrains minor version
+- REPL brace counting now skips strings and comments
+
+**Codegen, IR & Optimizer (9 fixes):**
+- JS codegen print output now matches interpreter formatting
+- Added missing builtins to codegen runtime (`upper`, `lower`, `type_of`)
+- Null-safe member access in compiled output
+- IR variable shadowing fixed with full scope stack and name mangling
+- Match guard evaluation order fixed (pattern bindings now exist before guard runs)
+- Added `fold` builtin to interpreter (was only in codegen)
+- Fixed function hoisting self-reference producing undefined
+- Documented: nested function closures can't capture outer params (IR architectural limitation)
+- Documented: for-loop closure variable capture (shared loop variable)
+
 ## [0.5.3] — 2026-02-16
 
 ### Fixed — 11 Bug Fixes (Compiler, Stdlib, Toolchain Audit)

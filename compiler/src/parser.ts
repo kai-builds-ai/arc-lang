@@ -1,6 +1,6 @@
 // Arc Language Parser - Recursive Descent with Pratt Parsing
 
-import { Token, TokenType } from "./lexer.js";
+import { Token, TokenType, lex } from "./lexer.js";
 import * as AST from "./ast.js";
 
 export class ParseError extends Error {
@@ -430,7 +430,9 @@ export class Parser {
       const op = this.binaryOp();
       if (op) {
         this.advance();
-        const right = this.parseExpr(prec + 1);
+        // Right-associative for ** (power operator)
+        const nextPrec = op === "**" ? prec : prec + 1;
+        const right = this.parseExpr(nextPrec);
         left = { kind: "BinaryExpr", op, left, right, loc: left.loc } as AST.BinaryExpr;
         continue;
       }
@@ -478,7 +480,8 @@ export class Parser {
     // Unary operators
     if (t.type === TokenType.Minus) {
       this.advance();
-      return { kind: "UnaryExpr", op: "-", operand: this.parseExpr(8), loc };
+      // Precedence 7: binds looser than ** so -x ** 2 parses as -(x ** 2)
+      return { kind: "UnaryExpr", op: "-", operand: this.parseExpr(7), loc };
     }
     if (t.type === TokenType.Not) {
       this.advance();
@@ -618,10 +621,13 @@ export class Parser {
       if (this.at(TokenType.StringInterpPart)) {
         parts.push(this.advance().value);
       } else if (this.at(TokenType.Ident)) {
-        // This is an interpolated expression identifier
+        // The lexer captures the raw text inside {} — re-lex and parse as expression
         const identToken = this.advance();
-        // Try to parse a more complex expression from the token value
-        parts.push({ kind: "Identifier", name: identToken.value, loc: { line: identToken.line, col: identToken.col } } as AST.Identifier);
+        const exprSource = identToken.value;
+        const exprTokens = lex(exprSource);
+        const exprParser = new Parser(exprTokens);
+        const expr = exprParser.parseExpr();
+        parts.push(expr);
       } else {
         this.advance(); // skip unexpected
       }
@@ -740,12 +746,38 @@ export class Parser {
   }
 
   private parsePattern(): AST.Pattern {
+    let pattern = this.parsePatternAtom();
+
+    // Check for or-pattern: pat | pat | ...
+    if (this.at(TokenType.Bar)) {
+      const patterns: AST.Pattern[] = [pattern];
+      while (this.at(TokenType.Bar)) {
+        this.advance();
+        patterns.push(this.parsePatternAtom());
+      }
+      return { kind: "OrPattern", patterns, loc: pattern.loc };
+    }
+
+    return pattern;
+  }
+
+  private parsePatternAtom(): AST.Pattern {
     const loc = this.loc();
     const t = this.peek();
 
     if (t.type === TokenType.Ident && t.value === "_") {
       this.advance();
       return { kind: "WildcardPattern", loc };
+    }
+    // Negative numeric literals
+    if (t.type === TokenType.Minus) {
+      this.advance();
+      const numTok = this.peek();
+      if (numTok.type === TokenType.Int || numTok.type === TokenType.Float) {
+        this.advance();
+        return { kind: "LiteralPattern", value: -parseFloat(numTok.value), loc };
+      }
+      throw new ParseError(`Expected number after - in pattern`, loc);
     }
     if (t.type === TokenType.Int || t.type === TokenType.Float) {
       this.advance();
@@ -758,6 +790,17 @@ export class Parser {
     if (t.type === TokenType.True) { this.advance(); return { kind: "LiteralPattern", value: true, loc }; }
     if (t.type === TokenType.False) { this.advance(); return { kind: "LiteralPattern", value: false, loc }; }
     if (t.type === TokenType.NilKw) { this.advance(); return { kind: "LiteralPattern", value: null, loc }; }
+    // Array pattern: [pat, pat, ...]
+    if (t.type === TokenType.LBracket) {
+      this.advance();
+      const elements: AST.Pattern[] = [];
+      while (!this.at(TokenType.RBracket) && !this.at(TokenType.EOF)) {
+        elements.push(this.parsePattern());
+        if (this.at(TokenType.Comma)) this.advance();
+      }
+      this.expect(TokenType.RBracket);
+      return { kind: "ArrayPattern", elements, loc };
+    }
     if (t.type === TokenType.Ident) {
       this.advance();
       return { kind: "BindingPattern", name: t.value, loc };

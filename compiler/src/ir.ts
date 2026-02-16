@@ -52,6 +52,8 @@ export class IRGenerator {
   private labelCount = 0;
   private functions: IRFunction[] = [];
   private currentInstrs: IRInstr[] = [];
+  private scopeStack: Map<string, string>[] = [new Map()];
+  private scopeCount = 0;
 
   private temp(): string {
     return `%${this.tempCount++}`;
@@ -63,6 +65,41 @@ export class IRGenerator {
 
   private emit(instr: IRInstr): void {
     this.currentInstrs.push(instr);
+  }
+
+  private pushScope(): void {
+    this.scopeStack.push(new Map());
+  }
+
+  private popScope(): void {
+    this.scopeStack.pop();
+  }
+
+  private defineVar(name: string): string {
+    const scope = this.scopeStack[this.scopeStack.length - 1];
+    // Check if already defined in ANY scope (including this one)
+    let existsInAnyScope = false;
+    for (let i = this.scopeStack.length - 1; i >= 0; i--) {
+      if (this.scopeStack[i].has(name)) {
+        existsInAnyScope = true;
+        break;
+      }
+    }
+    if (existsInAnyScope) {
+      const mangled = `${name}__s${this.scopeCount++}`;
+      scope.set(name, mangled);
+      return mangled;
+    }
+    scope.set(name, name);
+    return name;
+  }
+
+  private resolveVar(name: string): string {
+    for (let i = this.scopeStack.length - 1; i >= 0; i--) {
+      const v = this.scopeStack[i].get(name);
+      if (v !== undefined) return v;
+    }
+    return name;
   }
 
   generateIR(program: AST.Program): IRModule {
@@ -88,7 +125,8 @@ export class IRGenerator {
       case "LetStmt": {
         const val = this.lowerExpr(stmt.value);
         if (typeof stmt.name === "string") {
-          this.emit({ op: "store", name: stmt.name, src: val });
+          const mangled = this.defineVar(stmt.name);
+          this.emit({ op: "store", name: mangled, src: val });
         } else {
           // Destructuring — store temp then extract fields
           const dt = stmt.name as AST.DestructureTarget;
@@ -101,7 +139,8 @@ export class IRGenerator {
               this.emit({ op: "const", dest: idx, value: i });
               this.emit({ op: "index", dest, obj: val, idx });
             }
-            this.emit({ op: "store", name: dt.names[i], src: dest });
+            const mangled = this.defineVar(dt.names[i]);
+            this.emit({ op: "store", name: mangled, src: dest });
           }
         }
         break;
@@ -109,7 +148,13 @@ export class IRGenerator {
 
       case "FnStmt": {
         const savedInstrs = this.currentInstrs;
+        const savedScope = this.scopeStack;
         this.currentInstrs = [];
+        // Function gets its own scope with params
+        this.scopeStack = [new Map()];
+        for (const p of stmt.params) {
+          this.defineVar(p);
+        }
 
         // Lower function body
         const result = this.lowerExpr(stmt.body);
@@ -122,8 +167,10 @@ export class IRGenerator {
         });
 
         this.currentInstrs = savedInstrs;
+        this.scopeStack = savedScope;
         // Store function reference in main scope
-        this.emit({ op: "store", name: stmt.name, src: `@fn:${stmt.name}` });
+        const fnMangled = this.defineVar(stmt.name);
+        this.emit({ op: "store", name: fnMangled, src: `@fn:${stmt.name}` });
         break;
       }
 
@@ -149,11 +196,14 @@ export class IRGenerator {
         this.emit({ op: "branch", cond, ifTrue: bodyLabel, ifFalse: endLabel });
 
         this.emit({ op: "label", name: bodyLabel });
+        this.pushScope();
         const elem = this.temp();
         this.emit({ op: "index", dest: elem, obj: iter, idx: counter });
-        this.emit({ op: "store", name: stmt.variable, src: elem });
+        const loopVarName = this.defineVar(stmt.variable);
+        this.emit({ op: "store", name: loopVarName, src: elem });
 
         this.lowerExpr(stmt.body);
+        this.popScope();
 
         const next = this.temp();
         const one = this.temp();
@@ -188,7 +238,7 @@ export class IRGenerator {
 
       case "AssignStmt": {
         const val = this.lowerExpr(stmt.value);
-        this.emit({ op: "store", name: stmt.target, src: val });
+        this.emit({ op: "store", name: this.resolveVar(stmt.target), src: val });
         break;
       }
 
@@ -280,7 +330,7 @@ export class IRGenerator {
 
       case "Identifier": {
         const dest = this.temp();
-        this.emit({ op: "load", dest, name: expr.name });
+        this.emit({ op: "load", dest, name: this.resolveVar(expr.name) });
         return dest;
       }
 
@@ -393,18 +443,23 @@ export class IRGenerator {
           const cond = this.lowerPattern(arm.pattern, subject);
 
           if (arm.guard) {
-            // Pattern match AND guard
+            // For guards, we need to bind pattern variables BEFORE evaluating the guard
+            // because the guard may reference bound variables (e.g., `n if n > 10`)
+            const guardLabel = this.label("match_guard");
+            this.emit({ op: "branch", cond, ifTrue: guardLabel, ifFalse: nextLabel });
+            this.emit({ op: "label", name: guardLabel });
+            this.bindPattern(arm.pattern, subject);
             const guardCond = this.lowerExpr(arm.guard);
-            const combined = this.temp();
-            this.emit({ op: "binop", dest: combined, operator: "and", left: cond, right: guardCond });
-            this.emit({ op: "branch", cond: combined, ifTrue: armLabel, ifFalse: nextLabel });
+            this.emit({ op: "branch", cond: guardCond, ifTrue: armLabel, ifFalse: nextLabel });
           } else {
             this.emit({ op: "branch", cond, ifTrue: armLabel, ifFalse: nextLabel });
           }
 
           this.emit({ op: "label", name: armLabel });
-          // Bind pattern variables
-          this.bindPattern(arm.pattern, subject);
+          // Bind pattern variables (for non-guard case; guard case already bound above)
+          if (!arm.guard) {
+            this.bindPattern(arm.pattern, subject);
+          }
           const val = this.lowerExpr(arm.body);
           this.emit({ op: "store", name: resultName, src: val });
           this.emit({ op: "jump", target: endLabel });
@@ -424,7 +479,12 @@ export class IRGenerator {
         // Lower lambda to anonymous function
         const fnName = `__lambda_${this.labelCount++}`;
         const savedInstrs = this.currentInstrs;
+        const savedScope = this.scopeStack;
         this.currentInstrs = [];
+        this.scopeStack = [new Map()];
+        for (const p of expr.params) {
+          this.defineVar(p);
+        }
 
         const result = this.lowerExpr(expr.body);
         this.emit({ op: "ret", value: result });
@@ -436,6 +496,7 @@ export class IRGenerator {
         });
 
         this.currentInstrs = savedInstrs;
+        this.scopeStack = savedScope;
         const dest = this.temp();
         this.emit({ op: "load", dest, name: `@fn:${fnName}` });
         return dest;
@@ -550,6 +611,7 @@ export class IRGenerator {
       }
 
       case "BlockExpr": {
+        this.pushScope();
         let last = this.temp();
         this.emit({ op: "const", dest: last, value: null });
         for (const s of expr.stmts) {
@@ -559,6 +621,7 @@ export class IRGenerator {
             this.lowerStmt(s);
           }
         }
+        this.popScope();
         return last;
       }
 

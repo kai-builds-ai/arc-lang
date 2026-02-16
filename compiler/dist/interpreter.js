@@ -107,6 +107,15 @@ function makePrelude(env) {
             }
             return acc;
         },
+        fold: (list, init, fn) => {
+            if (!Array.isArray(list))
+                throw new Error("fold expects a list");
+            let acc = init;
+            for (let i = 0; i < list.length; i++) {
+                acc = callFn(fn, [acc, list[i]]);
+            }
+            return acc;
+        },
         sort: (list) => {
             if (!Array.isArray(list))
                 throw new Error("sort expects a list");
@@ -321,7 +330,12 @@ function evalExpr(expr, env) {
             const left = evalExpr(expr.left, env);
             const right = evalExpr(expr.right, env);
             switch (expr.op) {
-                case "+": return left + right;
+                case "+": {
+                    if (typeof left === "string" || typeof right === "string") {
+                        return toStr(left) + toStr(right);
+                    }
+                    return left + right;
+                }
                 case "-": return left - right;
                 case "*": return left * right;
                 case "/": {
@@ -400,6 +414,8 @@ function evalExpr(expr, env) {
         }
         case "MemberExpr": {
             const obj = evalExpr(expr.object, env);
+            if (obj === null)
+                return null;
             if (obj && typeof obj === "object" && "__map" in obj) {
                 return obj.entries.get(expr.property) ?? null;
             }

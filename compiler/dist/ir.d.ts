@@ -112,9 +112,15 @@ export declare class IRGenerator {
     private labelCount;
     private functions;
     private currentInstrs;
+    private scopeStack;
+    private scopeCount;
     private temp;
     private label;
     private emit;
+    private pushScope;
+    private popScope;
+    private defineVar;
+    private resolveVar;
     generateIR(program: AST.Program): IRModule;
     private lowerStmt;
     private lowerExpr;

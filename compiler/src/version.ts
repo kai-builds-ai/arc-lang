@@ -14,12 +14,22 @@ export function printVersion(): void {
 
 /** Semver comparison: returns -1, 0, or 1 */
 export function compareSemver(a: string, b: string): number {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
+  // Strip pre-release suffixes for numeric comparison
+  const stripPre = (s: string) => s.replace(/-.*$/, "");
+  const pa = stripPre(a).split(".").map(Number);
+  const pb = stripPre(b).split(".").map(Number);
   for (let i = 0; i < 3; i++) {
-    if (pa[i] < pb[i]) return -1;
-    if (pa[i] > pb[i]) return 1;
+    const va = pa[i] ?? 0;
+    const vb = pb[i] ?? 0;
+    if (isNaN(va) || isNaN(vb)) continue;
+    if (va < vb) return -1;
+    if (va > vb) return 1;
   }
+  // If numeric parts are equal, pre-release < release
+  const aHasPre = a.includes("-");
+  const bHasPre = b.includes("-");
+  if (aHasPre && !bHasPre) return -1;
+  if (!aHasPre && bHasPre) return 1;
   return 0;
 }
 
@@ -36,9 +46,16 @@ export function checkVersionCompatibility(required: string): { compatible: boole
 
   if (required.startsWith("^")) {
     const base = required.slice(1);
-    const [major] = base.split(".").map(Number);
-    const [curMajor] = current.split(".").map(Number);
-    const ok = curMajor === major && compareSemver(current, base) >= 0;
+    const parts = base.split(".").map(Number);
+    const curParts = current.split(".").map(Number);
+    let ok: boolean;
+    if (parts[0] === 0) {
+      // ^0.x.y means >=0.x.y, <0.(x+1).0 — constrain on minor when major is 0
+      ok = curParts[0] === 0 && curParts[1] === parts[1] && compareSemver(current, base) >= 0;
+    } else {
+      // ^x.y.z means >=x.y.z, <(x+1).0.0
+      ok = curParts[0] === parts[0] && compareSemver(current, base) >= 0;
+    }
     return { compatible: ok, message: ok ? "Compatible" : `Requires Arc ${required}, current is ${current}` };
   }
 
@@ -51,7 +68,7 @@ export function checkVersionCompatibility(required: string): { compatible: boole
   }
 
   // Exact match
-  const ok = compareSemver(current, required) >= 0;
+  const ok = compareSemver(current, required) === 0;
   return { compatible: ok, message: ok ? "Compatible" : `Requires Arc ${required}, current is ${current}` };
 }
 

@@ -9,7 +9,8 @@ export function generateJS(module) {
     lines.push(`  len(a) { return Array.isArray(a) ? a.length : typeof a === "string" ? a.length : 0; },`);
     lines.push(`  str(v) { return String(v); },`);
     lines.push(`  push(arr, v) { arr.push(v); return arr; },`);
-    lines.push(`  print(v) { console.log(typeof v === "object" && v !== null ? JSON.stringify(v) : v); },`);
+    lines.push(`  __toStr(v) { if (v === null) return "nil"; if (typeof v === "boolean") return v ? "true" : "false"; if (typeof v === "number" || typeof v === "string") return String(v); if (Array.isArray(v)) return "[" + v.map(x => this.__toStr(x)).join(", ") + "]"; if (v && v.__map) { const entries = [...v.entries.entries()].map(([k, val]) => k + ": " + this.__toStr(val)); return "{" + entries.join(", ") + "}"; } return String(v); },`);
+    lines.push(`  print(v) { console.log(this.__toStr(v)); },`);
     lines.push(`  head(a) { return a[0]; },`);
     lines.push(`  tail(a) { return a.slice(1); },`);
     lines.push(`  map(a, f) { return a.map(f); },`);
@@ -34,6 +35,9 @@ export function generateJS(module) {
     lines.push(`  replace(s, old, nw) { return s.replaceAll(old, nw); },`);
     lines.push(`  uppercase(s) { return s.toUpperCase(); },`);
     lines.push(`  lowercase(s) { return s.toLowerCase(); },`);
+    lines.push(`  upper(s) { return s.toUpperCase(); },`);
+    lines.push(`  lower(s) { return s.toLowerCase(); },`);
+    lines.push(`  type_of(v) { if (v === null) return "nil"; if (typeof v === "boolean") return "bool"; if (typeof v === "number") return Number.isInteger(v) ? "int" : "float"; if (typeof v === "string") return "string"; if (Array.isArray(v)) return "list"; if (v && v.__map) return "map"; return "unknown"; },`);
     lines.push(`  sum(a) { return a.reduce((s, x) => s + x, 0); },`);
     lines.push(`  flat(a) { return a.flat(); },`);
     lines.push(`  zip(a, b) { return a.map((x, i) => [x, b[i]]); },`);
@@ -152,7 +156,13 @@ function emitInstr(instr) {
             return `var ${S(instr.dest)} = ${S(instr.name)};`;
         case "store":
             if (instr.src.startsWith("@fn:")) {
-                return `var ${S(instr.name)} = ${S(instr.src.slice(4))};`;
+                const fnName = instr.src.slice(4);
+                // If storing a function reference to a variable with the same name,
+                // the hoisted function definition already provides it — skip redundant var
+                if (S(instr.name) === S(fnName)) {
+                    return `/* ${S(instr.name)} = ${S(fnName)} (hoisted) */`;
+                }
+                return `var ${S(instr.name)} = ${S(fnName)};`;
             }
             return `var ${S(instr.name)} = ${S(instr.src)};`;
         case "binop":
@@ -164,7 +174,7 @@ function emitInstr(instr) {
         case "toolcall":
             return `var ${S(instr.dest)} = await fetch(${S(instr.url)}, { method: ${JSON.stringify(instr.method)}${instr.body ? `, body: JSON.stringify(${S(instr.body)})` : ""} }).then(r => r.json());`;
         case "field":
-            return `var ${S(instr.dest)} = (${S(instr.obj)} && ${S(instr.obj)}.__map) ? ${S(instr.obj)}.entries.get(${JSON.stringify(instr.prop)}) : ${S(instr.obj)}[${JSON.stringify(instr.prop)}];`;
+            return `var ${S(instr.dest)} = (${S(instr.obj)} == null) ? null : (${S(instr.obj)}.__map) ? ${S(instr.obj)}.entries.get(${JSON.stringify(instr.prop)}) : ${S(instr.obj)}[${JSON.stringify(instr.prop)}];`;
         case "index":
             return `var ${S(instr.dest)} = ${S(instr.obj)}[${S(instr.idx)}];`;
         case "setfield":
@@ -217,7 +227,8 @@ function emitCall(fn, args) {
         "range", "keys", "values", "type", "abs", "max", "min", "floor", "ceil",
         "round", "sort", "reverse", "contains", "join", "split", "trim", "replace",
         "uppercase", "lowercase", "sum", "flat", "zip", "enumerate", "slice",
-        "append", "concat", "unique", "int", "float", "__await", "__fetch_parallel"
+        "append", "concat", "unique", "int", "float", "__await", "__fetch_parallel",
+        "upper", "lower", "type_of", "__toStr"
     ];
     if (builtins.includes(fn)) {
         return `__arc_runtime.${fn}(${args.join(", ")})`;

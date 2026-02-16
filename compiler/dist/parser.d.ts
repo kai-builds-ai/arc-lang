@@ -38,6 +38,7 @@ export declare class Parser {
     private parseIf;
     private parseMatch;
     private parsePattern;
+    private parsePatternAtom;
     private parseToolCall;
 }
 export declare function parse(tokens: Token[]): AST.Program;

@@ -16,9 +16,11 @@ export interface ModuleExports {
 }
 
 const moduleCache = new Map<string, ModuleExports>();
+const modulesInProgress = new Set<string>();
 
 export function clearModuleCache(): void {
   moduleCache.clear();
+  modulesInProgress.clear();
 }
 
 /**
@@ -56,11 +58,18 @@ export function resolveModule(path: string[], basePath: string): string {
 export function loadModule(filePath: string): ModuleExports {
   const absPath = resolve(filePath);
 
+  // Detect circular imports — check before cache since cache is pre-populated with {}
+  if (modulesInProgress.has(absPath)) {
+    throw new Error(`Circular import detected: ${absPath}`);
+  }
+
   if (moduleCache.has(absPath)) {
     return moduleCache.get(absPath)!;
   }
 
-  // Prevent circular imports — set empty first
+  modulesInProgress.add(absPath);
+
+  // Pre-populate cache to handle any remaining edge cases
   moduleCache.set(absPath, {});
 
   const source = readFileSync(absPath, "utf-8");
@@ -94,6 +103,7 @@ export function loadModule(filePath: string): ModuleExports {
   }
 
   moduleCache.set(absPath, exports);
+  modulesInProgress.delete(absPath);
   return exports;
 }
 

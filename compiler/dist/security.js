@@ -157,7 +157,7 @@ export class SafeInterpreter {
             ctx.tick();
             if (stmt.kind === "UseStmt") {
                 const useStmt = stmt;
-                validateImport(useStmt.module, this.config);
+                validateImport(useStmt.path.join("/"), this.config);
                 if (!this.config.disableImports) {
                     // No file context in sandbox, skip actual import
                 }

@@ -1,0 +1,3 @@
+# Long pipeline chain
+let result = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] |> filter((x) => x % 2 == 0) |> map((x) => x * x) |> sum
+print(result)

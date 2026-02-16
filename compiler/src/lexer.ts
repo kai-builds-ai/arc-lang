@@ -94,13 +94,30 @@ export function lex(source: string): Token[] {
           // Lex the expression inside {} as tokens - just grab until matching }
           let depth = 1;
           let interpExpr = "";
+          const interpLine = line, interpCol = col;
           while (i < source.length && depth > 0) {
+            if (peek() === '"') {
+              // Skip over string literals inside interpolation to avoid miscounting braces
+              interpExpr += advance(); // opening quote
+              while (i < source.length && peek() !== '"') {
+                if (peek() === '\\') { interpExpr += advance(); } // escape char
+                interpExpr += advance();
+              }
+              if (i < source.length) interpExpr += advance(); // closing quote
+              continue;
+            }
             if (peek() === "{") depth++;
             if (peek() === "}") { depth--; if (depth === 0) break; }
             interpExpr += advance();
           }
           if (peek() === "}") advance(); // skip }
-          parts.push(tok(TokenType.Ident, interpExpr, line, col));
+          // Skip empty interpolation
+          if (interpExpr.trim().length > 0) {
+            parts.push(tok(TokenType.Ident, interpExpr, interpLine, interpCol));
+          } else {
+            // Empty interpolation {} - treat as empty string part
+            parts.push(tok(TokenType.String, "", interpLine, interpCol));
+          }
           continue;
         }
         if (peek() === "\\") {
@@ -111,9 +128,39 @@ export function lex(source: string): Token[] {
           const esc = advance();
           if (esc === "n") str += "\n";
           else if (esc === "t") str += "\t";
+          else if (esc === "r") str += "\r";
+          else if (esc === "0") str += "\0";
           else if (esc === "\\") str += "\\";
           else if (esc === '"') str += '"';
-          else str += esc;
+          else if (esc === "{") str += "{";
+          else if (esc === "x") {
+            // \xNN - hex escape (2 digits)
+            let hex = "";
+            for (let h = 0; h < 2 && i < source.length; h++) {
+              const hc = peek();
+              if (/[0-9a-fA-F]/.test(hc)) { hex += advance(); }
+              else break;
+            }
+            str += hex.length > 0 ? String.fromCharCode(parseInt(hex, 16)) : "x";
+          } else if (esc === "u") {
+            // \u{NNNN} or \uNNNN - unicode escape
+            if (peek() === "{") {
+              advance(); // skip {
+              let hex = "";
+              while (i < source.length && peek() !== "}") { hex += advance(); }
+              if (peek() === "}") advance();
+              str += hex.length > 0 ? String.fromCodePoint(parseInt(hex, 16)) : "";
+            } else {
+              // \uNNNN - 4 hex digits
+              let hex = "";
+              for (let h = 0; h < 4 && i < source.length; h++) {
+                const hc = peek();
+                if (/[0-9a-fA-F]/.test(hc)) { hex += advance(); }
+                else break;
+              }
+              str += hex.length > 0 ? String.fromCharCode(parseInt(hex, 16)) : "u";
+            }
+          } else str += esc;
           continue;
         }
         str += advance();

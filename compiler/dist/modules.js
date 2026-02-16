@@ -8,8 +8,10 @@ import { createEnv, runStmt } from "./interpreter.js";
 const __filename2 = fileURLToPath(import.meta.url);
 const __dirname2 = dirname(__filename2);
 const moduleCache = new Map();
+const modulesInProgress = new Set();
 export function clearModuleCache() {
     moduleCache.clear();
+    modulesInProgress.clear();
 }
 /**
  * Resolve a module path to a file path.
@@ -44,10 +46,15 @@ export function resolveModule(path, basePath) {
  */
 export function loadModule(filePath) {
     const absPath = resolve(filePath);
+    // Detect circular imports — check before cache since cache is pre-populated with {}
+    if (modulesInProgress.has(absPath)) {
+        throw new Error(`Circular import detected: ${absPath}`);
+    }
     if (moduleCache.has(absPath)) {
         return moduleCache.get(absPath);
     }
-    // Prevent circular imports — set empty first
+    modulesInProgress.add(absPath);
+    // Pre-populate cache to handle any remaining edge cases
     moduleCache.set(absPath, {});
     const source = readFileSync(absPath, "utf-8");
     const tokens = lex(source);
@@ -79,6 +86,7 @@ export function loadModule(filePath) {
         }
     }
     moduleCache.set(absPath, exports);
+    modulesInProgress.delete(absPath);
     return exports;
 }
 /**

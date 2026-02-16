@@ -210,7 +210,7 @@ export class SafeInterpreter {
 
       if (stmt.kind === "UseStmt") {
         const useStmt = stmt as AST.UseStmt;
-        validateImport((useStmt as any).module, this.config);
+        validateImport(useStmt.path.join("/"), this.config);
         if (!this.config.disableImports) {
           // No file context in sandbox, skip actual import
         }

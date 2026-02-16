@@ -93,12 +93,31 @@ function main() {
         }
         // Multi-line support
         buffer += (buffer ? "\n" : "") + line;
-        // Count braces
-        for (const ch of line) {
-            if (ch === "{")
-                braceDepth++;
-            if (ch === "}")
-                braceDepth--;
+        // Count braces (skip braces inside strings and comments)
+        let inString = false;
+        let escaped = false;
+        for (let ci = 0; ci < line.length; ci++) {
+            const ch = line[ci];
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (ch === "\\") {
+                escaped = true;
+                continue;
+            }
+            if (ch === '"') {
+                inString = !inString;
+                continue;
+            }
+            if (ch === "#" && !inString)
+                break; // rest is comment
+            if (!inString) {
+                if (ch === "{")
+                    braceDepth++;
+                if (ch === "}")
+                    braceDepth--;
+            }
         }
         if (braceDepth > 0) {
             rl.setPrompt("...  ");
