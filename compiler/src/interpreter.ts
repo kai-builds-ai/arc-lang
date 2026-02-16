@@ -1,6 +1,8 @@
 // Arc Language Tree-Walking Interpreter
 
 import * as AST from "./ast.js";
+import * as nodeCrypto from "crypto";
+import * as nodeOs from "os";
 
 type Value = number | string | boolean | null | Value[] | MapValue | FnValue | AsyncValue;
 
@@ -18,6 +20,7 @@ interface FnValue {
   __fn: true;
   name: string;
   params: string[];
+  richParams?: AST.Param[];
   body: AST.Expr;
   closure: Env;
 }
@@ -209,6 +212,7 @@ function makePrelude(env: Env): void {
     range: (a, b) => { const r: number[] = []; for (let i = a as number; i < (b as number); i++) r.push(i); return r; },
     keys: (m) => m && typeof m === "object" && "__map" in m ? [...(m as MapValue).entries.keys()] : [],
     values: (m) => m && typeof m === "object" && "__map" in m ? [...(m as MapValue).entries.values()] : [],
+    entries: (m) => m && typeof m === "object" && "__map" in m ? [...(m as MapValue).entries.entries()].map(([k, v]) => { const e = new Map<string, Value>(); e.set("key", k); e.set("value", v); return { __map: true, entries: e } as MapValue; }) : [],
     push: (list, item) => Array.isArray(list) ? [...list, item] : list,
     concat: (a, b) => {
       if (Array.isArray(a) && Array.isArray(b)) return [...a, ...b];
@@ -221,13 +225,427 @@ function makePrelude(env: Env): void {
       if (typeof v === "string") return v.slice(start as number, end as number ?? undefined);
       return null;
     },
+    to_string: (v) => toStr(v),
+    index_of: (s, sub) => {
+      if (typeof s === "string" && typeof sub === "string") {
+        const idx = s.indexOf(sub);
+        return idx === -1 ? null : idx;
+      }
+      if (Array.isArray(s)) {
+        const idx = s.indexOf(sub);
+        return idx === -1 ? null : idx;
+      }
+      return null;
+    },
+    ord: (s) => typeof s === "string" && s.length > 0 ? s.charCodeAt(0) : 0,
+    chr: (n) => typeof n === "number" ? String.fromCharCode(n) : "",
+    char_at: (s, i) => typeof s === "string" ? (s[i as number] ?? null) : null,
+    time_ms: () => Date.now(),
+
+    // --- crypto natives ---
+    crypto_hash: (algorithm, data) => {
+      return nodeCrypto.createHash(algorithm as string).update(data as string).digest("hex");
+    },
+    crypto_hmac: (algorithm, key, data) => {
+      return nodeCrypto.createHmac(algorithm as string, key as string).update(data as string).digest("hex");
+    },
+    crypto_random_bytes: (n) => {
+      const buf = nodeCrypto.randomBytes(n as number);
+      return Array.from(buf) as Value[];
+    },
+    crypto_random_int: (min, max) => {
+      const lo = min as number;
+      const hi = max as number;
+      return nodeCrypto.randomInt(lo, hi + 1);
+    },
+    crypto_uuid: () => nodeCrypto.randomUUID(),
+    crypto_encode_base64: (s) => Buffer.from(s as string).toString("base64"),
+    crypto_decode_base64: (s) => Buffer.from(s as string, "base64").toString("utf-8"),
+
+    // --- net natives ---
+    net_url_parse: (url) => {
+      try {
+        const u = new URL(url as string);
+        const m = new Map<string, Value>();
+        m.set("protocol", u.protocol);
+        m.set("host", u.hostname);
+        m.set("port", u.port || null);
+        m.set("path", u.pathname);
+        m.set("query", u.search || null);
+        m.set("hash", u.hash || null);
+        return { __map: true, entries: m } as MapValue;
+      } catch {
+        return null;
+      }
+    },
+    net_url_encode: (s) => encodeURIComponent(s as string),
+    net_url_decode: (s) => decodeURIComponent(s as string),
+    net_query_parse: (s) => {
+      const str = (s as string).startsWith("?") ? (s as string).slice(1) : s as string;
+      const params = new URLSearchParams(str);
+      const m = new Map<string, Value>();
+      params.forEach((v, k) => m.set(k, v));
+      return { __map: true, entries: m } as MapValue;
+    },
+    net_query_stringify: (map) => {
+      if (map && typeof map === "object" && "__map" in map) {
+        const entries = (map as MapValue).entries;
+        const parts: string[] = [];
+        entries.forEach((v, k) => parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(toStr(v))}`));
+        return parts.join("&");
+      }
+      return "";
+    },
+    net_ip_is_valid: (s) => {
+      const str = s as string;
+      // IPv4
+      const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(str);
+      if (v4) return v4.slice(1).every(n => parseInt(n) <= 255);
+      // IPv6 (simplified check)
+      if (str.includes(":")) {
+        try { new URL(`http://[${str}]`); return true; } catch { return false; }
+      }
+      return false;
+    },
+
+    // --- error natives ---
+    error_new: (kind, message) => {
+      const m = new Map<string, Value>();
+      m.set("kind", kind);
+      m.set("message", message);
+      m.set("stack", null);
+      return { __map: true, entries: m } as MapValue;
+    },
+    error_is_error: (val) => {
+      if (val && typeof val === "object" && "__map" in val) {
+        const entries = (val as MapValue).entries;
+        return entries.has("kind") && entries.has("message");
+      }
+      return false;
+    },
+    error_wrap: (err, message) => {
+      if (err && typeof err === "object" && "__map" in err) {
+        const old = (err as MapValue).entries;
+        const m = new Map<string, Value>();
+        m.set("kind", old.get("kind") ?? null);
+        m.set("message", message);
+        m.set("stack", null);
+        m.set("wrapped", err);
+        return { __map: true, entries: m } as MapValue;
+      }
+      return err;
+    },
+    error_try: (fn) => {
+      try {
+        const result = typeof fn === "function" ? (fn as any)() :
+          (fn && typeof fn === "object" && "__fn" in fn) ? callFn(fn, []) : null;
+        const okMap = new Map<string, Value>();
+        okMap.set("ok", true);
+        okMap.set("value", result);
+        return { __map: true, entries: okMap } as MapValue;
+      } catch (e: any) {
+        const errMap = new Map<string, Value>();
+        errMap.set("ok", false);
+        errMap.set("error", e.message ?? toStr(e as Value));
+        return { __map: true, entries: errMap } as MapValue;
+      }
+    },
+    Ok: (v) => {
+      const m = new Map<string, Value>();
+      m.set("ok", true);
+      m.set("value", v);
+      return { __map: true, entries: m } as MapValue;
+    },
+    Err: (e) => {
+      const m = new Map<string, Value>();
+      m.set("ok", false);
+      m.set("error", e);
+      return { __map: true, entries: m } as MapValue;
+    },
+    is_ok: (v) => {
+      if (v && typeof v === "object" && "__map" in v) {
+        return (v as MapValue).entries.get("ok") === true;
+      }
+      return false;
+    },
+    is_err: (v) => {
+      if (v && typeof v === "object" && "__map" in v) {
+        return (v as MapValue).entries.get("ok") === false;
+      }
+      return false;
+    },
+    unwrap: (v) => {
+      if (v && typeof v === "object" && "__map" in v) {
+        const m = v as MapValue;
+        if (m.entries.get("ok") === true) return m.entries.get("value") ?? null;
+        throw new Error(`Called unwrap on Err: ${toStr(m.entries.get("error") ?? null)}`);
+      }
+      throw new Error("Called unwrap on non-Result value");
+    },
+    unwrap_or: (v, defaultVal) => {
+      if (v && typeof v === "object" && "__map" in v) {
+        const m = v as MapValue;
+        if (m.entries.get("ok") === true) return m.entries.get("value") ?? null;
+        return defaultVal;
+      }
+      return defaultVal;
+    },
+    map_result: (v, fn) => {
+      if (v && typeof v === "object" && "__map" in v) {
+        const m = v as MapValue;
+        if (m.entries.get("ok") === true) {
+          const result = callFn(fn as FnValue, [m.entries.get("value") ?? null]);
+          const newMap = new Map<string, Value>();
+          newMap.set("ok", true);
+          newMap.set("value", result);
+          return { __map: true, entries: newMap } as MapValue;
+        }
+        return v; // pass Err through
+      }
+      throw new Error("map_result expects a Result value");
+    },
+    unwrap_err: (v) => {
+      if (v && typeof v === "object" && "__map" in v) {
+        const m = v as MapValue;
+        if (m.entries.get("ok") === false) return m.entries.get("error") ?? null;
+        throw new Error("Called unwrap_err on Ok value");
+      }
+      throw new Error("Called unwrap_err on non-Result value");
+    },
+
+    // --- regex natives ---
+    regex_new: (pattern) => {
+      // Return a map representing a compiled regex
+      const m = new Map<string, Value>();
+      m.set("pattern", pattern);
+      m.set("__regex", true as any);
+      return { __map: true, entries: m } as MapValue;
+    },
+    regex_try_new: (pattern) => {
+      try {
+        new RegExp(pattern as string);
+        const m = new Map<string, Value>();
+        m.set("pattern", pattern);
+        m.set("__regex", true as any);
+        return { __map: true, entries: m } as MapValue;
+      } catch { return null; }
+    },
+    regex_find: (re, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      const match = new RegExp(pattern).exec(text as string);
+      if (!match) return null;
+      const m = new Map<string, Value>();
+      m.set("match", match[0]);
+      m.set("index", match.index);
+      const groups = match.slice(1).map(g => g ?? null) as Value[];
+      m.set("groups", groups);
+      return { __map: true, entries: m } as MapValue;
+    },
+    regex_find_all: (re, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      const regex = new RegExp(pattern, "g");
+      const results: Value[] = [];
+      let match;
+      while ((match = regex.exec(text as string)) !== null) {
+        const m = new Map<string, Value>();
+        m.set("match", match[0]);
+        m.set("index", match.index);
+        const groups = match.slice(1).map(g => g ?? null) as Value[];
+        m.set("groups", groups);
+        results.push({ __map: true, entries: m } as MapValue);
+      }
+      return results;
+    },
+    regex_replace: (re, replacement, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      return (text as string).replace(new RegExp(pattern), replacement as string);
+    },
+    regex_replace_all: (re, replacement, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      return (text as string).replace(new RegExp(pattern, "g"), replacement as string);
+    },
+    regex_split: (re, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      return (text as string).split(new RegExp(pattern));
+    },
+    regex_captures: (re, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      const match = new RegExp(pattern).exec(text as string);
+      if (!match || match.length <= 1) return null;
+      return match.slice(1).map(g => g ?? null) as Value[];
+    },
+    regex_captures_all: (re, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      const regex = new RegExp(pattern, "g");
+      const results: Value[] = [];
+      let match;
+      while ((match = regex.exec(text as string)) !== null) {
+        if (match.length > 1) {
+          results.push(match.slice(1).map(g => g ?? null) as Value[]);
+        }
+      }
+      return results;
+    },
+    regex_test: (re, text) => {
+      const pattern = (re && typeof re === "object" && "__map" in re)
+        ? (re as MapValue).entries.get("pattern") as string
+        : re as string;
+      return new RegExp(pattern).test(text as string);
+    },
+
+    // --- datetime natives ---
+    __builtin_now: () => Date.now(),
+    __builtin_date_from_ts: (ts) => {
+      const d = new Date(ts as number);
+      const m = new Map<string, Value>();
+      m.set("year", d.getFullYear());
+      m.set("month", d.getMonth() + 1);
+      m.set("day", d.getDate());
+      m.set("hour", d.getHours());
+      m.set("minute", d.getMinutes());
+      m.set("second", d.getSeconds());
+      m.set("ms", d.getMilliseconds());
+      return { __map: true, entries: m } as MapValue;
+    },
+    __builtin_date_parse: (dateStr, format) => {
+      const s = dateStr as string;
+      const fmt = format as string;
+      // Support ISO format and custom format tokens
+      if (fmt === "ISO" || fmt === "iso") {
+        return new Date(s).getTime();
+      }
+      // Parse using format tokens: YYYY, MM, DD, hh, mm, ss
+      let year = 2000, month = 1, day = 1, hour = 0, min = 0, sec = 0;
+      let fi = 0, si = 0;
+      while (fi < fmt.length && si < s.length) {
+        if (fmt.slice(fi, fi + 4) === "YYYY") { year = parseInt(s.slice(si, si + 4)); fi += 4; si += 4; }
+        else if (fmt.slice(fi, fi + 2) === "MM") { month = parseInt(s.slice(si, si + 2)); fi += 2; si += 2; }
+        else if (fmt.slice(fi, fi + 2) === "DD") { day = parseInt(s.slice(si, si + 2)); fi += 2; si += 2; }
+        else if (fmt.slice(fi, fi + 2) === "hh") { hour = parseInt(s.slice(si, si + 2)); fi += 2; si += 2; }
+        else if (fmt.slice(fi, fi + 2) === "mm") { min = parseInt(s.slice(si, si + 2)); fi += 2; si += 2; }
+        else if (fmt.slice(fi, fi + 2) === "ss") { sec = parseInt(s.slice(si, si + 2)); fi += 2; si += 2; }
+        else { fi++; si++; }
+      }
+      return new Date(year, month - 1, day, hour, min, sec).getTime();
+    },
+    __builtin_date_format: (ts, fmt) => {
+      const d = new Date(ts as number);
+      let result = fmt as string;
+      result = result.replace("YYYY", String(d.getFullYear()));
+      result = result.replace("MM", String(d.getMonth() + 1).padStart(2, "0"));
+      result = result.replace("DD", String(d.getDate()).padStart(2, "0"));
+      result = result.replace("hh", String(d.getHours()).padStart(2, "0"));
+      result = result.replace("mm", String(d.getMinutes()).padStart(2, "0"));
+      result = result.replace("ss", String(d.getSeconds()).padStart(2, "0"));
+      return result;
+    },
+    __builtin_date_to_iso: (ts) => new Date(ts as number).toISOString(),
+    __builtin_date_from_iso: (s) => new Date(s as string).getTime(),
+
+    // --- os natives ---
+    __native: (name, ...args) => {
+      const cmd = name as string;
+      switch (cmd) {
+        case "os.cwd": return process.cwd();
+        case "os.env": return process.env[args[0] as string] ?? null;
+        case "os.set_env": { process.env[args[0] as string] = args[1] as string; return null; }
+        case "os.platform": {
+          const p = process.platform;
+          if (p === "win32") return "windows";
+          if (p === "darwin") return "macos";
+          return p;
+        }
+        case "os.home_dir": return nodeOs.homedir();
+        case "os.temp_dir": return nodeOs.tmpdir();
+        case "os.list_dir": {
+          try {
+            const fs = require("fs");
+            return fs.readdirSync(args[0] as string) as Value[];
+          } catch { return []; }
+        }
+        case "os.is_file": {
+          try {
+            const fs = require("fs");
+            return fs.statSync(args[0] as string).isFile();
+          } catch { return false; }
+        }
+        case "os.is_dir": {
+          try {
+            const fs = require("fs");
+            return fs.statSync(args[0] as string).isDirectory();
+          } catch { return false; }
+        }
+        case "os.mkdir": {
+          try {
+            const fs = require("fs");
+            fs.mkdirSync(args[0] as string, { recursive: true });
+            return true;
+          } catch { return false; }
+        }
+        case "os.rmdir": {
+          try {
+            const fs = require("fs");
+            fs.rmdirSync(args[0] as string);
+            return true;
+          } catch { return false; }
+        }
+        case "os.remove": {
+          try {
+            const fs = require("fs");
+            fs.unlinkSync(args[0] as string);
+            return true;
+          } catch { return false; }
+        }
+        case "os.rename": {
+          try {
+            const fs = require("fs");
+            fs.renameSync(args[0] as string, args[1] as string);
+            return true;
+          } catch { return false; }
+        }
+        case "os.copy": {
+          try {
+            const fs = require("fs");
+            fs.copyFileSync(args[0] as string, args[1] as string);
+            return true;
+          } catch { return false; }
+        }
+        case "os.file_size": {
+          try {
+            const fs = require("fs");
+            return fs.statSync(args[0] as string).size;
+          } catch { return null; }
+        }
+        case "os.exec": {
+          try {
+            const cp = require("child_process");
+            return cp.execSync(args[0] as string, { encoding: "utf-8" }).trim();
+          } catch { return null; }
+        }
+        default: return null;
+      }
+    },
   };
 
   function callFn(fn: FnValue | Value, args: Value[]): Value {
     if (fn && typeof fn === "object" && "__fn" in fn) {
       const f = fn as FnValue;
       const fnEnv = new Env(f.closure);
-      f.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
+      bindParams(f, args, fnEnv, evalExpr);
       return evalExpr(f.body, fnEnv);
     }
     // It might be a native function stored as a special wrapper
@@ -238,6 +656,25 @@ function makePrelude(env: Env): void {
   // Register prelude fns as special callable values
   for (const [name, fn] of Object.entries(fns)) {
     env.set(name, fn as any);
+  }
+}
+
+function bindParams(fn: FnValue, args: Value[], fnEnv: Env, evalExprFn: (e: AST.Expr, env: Env) => Value): void {
+  if (fn.richParams) {
+    for (let i = 0; i < fn.richParams.length; i++) {
+      const p = fn.richParams[i];
+      if (p.rest) {
+        fnEnv.set(p.name, args.slice(i));
+      } else if (i < args.length) {
+        fnEnv.set(p.name, args[i]);
+      } else if (p.default) {
+        fnEnv.set(p.name, evalExprFn(p.default, fn.closure));
+      } else {
+        fnEnv.set(p.name, null);
+      }
+    }
+  } else {
+    fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
   }
 }
 
@@ -376,7 +813,7 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         try {
           tailLoop: while (true) {
             const fnEnv = new Env(fn.closure);
-            fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
+            bindParams(fn, args, fnEnv, evalExpr);
             const bodyResult = evalExprTCO(fn.body, fnEnv, fn.name);
             if (bodyResult && typeof bodyResult === "object" && "__tco" in bodyResult) {
               const tco = bodyResult as TCOSignal;
@@ -410,12 +847,38 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       throw new Error(`Cannot access property '${expr.property}' on ${toStr(obj)}`);
     }
 
+    case "OptionalMemberExpr": {
+      const obj = evalExpr(expr.object, env);
+      if (obj === null) return null;
+      if (obj && typeof obj === "object" && "__map" in obj) {
+        return (obj as MapValue).entries.get(expr.property) ?? null;
+      }
+      throw new Error(`Cannot access property '${expr.property}' on ${toStr(obj)}`);
+    }
+
+    case "TryExpr": {
+      const val = evalExpr(expr.expr, env);
+      // If val is a Result with ok: false, return early with the Err
+      if (val && typeof val === "object" && "__map" in val) {
+        const m = val as MapValue;
+        if (m.entries.get("ok") === false) {
+          throw new ReturnSignal(val);
+        }
+        if (m.entries.get("ok") === true) {
+          return m.entries.get("value") ?? null;
+        }
+      }
+      // Not a Result type — just return the value
+      return val;
+    }
+
     case "IndexExpr": {
       const obj = evalExpr(expr.object, env);
       const idx = evalExpr(expr.index, env);
       if (Array.isArray(obj) && typeof idx === "number") return obj[idx] ?? null;
-      if (obj && typeof obj === "object" && "__map" in obj && typeof idx === "string") {
-        return (obj as MapValue).entries.get(idx) ?? null;
+      if (obj && typeof obj === "object" && "__map" in obj) {
+        const key = typeof idx === "string" ? idx : toStr(idx);
+        return (obj as MapValue).entries.get(key) ?? null;
       }
       return null;
     }
@@ -431,7 +894,7 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         if (fn && typeof fn === "object" && "__fn" in fn) {
           const f = fn as FnValue;
           const fnEnv = new Env(f.closure);
-          f.params.forEach((p, i) => fnEnv.set(p, i === 0 ? left : null));
+          bindParams(f, [left], fnEnv, evalExpr);
           try { return evalExpr(f.body, fnEnv); } catch (e) { if (e instanceof ReturnSignal) return e.value; throw e; }
         }
       }
@@ -442,7 +905,7 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         if (callee && typeof callee === "object" && "__fn" in callee) {
           const fn = callee as FnValue;
           const fnEnv = new Env(fn.closure);
-          fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
+          bindParams(fn, args, fnEnv, evalExpr);
           try { return evalExpr(fn.body, fnEnv); } catch (e) { if (e instanceof ReturnSignal) return e.value; throw e; }
         }
       }
@@ -472,13 +935,44 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       return { __fn: true, name: "<lambda>", params: expr.params, body: expr.body, closure: env } as FnValue;
     }
 
-    case "ListLiteral": return expr.elements.map(e => evalExpr(e, env));
+    case "SpreadExpr": {
+      // SpreadExpr should only appear inside list/map literals; standalone is an error
+      throw new Error(`Spread operator can only be used inside list or map literals`);
+    }
+
+    case "ListLiteral": {
+      const result: Value[] = [];
+      for (const e of expr.elements) {
+        if (e.kind === "SpreadExpr") {
+          const val = evalExpr(e.expr, env);
+          if (Array.isArray(val)) {
+            result.push(...val);
+          } else {
+            throw new Error(`Spread expects a list, got ${toStr(val)}`);
+          }
+        } else {
+          result.push(evalExpr(e, env));
+        }
+      }
+      return result;
+    }
 
     case "MapLiteral": {
       const m = new Map<string, Value>();
       for (const entry of expr.entries) {
-        const key = typeof entry.key === "string" ? entry.key : toStr(evalExpr(entry.key, env));
-        m.set(key, evalExpr(entry.value, env));
+        if (entry.spread) {
+          const val = evalExpr(entry.spread, env);
+          if (val && typeof val === "object" && "__map" in val) {
+            for (const [k, v] of (val as MapValue).entries) {
+              m.set(k, v);
+            }
+          } else {
+            throw new Error(`Spread in map expects a map, got ${toStr(val)}`);
+          }
+        } else {
+          const key = typeof entry.key === "string" ? entry.key : toStr(evalExpr(entry.key as AST.Expr, env));
+          m.set(key, evalExpr(entry.value!, env));
+        }
       }
       return { __map: true, entries: m } as MapValue;
     }
@@ -568,6 +1062,25 @@ function matchPattern(pattern: AST.Pattern, value: Value, env: Env): boolean {
     }
     case "OrPattern":
       return pattern.patterns.some(p => matchPattern(p, value, env));
+    case "ConstructorPattern": {
+      if (!value || typeof value !== "object" || !("__map" in value)) return false;
+      const m = (value as MapValue).entries;
+      if (pattern.name === "Ok") {
+        if (m.get("ok") !== true) return false;
+        if (pattern.args.length > 0) {
+          return matchPattern(pattern.args[0], m.get("value") ?? null, env);
+        }
+        return true;
+      }
+      if (pattern.name === "Err") {
+        if (m.get("ok") !== false) return false;
+        if (pattern.args.length > 0) {
+          return matchPattern(pattern.args[0], m.get("error") ?? null, env);
+        }
+        return true;
+      }
+      return false;
+    }
     default: return false;
   }
 }
@@ -586,13 +1099,16 @@ function evalStmt(stmt: AST.Stmt, env: Env): Value {
           for (const n of target.names) env.set(n, m.get(n) ?? null, stmt.mutable);
         } else if (target.type === "array" && Array.isArray(value)) {
           target.names.forEach((n, i) => env.set(n, value[i] ?? null, stmt.mutable));
+          if (target.rest) {
+            env.set(target.rest, value.slice(target.names.length), stmt.mutable);
+          }
         }
       }
       return value;
     }
 
     case "FnStmt": {
-      const fn: FnValue = { __fn: true, name: stmt.name, params: stmt.params, body: stmt.body, closure: env };
+      const fn: FnValue = { __fn: true, name: stmt.name, params: stmt.params, richParams: stmt.richParams, body: stmt.body, closure: env };
       env.set(stmt.name, fn);
       return fn;
     }
@@ -603,7 +1119,17 @@ function evalStmt(stmt: AST.Stmt, env: Env): Value {
       let result: Value = null;
       for (const item of iterable) {
         const loopEnv = new Env(env);
-        loopEnv.set(stmt.variable, item);
+        if (typeof stmt.variable === "string") {
+          loopEnv.set(stmt.variable, item);
+        } else {
+          const target = stmt.variable;
+          if (target.type === "array" && Array.isArray(item)) {
+            target.names.forEach((n, i) => loopEnv.set(n, (item as Value[])[i] ?? null));
+          } else if (target.type === "object" && item && typeof item === "object" && "__map" in item) {
+            const m = (item as MapValue).entries;
+            for (const n of target.names) loopEnv.set(n, m.get(n) ?? null);
+          }
+        }
         result = evalExpr(stmt.body, loopEnv);
       }
       return result;
@@ -644,8 +1170,9 @@ function evalStmt(stmt: AST.Stmt, env: Env): Value {
         obj[index] = value;
         return value;
       }
-      if (obj && typeof obj === "object" && "__map" in obj && typeof index === "string") {
-        (obj as MapValue).entries.set(index, value);
+      if (obj && typeof obj === "object" && "__map" in obj) {
+        const key = typeof index === "string" ? index : toStr(index);
+        (obj as MapValue).entries.set(key, value);
         return value;
       }
       throw new Error(`Cannot assign index on ${toStr(obj)}`);

@@ -1,42 +1,37 @@
 # Arc Standard Library: result module
-# Result type pattern for error handling
+# Result type pattern for error handling using native builtins
 
-pub fn ok(value) => {ok: true, value: value, error: nil}
+# Ok(value) - wraps a success value in a Result
+pub fn ok(value) => Ok(value)
 
-pub fn err(message) => {ok: false, value: nil, error: message}
+# err(error) - wraps an error in a Result
+pub fn err(error) => Err(error)
 
-pub fn is_ok(result) => result.ok == true
+# is_ok(result) - returns true if Result is Ok
+pub fn result_is_ok(result) => is_ok(result)
 
-pub fn is_err(result) => result.ok == false
+# is_err(result) - returns true if Result is Err
+pub fn result_is_err(result) => is_err(result)
 
-pub fn unwrap(result) {
-  assert(result.ok == true, "unwrap called on error: " ++ str(result.error))
-  result.value
-}
+# result_unwrap(result) - returns value or throws on Err
+pub fn result_unwrap(result) => unwrap(result)
 
-pub fn unwrap_or(result, default) {
-  if result.ok == true { result.value }
-  el { default }
-}
+# result_unwrap_or(result, default) - returns value or default on Err
+pub fn result_unwrap_or(result, default) => unwrap_or(result, default)
 
-pub fn map_result(result, f) {
-  if result.ok == true {
-    ok(f(result.value))
-  } el {
-    result
-  }
-}
+# result_map(result, f) - applies f to Ok value, passes Err through
+pub fn result_map(result, f) => map_result(result, f)
 
+# flat_map_result - chains Result-returning functions
 pub fn flat_map_result(result, f) {
-  if result.ok == true {
-    f(result.value)
+  if is_ok(result) {
+    f(unwrap(result))
   } el {
     result
   }
 }
 
+# try_fn - wraps a function call in a Result
 pub fn try_fn(f) {
-  # Without try/catch, this just runs the function
-  # If it throws, the program aborts (Arc has no exception handling yet)
-  ok(f())
+  Ok(f())
 }
