@@ -29,8 +29,10 @@ if (command === "version" || args.includes("--version") || args.includes("-v")) 
 } else if (command === "bench") {
   const benchArgs = args.slice(1);
   if (benchArgs.includes("--tokens")) {
+    // @ts-ignore - benchmarks outside rootDir
     import("../benchmarks/token-efficiency.js");
   } else {
+    // @ts-ignore - benchmarks outside rootDir
     import("../benchmarks/bench.js");
   }
 } else if (command === "repl") {
@@ -38,7 +40,8 @@ if (command === "version" || args.includes("--version") || args.includes("-v")) 
 } else if (command === "fuzz") {
   const iterArg = args.find(a => a.startsWith("--iterations="));
   const iterations = iterArg ? parseInt(iterArg.split("=")[1]) : 1000;
-  import("../../tests/fuzz/fuzzer.js").then(({ runFuzzer, fuzzReport }) => {
+  // @ts-ignore - tests outside rootDir
+  import("../../tests/fuzz/fuzzer.js").then(({ runFuzzer, fuzzReport }: any) => {
     console.log(`Running fuzzer with ${iterations} iterations...`);
     const result = runFuzzer(iterations);
     fuzzReport(result);

@@ -481,7 +481,7 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
           const body = evalExpr(expr.body, env);
           return { __map: true, entries: new Map([["status", 200], ["method", method], ["url", url], ["body", body]]) } as MapValue;
         }
-        return { __map: true, entries: new Map([["status", 200], ["method", method], ["url", url], ["data", `mock-data-from-${url}`]]) } as MapValue;
+        return { __map: true, entries: new Map<string, any>([["status", 200], ["method", method], ["url", url], ["data", `mock-data-from-${url}`]]) } as MapValue;
       }
       // Custom tool call
       console.log(`[mock tool @${expr.method}(${url})]`);
