@@ -84,10 +84,10 @@ test("unary minus on expression", () => {
 });
 
 test("not with comparison", () => {
-  // not binds very tight, so `not x == 5` parses as `(not x) == 5`
-  const e = expr("not x == 5") as AST.BinaryExpr;
-  assert(e.op === "==", "top is == because not binds tight");
-  assert(e.left.kind === "UnaryExpr", "left is not x");
+  // not has lower precedence than ==, so `not x == 5` parses as `not (x == 5)`
+  const e = expr("not x == 5") as AST.UnaryExpr;
+  assert(e.kind === "UnaryExpr" && e.op === "not", "top is not");
+  assert(e.operand.kind === "BinaryExpr", "operand is x == 5");
 });
 
 test("double unary minus", () => {

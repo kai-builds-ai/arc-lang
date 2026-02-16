@@ -265,7 +265,7 @@ test("flat nested", () => {
 });
 test("zip unequal", () => {
   const r = run("zip([1, 2, 3], [10, 20])");
-  assert(r.length === 3, "zip unequal");
+  assert(r.length === 2, "zip unequal truncates to shorter");
 });
 test("enumerate indices", () => {
   const r = run('enumerate(["a", "b", "c"])');

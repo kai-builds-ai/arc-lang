@@ -152,7 +152,8 @@ function makePrelude(env: Env): void {
     flat: (list) => Array.isArray(list) ? list.flat() : list,
     zip: (a, b) => {
       if (!Array.isArray(a) || !Array.isArray(b)) return [];
-      return a.map((v, i) => [v, b[i]] as Value[]);
+      const minLen = Math.min(a.length, b.length);
+      return a.slice(0, minLen).map((v, i) => [v, b[i]] as Value[]);
     },
     enumerate: (list) => {
       if (!Array.isArray(list)) return [];
@@ -431,7 +432,7 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
           const f = fn as FnValue;
           const fnEnv = new Env(f.closure);
           f.params.forEach((p, i) => fnEnv.set(p, i === 0 ? left : null));
-          return evalExpr(f.body, fnEnv);
+          try { return evalExpr(f.body, fnEnv); } catch (e) { if (e instanceof ReturnSignal) return e.value; throw e; }
         }
       }
       if (expr.right.kind === "CallExpr") {
@@ -442,7 +443,7 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
           const fn = callee as FnValue;
           const fnEnv = new Env(fn.closure);
           fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
-          return evalExpr(fn.body, fnEnv);
+          try { return evalExpr(fn.body, fnEnv); } catch (e) { if (e instanceof ReturnSignal) return e.value; throw e; }
         }
       }
       throw new Error(`Pipeline target must be a function at line ${expr.loc.line}`);

@@ -134,7 +134,8 @@ export function pkgAdd(name: string, options: { dev?: boolean; dir?: string } = 
   let version = "latest";
   if (name.startsWith("github:")) {
     version = name;
-    name = name.replace("github:", "").split("/").pop() || name;
+    const parts = name.replace("github:", "").split("/").filter(Boolean);
+    name = parts.pop() || "unknown";
   }
 
   toml[section][name] = version;

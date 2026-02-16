@@ -485,7 +485,7 @@ export class Parser {
     }
     if (t.type === TokenType.Not) {
       this.advance();
-      return { kind: "UnaryExpr", op: "not", operand: this.parseExpr(8), loc };
+      return { kind: "UnaryExpr", op: "not", operand: this.parseExpr(3), loc };
     }
 
     // Literals

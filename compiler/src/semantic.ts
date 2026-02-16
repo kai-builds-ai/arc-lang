@@ -365,6 +365,10 @@ export function analyze(program: AST.Program): Diagnostic[] {
         analyzeExpr(stmt.index, scope);
         analyzeExpr(stmt.value, scope);
         break;
+
+      case "RetStmt":
+        if (stmt.value) analyzeExpr(stmt.value, scope);
+        break;
     }
   }
 

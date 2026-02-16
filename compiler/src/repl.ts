@@ -13,7 +13,7 @@ const YELLOW = "\x1b[33m";
 const RESET = "\x1b[0m";
 
 let showAst = false;
-const env = createEnv();
+let env = createEnv();
 
 function printHelp() {
   console.log(`${CYAN}Arc REPL Commands:${RESET}`);
@@ -79,9 +79,8 @@ function main() {
         return;
       }
       if (trimmed === ":reset") {
-        // Re-create env by re-running. Simplest: just reload.
-        // Actually we can't easily reset the env object, so we note this limitation.
-        console.log(`${YELLOW}State reset (restart REPL for full reset)${RESET}`);
+        env = createEnv();
+        console.log(`${YELLOW}State reset${RESET}`);
         rl.prompt();
         return;
       }

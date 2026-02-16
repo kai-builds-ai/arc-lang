@@ -30,6 +30,13 @@ export function compareSemver(a: string, b: string): number {
   const bHasPre = b.includes("-");
   if (aHasPre && !bHasPre) return -1;
   if (!aHasPre && bHasPre) return 1;
+  // Both have pre-release: compare lexically
+  if (aHasPre && bHasPre) {
+    const aPre = a.slice(a.indexOf("-") + 1);
+    const bPre = b.slice(b.indexOf("-") + 1);
+    if (aPre < bPre) return -1;
+    if (aPre > bPre) return 1;
+  }
   return 0;
 }
 

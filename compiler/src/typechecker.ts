@@ -105,37 +105,105 @@ export function typecheck(program: AST.Program): Diagnostic[] {
     } else if (stmt.kind === "ForStmt") {
       walkExpr(stmt.iterable);
       walkExpr(stmt.body);
+    } else if (stmt.kind === "DoStmt") {
+      walkExpr(stmt.body);
+      walkExpr(stmt.condition);
     }
   }
 
   function walkExpr(expr: AST.Expr): void {
-    if (expr.kind === "MatchExpr") {
-      checkMatchExhaustiveness(expr);
-      for (const arm of expr.arms) {
-        walkExpr(arm.body);
-      }
-    } else if (expr.kind === "BlockExpr") {
-      for (const s of expr.stmts) {
-        walkStmt(s);
-      }
-    } else if (expr.kind === "IfExpr") {
-      walkExpr(expr.then);
-      if (expr.else_) walkExpr(expr.else_);
+    switch (expr.kind) {
+      case "MatchExpr":
+        checkMatchExhaustiveness(expr);
+        walkExpr(expr.subject);
+        for (const arm of expr.arms) {
+          if (arm.guard) walkExpr(arm.guard);
+          walkExpr(arm.body);
+        }
+        break;
+      case "BlockExpr":
+        for (const s of expr.stmts) walkStmt(s);
+        break;
+      case "IfExpr":
+        walkExpr(expr.condition);
+        walkExpr(expr.then);
+        if (expr.else_) walkExpr(expr.else_);
+        break;
+      case "BinaryExpr":
+        walkExpr(expr.left);
+        walkExpr(expr.right);
+        break;
+      case "UnaryExpr":
+        walkExpr(expr.operand);
+        break;
+      case "CallExpr":
+        walkExpr(expr.callee);
+        for (const a of expr.args) walkExpr(a);
+        break;
+      case "LambdaExpr":
+        walkExpr(expr.body);
+        break;
+      case "ListLiteral":
+        for (const el of expr.elements) walkExpr(el);
+        break;
+      case "MapLiteral":
+        for (const e of expr.entries) {
+          if (typeof e.key !== "string") walkExpr(e.key);
+          walkExpr(e.value);
+        }
+        break;
+      case "PipelineExpr":
+        walkExpr(expr.left);
+        walkExpr(expr.right);
+        break;
+      case "IndexExpr":
+        walkExpr(expr.object);
+        walkExpr(expr.index);
+        break;
+      case "MemberExpr":
+        walkExpr(expr.object);
+        break;
+      case "ListComprehension":
+        walkExpr(expr.iterable);
+        walkExpr(expr.expr);
+        if (expr.filter) walkExpr(expr.filter);
+        break;
+      case "ToolCallExpr":
+        walkExpr(expr.arg);
+        if (expr.body) walkExpr(expr.body);
+        break;
+      case "RangeExpr":
+        walkExpr(expr.start);
+        walkExpr(expr.end);
+        break;
+      case "StringInterp":
+        for (const part of expr.parts) {
+          if (typeof part !== "string") walkExpr(part);
+        }
+        break;
+      case "AsyncExpr":
+        walkExpr(expr.body);
+        break;
+      case "AwaitExpr":
+        walkExpr(expr.expr);
+        break;
+      case "FetchExpr":
+        for (const t of expr.targets) walkExpr(t);
+        break;
+      default:
+        break;
     }
   }
 
   function checkMatchExhaustiveness(matchExpr: AST.MatchExpr): void {
     const hasWildcard = matchExpr.arms.some(a => a.pattern.kind === "WildcardPattern");
     if (!hasWildcard) {
-      // Check if subject is a known enum type
-      if (matchExpr.subject.kind === "Identifier") {
-        // Can't easily determine type without full type inference, so just warn
-        diagnostics.push({
-          level: "warning",
-          message: `Match expression may not be exhaustive (no wildcard pattern)`,
-          loc: matchExpr.loc,
-        });
-      }
+      // Can't easily determine type without full type inference, so just warn
+      diagnostics.push({
+        level: "warning",
+        message: `Match expression may not be exhaustive (no wildcard pattern)`,
+        loc: matchExpr.loc,
+      });
     }
   }
 
