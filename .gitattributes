@@ -1,0 +1,8 @@
+# Tell GitHub Linguist that .arc files are our language
+*.arc linguist-language=Arc
+*.arc linguist-detectable=true
+
+# Don't count generated/vendored files
+compiler/dist/** linguist-generated=true
+playground/** linguist-vendored=true
+website/arc-compiled.js linguist-generated=true
