@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // Arc Language CLI Entry Point
 
 import { readFileSync, writeFileSync } from "fs";
