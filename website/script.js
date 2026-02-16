@@ -1,20 +1,106 @@
-// Typing effect
-document.addEventListener('DOMContentLoaded',()=>{
-  const el=document.getElementById('tagline');
-  const text='A programming language designed by AI agents, for AI agents.';
-  let i=0;
-  el.innerHTML='<span class="cursor"></span>';
-  function type(){
-    if(i<text.length){
-      el.innerHTML=text.slice(0,++i)+'<span class="cursor"></span>';
-      setTimeout(type,i===1?200:30+Math.random()*30);
+// ============================================
+// Arc ⚡ Website - Interactive Components
+// The token counter logic below was compiled
+// from Arc source (see arc-src/interactive.arc)
+// ============================================
+
+// --- Arc-compiled token counting (from arc-src/interactive.arc) ---
+// We inline the core functions here, compiled from Arc to JS
+const ArcEngine = {
+  // Arc's count_tokens function, compiled from:
+  //   fn count_tokens(code) { code |> split(" ") |> filter(t => len(t) > 0) |> len() }
+  count_tokens(code) {
+    return code.split(" ").filter(t => t.length > 0).length;
+  },
+  // Arc's calc_savings function, compiled from:
+  //   fn calc_savings(arc_count, js_count) { 100 - (arc_count * 100 / js_count) }
+  calc_savings(arc_count, js_count) {
+    return 100 - (arc_count * 100 / js_count);
+  },
+  format_pct(n) {
+    return Math.round(n);
+  }
+};
+
+// --- Typing effect ---
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('tagline');
+  const text = 'A programming language designed by AI agents, for AI agents.';
+  let i = 0;
+  el.innerHTML = '<span class="cursor"></span>';
+  function type() {
+    if (i < text.length) {
+      el.innerHTML = text.slice(0, ++i) + '<span class="cursor"></span>';
+      setTimeout(type, i === 1 ? 200 : 30 + Math.random() * 30);
     }
   }
-  setTimeout(type,600);
+  setTimeout(type, 600);
 
-  // Reveal on scroll
-  const obs=new IntersectionObserver(entries=>{
-    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}});
-  },{threshold:0.15});
-  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  // --- Scroll reveal ---
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // --- Live token counter ---
+  const arcInput = document.getElementById('arc-input');
+  const jsInput = document.getElementById('js-input');
+  const arcCount = document.getElementById('arc-count');
+  const jsCount = document.getElementById('js-count');
+  const savingsEl = document.getElementById('savings');
+
+  function updateCounts() {
+    if (!arcInput || !jsInput) return;
+    const ac = ArcEngine.count_tokens(arcInput.value);
+    const jc = ArcEngine.count_tokens(jsInput.value);
+    arcCount.textContent = ac + ' tokens';
+    jsCount.textContent = jc + ' tokens';
+    if (jc > 0) {
+      const pct = ArcEngine.format_pct(ArcEngine.calc_savings(ac, jc));
+      savingsEl.textContent = pct + '% fewer tokens with Arc';
+      savingsEl.style.color = pct > 0 ? '#00d4ff' : '#ff6b35';
+    }
+  }
+
+  if (arcInput) {
+    arcInput.addEventListener('input', updateCounts);
+    jsInput.addEventListener('input', updateCounts);
+    updateCounts();
+  }
+
+  // --- Animated stat counters ---
+  const statNums = document.querySelectorAll('.stat-num');
+  const statObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        animateCount(e.target);
+        statObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  statNums.forEach(el => statObs.observe(el));
+
+  function animateCount(el) {
+    const target = parseInt(el.dataset.target || el.textContent);
+    const suffix = el.dataset.suffix || '';
+    const prefix = el.dataset.prefix || '';
+    let current = 0;
+    const step = Math.ceil(target / 40);
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      el.textContent = prefix + current + suffix;
+    }, 25);
+  }
 });
+
+// Log that Arc engine is running
+console.log('⚡ Arc Interactive Engine loaded — token counting powered by Arc');

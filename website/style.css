@@ -70,6 +70,19 @@ section h2 span{color:var(--blue)}
 .stat-num{font-size:2.5rem;font-weight:800;color:var(--blue)}
 .stat-label{color:var(--gray);font-size:.9rem;margin-top:4px}
 
+/* LIVE TOKEN COUNTER */
+.token-counter{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:700px){.token-counter{grid-template-columns:1fr}}
+.counter-col{background:var(--bg2);border:1px solid #222;border-radius:12px;overflow:hidden}
+.counter-col .label{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--bg3);font-size:.85rem;font-weight:600;border-bottom:1px solid #222}
+.counter-col .label .tokens{color:var(--orange);font-weight:400;font-size:.8rem}
+.counter-col textarea{width:100%;min-height:180px;padding:20px;background:transparent;color:var(--white);border:none;outline:none;font-family:var(--mono);font-size:.85rem;line-height:1.7;resize:vertical}
+.subtitle{text-align:center;color:var(--gray);font-size:1rem;margin-top:-40px;margin-bottom:40px}
+.arc-badge{color:var(--blue);font-style:normal;font-weight:600;background:#0a1a2e;padding:2px 10px;border-radius:20px;font-size:.8rem;border:1px solid #00d4ff33}
+.savings-display{text-align:center;font-size:1.3rem;font-weight:700;color:var(--blue);margin-top:24px;min-height:2em}
+.arc-badge-footer{color:var(--gray);font-size:.8rem;margin-top:8px}
+.arc-badge-footer a{color:var(--blue)}
+
 /* GETTING STARTED */
 .getting-started pre{background:var(--bg2);border:1px solid #222;border-radius:12px;padding:24px;font-family:var(--mono);font-size:.9rem;line-height:1.8;overflow-x:auto;max-width:600px;margin:0 auto}
 
