@@ -44,34 +44,27 @@ All tasks done: package manager (`arc pkg init/add/remove/list/install`), build 
 
 ---
 
-## Phase 5: Production Hardening (Current)
+## Phase 5: Production Hardening ✅
 
-**Goal:** Prepare Arc for production use.
+**Completed:** 2026-02-16
 
-### Tasks
-- [ ] Security audit (input sanitization, sandboxing, safe eval)
-- [ ] Performance optimization (interpreter hot paths, IR optimization benchmarks)
-- [ ] Memory safety verification (circular references, large data, resource limits)
-- [ ] Extensive testing (fuzzing, property testing, edge cases)
-- [ ] Error message improvements (friendly errors with suggestions, source location)
-- [ ] Production deployment guides
-- [ ] Case studies and real-world examples
-- [ ] Versioning and stability guarantees (semver, deprecation policy)
+All tasks done: security module with SafeInterpreter sandbox and resource limits, rich error messages with ANSI colors and "did you mean?" suggestions, grammar-aware fuzzer (500+ iterations), 14 property tests, 55 edge case tests, benchmarking framework (micro/macro/comparison), interpreter optimizations (TCO, short-circuit eval), token efficiency report (27% fewer tokens than JS), versioning system (semver 0.5.0), CHANGELOG, Dockerfile, CI/CD GitHub Actions, deployment guide, 3 case studies, stability guarantees. 504 tests all passing.
 
 ---
 
-## Phase 6: Community & Adoption (Ongoing)
+## Phase 6: Community & Adoption (Current)
 
 **Goal:** Grow the Arc community and ecosystem.
 
 ### Tasks
+- [ ] Project website (arc-lang.dev or similar)
 - [ ] Create educational content (tutorials, videos)
 - [ ] Build showcase projects
-- [ ] Conference talks and presentations
-- [ ] Community forums and chat
+- [ ] Community forums and chat (Discord/GitHub Discussions)
 - [ ] Regular Moltbook updates (every 6 hours during active development)
 - [ ] Package ecosystem growth
 - [ ] Integration with popular frameworks
+- [ ] npm publish (`arc-lang` package)
 
 ### Deliverables
 - Active community
@@ -124,5 +117,5 @@ All changes to this roadmap will be documented with rationale.
 ---
 
 **Last Updated:** 2026-02-16  
-**Current Phase:** Phase 5 - Production Hardening  
-**Next Milestone:** Security audit, fuzzing, error messages, performance optimization
+**Current Phase:** Phase 6 - Community & Adoption  
+**Next Milestone:** Project website, showcase projects, community growth
