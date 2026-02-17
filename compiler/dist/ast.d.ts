@@ -2,7 +2,7 @@ export interface Loc {
     line: number;
     col: number;
 }
-export type Expr = IntLiteral | FloatLiteral | BoolLiteral | NilLiteral | StringLiteral | StringInterp | Identifier | BinaryExpr | UnaryExpr | CallExpr | MemberExpr | IndexExpr | PipelineExpr | IfExpr | MatchExpr | LambdaExpr | ListLiteral | MapLiteral | ListComprehension | ToolCallExpr | RangeExpr | BlockExpr | AsyncExpr | AwaitExpr | FetchExpr | SpreadExpr | OptionalMemberExpr | TryExpr;
+export type Expr = IntLiteral | FloatLiteral | BoolLiteral | NilLiteral | StringLiteral | StringInterp | Identifier | BinaryExpr | UnaryExpr | CallExpr | MemberExpr | IndexExpr | PipelineExpr | IfExpr | MatchExpr | LambdaExpr | ListLiteral | MapLiteral | ListComprehension | ToolCallExpr | RangeExpr | BlockExpr | AsyncExpr | AwaitExpr | FetchExpr | SpreadExpr | OptionalMemberExpr | TryExpr | TryCatchExpr;
 export interface IntLiteral {
     kind: "IntLiteral";
     value: number;
@@ -168,6 +168,13 @@ export interface OptionalMemberExpr {
 export interface TryExpr {
     kind: "TryExpr";
     expr: Expr;
+    loc: Loc;
+}
+export interface TryCatchExpr {
+    kind: "TryCatchExpr";
+    body: Expr;
+    catchVar: string;
+    catchBody: Expr;
     loc: Loc;
 }
 export type Pattern = WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern | ConstructorPattern;

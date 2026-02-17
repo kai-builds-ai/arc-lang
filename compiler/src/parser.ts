@@ -66,7 +66,6 @@ export class Parser {
       case TokenType.Use: return this.parseUse();
       case TokenType.Type: return this.parseType();
       case TokenType.Ret: return this.parseRet();
-      case TokenType.Try: return this.parseTryCatch();
       default: {
         const exprLoc = this.loc();
         const expr = this.parseExpr();
@@ -688,6 +687,20 @@ export class Parser {
       this.advance();
       const body = this.parseBlock();
       return { kind: "AsyncExpr", body, loc } as AST.AsyncExpr;
+    }
+
+    // Try/catch expression: try { body } catch e { handler }
+    if (t.type === TokenType.Try) {
+      this.advance();
+      const body = this.parseBlock();
+      if (this.at(TokenType.Catch)) {
+        this.expect(TokenType.Catch);
+        const catchVar = this.expect(TokenType.Ident).value;
+        const catchBody = this.parseBlock();
+        return { kind: "TryCatchExpr", body, catchVar, catchBody, loc } as AST.TryCatchExpr;
+      }
+      // Plain try expression (wraps in Result)
+      return { kind: "TryExpr", expr: body, loc } as AST.TryExpr;
     }
 
     // Await expression: await expr

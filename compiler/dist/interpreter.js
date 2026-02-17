@@ -2641,6 +2641,23 @@ function evalExpr(expr, env) {
             // Not a Result type — just return the value
             return val;
         }
+        case "TryCatchExpr": {
+            try {
+                return evalExpr(expr.body, env);
+            }
+            catch (e) {
+                if (e instanceof ReturnSignal)
+                    throw e;
+                if (e instanceof BreakSignal)
+                    throw e;
+                if (e instanceof ContinueSignal)
+                    throw e;
+                const catchEnv = new Env(env);
+                const errMsg = e instanceof Error ? e.message : String(e);
+                catchEnv.set(expr.catchVar, errMsg);
+                return evalExpr(expr.catchBody, catchEnv);
+            }
+        }
         case "IndexExpr": {
             const obj = evalExpr(expr.object, env);
             const idx = evalExpr(expr.index, env);

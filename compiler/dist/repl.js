@@ -98,7 +98,7 @@ function main() {
         output: process.stdout,
         prompt: "arc> ",
     });
-    console.log(`${CYAN}Arc REPL v0.1.0${RESET} — Type ${YELLOW}:help${RESET} for commands`);
+    console.log(`${CYAN}Arc REPL v0.6.3${RESET} — Type ${YELLOW}:help${RESET} for commands, ${YELLOW}:builtins${RESET} for functions`);
     rl.prompt();
     let buffer = "";
     let braceDepth = 0;
