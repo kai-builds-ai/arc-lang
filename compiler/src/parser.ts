@@ -689,6 +689,25 @@ export class Parser {
       return { kind: "AsyncExpr", body, loc } as AST.AsyncExpr;
     }
 
+    // Anonymous function expression: fn(params) { body } or fn(params) => expr
+    if (t.type === TokenType.Fn) {
+      this.advance();
+      this.expect(TokenType.LParen);
+      const params: string[] = [];
+      while (!this.at(TokenType.RParen)) {
+        params.push(this.expect(TokenType.Ident).value);
+        if (this.at(TokenType.Comma)) this.advance();
+      }
+      this.expect(TokenType.RParen);
+      if (this.at(TokenType.FatArrow)) {
+        this.advance();
+        const body = this.parseExpr();
+        return { kind: "LambdaExpr", params, body, loc } as AST.LambdaExpr;
+      }
+      const body = this.parseBlock();
+      return { kind: "LambdaExpr", params, body, loc } as AST.LambdaExpr;
+    }
+
     // Try/catch expression: try { body } catch e { handler }
     if (t.type === TokenType.Try) {
       this.advance();

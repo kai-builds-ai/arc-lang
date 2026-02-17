@@ -343,6 +343,24 @@ export function lint(source, options) {
                 }
                 break;
             }
+            case "WhileStmt":
+                analyzeExpr(stmt.condition, scope);
+                analyzeExpr(stmt.body, scope);
+                if (stmt.body.kind === "BlockExpr" && stmt.body.stmts.length === 0) {
+                    warn("empty-block", "While loop has an empty body", stmt.loc);
+                }
+                break;
+            case "BreakStmt":
+            case "ContinueStmt":
+                break;
+            case "TryCatchStmt":
+                analyzeExpr(stmt.body, scope);
+                analyzeExpr(stmt.catchBody, scope);
+                break;
+            case "RetStmt":
+                if (stmt.value)
+                    analyzeExpr(stmt.value, scope);
+                break;
             case "DoStmt":
                 analyzeExpr(stmt.body, scope);
                 analyzeExpr(stmt.condition, scope);

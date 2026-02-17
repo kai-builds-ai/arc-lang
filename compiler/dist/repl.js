@@ -90,6 +90,9 @@ function execute(source) {
     }
     catch (e) {
         console.log(`${RED}Error: ${e.message}${RESET}`);
+        if (e.suggestion) {
+            console.log(`${YELLOW}hint${RESET}: ${e.suggestion}`);
+        }
     }
 }
 function main() {

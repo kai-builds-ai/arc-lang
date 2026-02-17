@@ -98,6 +98,9 @@ function execute(source: string): void {
     }
   } catch (e: any) {
     console.log(`${RED}Error: ${e.message}${RESET}`);
+    if (e.suggestion) {
+      console.log(`${YELLOW}hint${RESET}: ${e.suggestion}`);
+    }
   }
 }
 

@@ -126,7 +126,7 @@ function syncFetch(method, url, body) {
     const bodyJson = bodyStr != null ? JSON.stringify(bodyStr) : "null";
     // Pass config via env to avoid shell escaping issues
     const fetchConfig = JSON.stringify({ method, url, body: bodyStr, headers: customHeaders });
-    const script = `const c=JSON.parse(process.env.ARC_FETCH);(async()=>{const o={method:c.method,headers:{...c.headers}};if(c.body!==null){o.body=c.body;if(!o.headers["Content-Type"])o.headers["Content-Type"]="application/json";}try{const r=await fetch(c.url,o);const t=await r.text();let d;try{d=JSON.parse(t)}catch{d=t}console.log(JSON.stringify({ok:true,status:r.status,data:d}))}catch(e){console.log(JSON.stringify({ok:false,status:0,data:e.message}))}})()`;
+    const script = `const c=JSON.parse(process.env.ARC_FETCH);(async()=>{const o={method:c.method,headers:{...c.headers}};if(c.body!==null){o.body=c.body;if(!o.headers["Content-Type"])o.headers["Content-Type"]="application/json";}try{const r=await fetch(c.url,o);const t=await r.text();let d;try{d=JSON.parse(t)}catch{d=t}console.log(JSON.stringify({ok:r.status>=200&&r.status<300,status:r.status,data:d}))}catch(e){console.log(JSON.stringify({ok:false,status:0,data:e.message}))}})()`;
     try {
         const raw = execSync(`node -e "${script.replace(/"/g, '\\"')}"`, {
             timeout: 30000,

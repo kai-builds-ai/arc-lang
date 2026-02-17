@@ -140,7 +140,7 @@ export function format(source: string, options?: Partial<FormatOptions>): string
           } else {
             elInline = formatBlockExpr(expr.else_, depth);
           }
-          const single = `if ${cond} ${thenInline} el ${elInline}`;
+          const single = `if ${cond} ${thenInline} else ${elInline}`;
           if (single.length + depth * opts.indentSize <= opts.maxLineLength) {
             return single;
           }
@@ -149,12 +149,12 @@ export function format(source: string, options?: Partial<FormatOptions>): string
             ? formatBlockMultiline(expr.then, depth)
             : thenInline;
           if (expr.else_.kind === "IfExpr") {
-            return `if ${cond} ${thenMulti} el ${formatExpr(expr.else_, depth)}`;
+            return `if ${cond} ${thenMulti} else ${formatExpr(expr.else_, depth)}`;
           }
           const elMulti = expr.else_.kind === "BlockExpr"
             ? formatBlockMultiline(expr.else_ as AST.BlockExpr, depth)
             : elInline;
-          return `if ${cond} ${thenMulti} el ${elMulti}`;
+          return `if ${cond} ${thenMulti} else ${elMulti}`;
         }
         const single = `if ${cond} ${thenInline}`;
         if (single.length + depth * opts.indentSize <= opts.maxLineLength) {
@@ -225,6 +225,8 @@ export function format(source: string, options?: Partial<FormatOptions>): string
       case "SpreadExpr": return `...${formatExpr(expr.expr, depth)}`;
       case "OptionalMemberExpr": return `${formatExpr(expr.object, depth)}?.${expr.property}`;
       case "TryExpr": return `${formatExpr(expr.expr, depth)}?`;
+      case "TryCatchExpr":
+        return `try ${formatBlockExpr(expr.body, depth)} catch ${expr.catchVar} ${formatBlockExpr(expr.catchBody, depth)}`;
       default: return `/* unknown */`;
     }
   }
@@ -329,6 +331,16 @@ export function format(source: string, options?: Partial<FormatOptions>): string
         const pub = stmt.pub ? "pub " : "";
         return `${pub}type ${stmt.name} = ${formatTypeExpr(stmt.def)}`;
       }
+      case "RetStmt":
+        return stmt.value ? `return ${formatExpr(stmt.value, depth)}` : "return";
+      case "WhileStmt":
+        return `while ${formatExpr(stmt.condition, depth)} ${formatBlockExpr(stmt.body, depth)}`;
+      case "BreakStmt":
+        return "break";
+      case "ContinueStmt":
+        return "continue";
+      case "TryCatchStmt":
+        return `try ${formatBlockExpr(stmt.body, depth)} catch ${stmt.catchVar} ${formatBlockExpr(stmt.catchBody, depth)}`;
       case "AssignStmt":
         return `${stmt.target} = ${formatExpr(stmt.value, depth)}`;
       case "MemberAssignStmt":
