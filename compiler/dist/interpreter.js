@@ -77,6 +77,41 @@ class Env {
         return this.vars.has(name) || (this.parent?.has(name) ?? false);
     }
 }
+function arcDeepEqual(a, b) {
+    if (a === b)
+        return true;
+    if (a === null || b === null)
+        return false;
+    if (typeof a !== typeof b)
+        return false;
+    if (typeof a !== "object")
+        return a === b;
+    // Arrays (lists)
+    if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length)
+            return false;
+        for (let i = 0; i < a.length; i++) {
+            if (!arcDeepEqual(a[i], b[i]))
+                return false;
+        }
+        return true;
+    }
+    if (Array.isArray(a) || Array.isArray(b))
+        return false;
+    // Maps
+    if (a && typeof a === "object" && "__map" in a && b && typeof b === "object" && "__map" in b) {
+        const ma = a.entries;
+        const mb = b.entries;
+        if (ma.size !== mb.size)
+            return false;
+        for (const [k, v] of ma) {
+            if (!mb.has(k) || !arcDeepEqual(v, mb.get(k)))
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
 function isTruthy(v) {
     if (v === null || v === false || v === 0 || v === "")
         return false;
@@ -519,6 +554,25 @@ function makePrelude(env) {
                 errMap.set("error", e.message ?? toStr(e));
                 return { __map: true, __result: true, entries: errMap };
             }
+        },
+        error_throw: (code, message) => {
+            throw new Error(`[${toStr(code)}] ${toStr(message)}`);
+        },
+        error_retry: (fn, times) => {
+            const n = typeof times === "number" ? times : 1;
+            let lastErr = null;
+            for (let i = 0; i < n; i++) {
+                const result = typeof fn === "function" ? fn() : callFn(fn, []);
+                if (result && typeof result === "object" && "__map" in result) {
+                    const entries = result.entries;
+                    if (entries.has("kind") && entries.has("message")) {
+                        lastErr = result;
+                        continue;
+                    }
+                }
+                return result;
+            }
+            return lastErr;
         },
         Ok: (v) => {
             const m = new Map();
@@ -2509,8 +2563,8 @@ function evalExpr(expr, env) {
                         throw new ArcRuntimeError(`TypeError: cannot exponentiate non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     return Math.pow(left, right);
                 }
-                case "==": return left === right;
-                case "!=": return left !== right;
+                case "==": return arcDeepEqual(left, right);
+                case "!=": return !arcDeepEqual(left, right);
                 case "<": return left < right;
                 case ">": return left > right;
                 case "<=": return left <= right;
@@ -2607,6 +2661,11 @@ function evalExpr(expr, env) {
                 reverse: "reverse(list)", push: "push(list, item)", concat: "concat(a, b)",
                 forEach: "for item in list { ... }", charAt: "char_at(str, i)",
                 toString: "str(value)", match: "use regex; regex.find(str, pattern)",
+                size: "len(value)", count: "len(value)", pop: "slice(list, 0, len(list) - 1)",
+                append: "push(list, item)", extend: "concat(list_a, list_b)",
+                keys: "keys(map)", values: "values(map)",
+                upper: "upper(str)", lower: "lower(str)",
+                strip: "trim(str)", lstrip: "trim(str)", rstrip: "trim(str)",
             };
             const suggestion = methodBuiltins[prop]
                 ? `Arc uses free functions, not methods. Try: ${methodBuiltins[prop]}`
@@ -2622,8 +2681,19 @@ function evalExpr(expr, env) {
             if (obj && typeof obj === "object" && "__map" in obj) {
                 return obj.entries.get(expr.property) ?? null;
             }
-            throw new ArcRuntimeError(`Cannot access property '${expr.property}' on ${toStr(obj)}`, {
-                code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc,
+            const optProp = expr.property;
+            const optMethodBuiltins = {
+                length: "len(value)", size: "len(value)", count: "len(value)",
+                trim: "trim(str)", split: "split(str, sep)", join: "join(list, sep)",
+                includes: "contains(value, sub)", indexOf: "index_of(str, sub)",
+                push: "push(list, item)", pop: "slice(list, 0, len(list) - 1)",
+                reverse: "reverse(list)", sort: "sort(list)",
+            };
+            const optSuggestion = optMethodBuiltins[optProp]
+                ? `Arc uses free functions, not methods. Try: ${optMethodBuiltins[optProp]}`
+                : undefined;
+            throw new ArcRuntimeError(`Cannot access property '${optProp}' on ${toStr(obj)}`, {
+                code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc, suggestion: optSuggestion,
             });
         }
         case "TryExpr": {
@@ -2859,7 +2929,7 @@ function evalExpr(expr, env) {
 function matchPattern(pattern, value, env) {
     switch (pattern.kind) {
         case "WildcardPattern": return true;
-        case "LiteralPattern": return pattern.value === value;
+        case "LiteralPattern": return arcDeepEqual(pattern.value, value);
         case "BindingPattern":
             env.set(pattern.name, value);
             return true;

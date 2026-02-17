@@ -377,9 +377,16 @@ export function lint(source, options) {
                         scope.define(imp, { name: imp, loc: stmt.loc, mutable: false, used: false, mutated: false, kind: "import" });
                     }
                 }
-                else if (!stmt.wildcard) {
+                else if (stmt.wildcard) {
+                    // `use foo::*` — wildcard imports are always considered used
+                }
+                else {
+                    // Bare `use module` imports (e.g. `use math`, `use strings`) inject their
+                    // exported functions directly into scope at runtime. The module name itself
+                    // is never referenced as an identifier, so we mark it as used to avoid
+                    // false-positive "unused import" warnings for stdlib modules.
                     const moduleName = stmt.path[stmt.path.length - 1];
-                    scope.define(moduleName, { name: moduleName, loc: stmt.loc, mutable: false, used: false, mutated: false, kind: "import" });
+                    scope.define(moduleName, { name: moduleName, loc: stmt.loc, mutable: false, used: true, mutated: false, kind: "import" });
                 }
                 break;
             }

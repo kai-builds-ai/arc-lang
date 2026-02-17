@@ -4,7 +4,18 @@
 pub fn parse_csv(text) => __native("csv.parse", text)
 
 pub fn to_csv(rows) {
-  join(map(rows, row => join(map(row, cell => _escape_csv(str(cell))), ",")), "\n")
+  if len(rows) == 0 { "" }
+  el {
+    let first = head(rows)
+    if type_of(first) == "map" {
+      let headers = keys(first)
+      let header_line = join(map(headers, h => _escape_csv(str(h))), ",")
+      let data_lines = map(rows, row => join(map(headers, h => _escape_csv(str(row[h]))), ","))
+      header_line ++ "\n" ++ join(data_lines, "\n")
+    } el {
+      join(map(rows, row => join(map(row, cell => _escape_csv(str(cell))), ",")), "\n")
+    }
+  }
 }
 
 pub fn parse_csv_headers(text) {

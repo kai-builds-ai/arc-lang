@@ -194,6 +194,30 @@ export function lex(source: string): Token[] {
       continue;
     }
 
+    // Single-quoted strings (no interpolation, raw-ish)
+    if (ch === "'") {
+      advance(); // skip opening quote
+      let str = "";
+      while (i < source.length && peek() !== "'") {
+        if (peek() === "\\") {
+          advance();
+          if (i >= source.length) break;
+          const esc = advance();
+          if (esc === "'") str += "'";
+          else if (esc === "\\") str += "\\";
+          else if (esc === "n") str += "\n";
+          else if (esc === "t") str += "\t";
+          else { str += "\\" + esc; }
+          continue;
+        }
+        if (peek() === "\n") { str += advance(); continue; }
+        str += advance();
+      }
+      if (peek() === "'") advance(); // skip closing quote
+      tokens.push(tok(TokenType.String, str, sl, sc));
+      continue;
+    }
+
     // Numbers
     if (ch >= "0" && ch <= "9") {
       let num = "";

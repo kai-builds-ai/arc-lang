@@ -15,12 +15,19 @@ pub fn find_all(pattern, text) {
 
 # Returns true if `pattern` matches anywhere in `text`, false otherwise
 pub fn test(pattern, text) {
-  let result = find(pattern, text)
-  result != nil
+  let re = regex_new(pattern)
+  regex_test(re, text)
 }
 
-# Replaces the first occurrence of `pattern` with `replacement` in `text`
+# Replaces all occurrences of `pattern` with `replacement` in `text`
+# (For first-occurrence-only replacement, use replace_first)
 pub fn replace(pattern, replacement, text) {
+  let re = regex_new(pattern)
+  regex_replace(re, replacement, text)
+}
+
+# Replaces only the first occurrence of `pattern` with `replacement` in `text`
+pub fn replace_first(pattern, replacement, text) {
   let re = regex_new(pattern)
   regex_replace(re, replacement, text)
 }

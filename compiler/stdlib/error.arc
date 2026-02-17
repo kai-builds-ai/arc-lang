@@ -34,3 +34,9 @@ pub fn try_catch_finally(f, handler, cleanup) {
   cleanup()
   handled
 }
+
+# Throw an error (raises a runtime exception)
+pub fn throw(code, message) => error_throw(code, message)
+
+# Retry a function up to n times, returning the first success or last error
+pub fn retry(f, times) => error_retry(f, times)

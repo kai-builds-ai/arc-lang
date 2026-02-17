@@ -23,6 +23,7 @@ export declare class Parser {
     private parseFor;
     private parseWhile;
     private parseTryCatch;
+    private parseTryStmtOrExpr;
     private parseDo;
     private parseUse;
     private parseType;

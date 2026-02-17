@@ -27,11 +27,12 @@ function extractComments(source: string): Comment[] {
   let line = 1, col = 1;
   let i = 0;
   while (i < source.length) {
-    if (source[i] === '"') {
+    if (source[i] === '"' || source[i] === "'") {
+      const quote = source[i];
       i++; col++;
-      while (i < source.length && source[i] !== '"') {
+      while (i < source.length && source[i] !== quote) {
         if (source[i] === '\\') { i++; col++; }
-        if (source[i] === '\n') { line++; col = 1; } else { col++; }
+        if (i < source.length && source[i] === '\n') { line++; col = 1; } else { col++; }
         i++;
       }
       if (i < source.length) { i++; col++; }
@@ -93,7 +94,13 @@ export function format(source: string, options?: Partial<FormatOptions>): string
       case "FloatLiteral": return String(expr.value);
       case "BoolLiteral": return expr.value ? "true" : "false";
       case "NilLiteral": return "nil";
-      case "StringLiteral": return `"${escapeString(expr.value)}"`;
+      case "StringLiteral": {
+        // Use single quotes if the string contains double quotes (e.g. JSON strings)
+        if (expr.value.includes('"')) {
+          return `'${escapeSingleQuoteString(expr.value)}'`;
+        }
+        return `"${escapeString(expr.value)}"`;
+      }
       case "StringInterp": {
         let s = '"';
         for (const part of expr.parts) {
@@ -396,6 +403,14 @@ function escapeString(s: string): string {
   return s
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\t/g, '\\t');
+}
+
+function escapeSingleQuoteString(s: string): string {
+  return s
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
     .replace(/\n/g, '\\n')
     .replace(/\t/g, '\\t');
 }

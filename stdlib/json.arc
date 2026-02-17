@@ -60,7 +60,7 @@ fn _parse_value(s) {
 }
 
 fn _mk(v, r) {
-  let result = {}
+  let mut result = {}
   result["value"] = v
   result["rest"] = r
   result

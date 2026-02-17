@@ -67,6 +67,7 @@ export class Parser {
             case TokenType.Use: return this.parseUse();
             case TokenType.Type: return this.parseType();
             case TokenType.Ret: return this.parseRet();
+            case TokenType.Try: return this.parseTryStmtOrExpr();
             default: {
                 const exprLoc = this.loc();
                 const expr = this.parseExpr();
@@ -267,6 +268,22 @@ export class Parser {
         const catchVar = this.expect(TokenType.Ident).value;
         const catchBody = this.parseBlock();
         return { kind: "TryCatchStmt", body, catchVar, catchBody, loc };
+    }
+    parseTryStmtOrExpr() {
+        // Try to parse as TryCatchStmt at statement level
+        // try { ... } catch var { ... }
+        const loc = this.loc();
+        this.expect(TokenType.Try);
+        const body = this.parseBlock();
+        if (this.at(TokenType.Catch)) {
+            this.advance();
+            const catchVar = this.expect(TokenType.Ident).value;
+            const catchBody = this.parseBlock();
+            return { kind: "TryCatchStmt", body, catchVar, catchBody, loc };
+        }
+        // No catch — it's a try expression as statement
+        const expr = { kind: "TryExpr", expr: body, loc };
+        return { kind: "ExprStmt", expr, loc };
     }
     parseDo() {
         const loc = this.loc();

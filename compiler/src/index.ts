@@ -23,7 +23,8 @@ import { pkgInit, pkgAdd, pkgRemove, pkgList, pkgInstall } from "./package-manag
 const args = process.argv.slice(2);
 if (args.includes("--no-pretty-errors")) setPrettyErrors(false);
 const command = args[0];
-const file = args[1];
+const positionalArgs = args.slice(1).filter(a => !a.startsWith("--"));
+const file = positionalArgs[0];
 const target = args.find(a => a.startsWith("--target="))?.split("=")[1] ?? "js";
 
 if (command === "version" || args.includes("--version") || args.includes("-v")) {
@@ -209,8 +210,7 @@ if (command === "version" || args.includes("--version") || args.includes("-v")) 
   console.log("  --version, -v           Print version");
   console.log("  --help, -h              Show this help");
   console.log("  --no-pretty-errors      Disable pretty error formatting");
-  if (!command || (command !== "help" && command !== "--help" && command !== "-h")) process.exit(1);
-  else process.exit(0);
+  process.exit(0);
 } else {
 
 const filePath = resolve(file);

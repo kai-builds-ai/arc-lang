@@ -18,6 +18,14 @@ pub fn exists(path) {
   content != nil
 }
 
+pub fn read_file(path) {
+  read(path)
+}
+
+pub fn write_file(path, content) {
+  write(path, content)
+}
+
 pub fn append(path, data) {
   let existing = read(path)
   if existing == nil {
