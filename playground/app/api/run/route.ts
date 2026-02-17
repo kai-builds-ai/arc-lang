@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       // Custom use handler that resolves stdlib from the npm package directly
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const useHandler = (stmt: any, env: any) => {
-        return handleUse(stmt, env, join(stdlibDir, "__playground__.arc"));
+        return handleUse(stmt, env, join(stdlibDir, "..", "__playground__.arc"));
       };
 
       // Capture console.log output
