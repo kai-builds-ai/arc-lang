@@ -242,6 +242,9 @@ export function lint(source: string, options?: Partial<LintOptions>): LintDiagno
       case "FetchExpr":
         for (const t of expr.targets) analyzeExpr(t, scope);
         break;
+      case "GroupExpr":
+        analyzeExpr((expr as any).expr, scope);
+        break;
     }
   }
 

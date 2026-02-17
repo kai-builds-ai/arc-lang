@@ -98,7 +98,10 @@ export function format(source: string, options?: Partial<FormatOptions>): string
   function formatExpr(expr: AST.Expr, depth: number): string {
     switch (expr.kind) {
       case "IntLiteral": return String(expr.value);
-      case "FloatLiteral": return String(expr.value);
+      case "FloatLiteral": {
+        const s = String(expr.value);
+        return s.includes('.') ? s : s + '.0';
+      }
       case "BoolLiteral": return expr.value ? "true" : "false";
       case "NilLiteral": return "nil";
       case "StringLiteral": {
