@@ -2,6 +2,28 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.0] — 2026-02-16
+
+### Added — 6 New Stdlib Modules (27 total)
+
+**Expanded math module (25 functions, up from 7):**
+- Trig: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`
+- Log/Exp: `log`, `log2`, `log10`, `exp`
+- Roots: `cbrt`, `hypot`
+- Combinatorics: `factorial`, `gcd`, `lcm`
+- Utility: `sign`, `round`, `sum`, `product`, `degrees`, `radians`
+- Constants: `TAU`
+
+**New modules:**
+- **`yaml`** — Parse and stringify YAML (nested maps, lists, block scalars)
+- **`toml`** — Parse and stringify TOML (sections, array of tables, inline tables)
+- **`html`** — Parse HTML, CSS selectors (tag, .class, #id), text extraction, rendering
+- **`path`** — Path manipulation (join, dirname, basename, extname, resolve, normalize)
+- **`env`** — Environment variables (get, set, remove, has, list, require)
+- **`log`** — Structured logging with levels, ANSI colors, child loggers, JSON output
+
+All parsers implemented in pure JS (zero npm dependencies).
+
 ## [0.5.9] — 2026-02-16
 
 ### Added — AI-Native Stdlib Modules

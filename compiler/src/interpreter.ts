@@ -4,6 +4,7 @@ import * as AST from "./ast.js";
 import * as nodeCrypto from "crypto";
 import * as nodeOs from "os";
 import * as nodeFs from "fs";
+import * as nodePath from "path";
 import { execSync } from "child_process";
 import { ArcRuntimeError, ErrorCode, findClosestMatch } from "./errors.js";
 
@@ -665,6 +666,30 @@ function makePrelude(env: Env): void {
     // --- os natives ---
     __native: (name, ...args) => {
       const cmd = name as string;
+      // Convert raw JS Maps/arrays to Arc MapValue/Value[] recursively
+      function toArcValue(v: any): Value {
+        if (v === null || v === undefined) return null;
+        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+        if (Array.isArray(v)) return v.map(toArcValue);
+        if (v instanceof Map) {
+          const entries = new Map<string, Value>();
+          for (const [k, val] of v) entries.set(k, toArcValue(val));
+          return { __map: true, entries } as MapValue;
+        }
+        return v;
+      }
+      // Convert Arc MapValue back to raw Maps for stringifying
+      function fromArcValue(v: Value): any {
+        if (v === null || v === undefined) return null;
+        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+        if (Array.isArray(v)) return v.map(fromArcValue);
+        if (v && typeof v === "object" && "__map" in v) {
+          const m = new Map<string, any>();
+          for (const [k, val] of (v as MapValue).entries) m.set(k, fromArcValue(val));
+          return m;
+        }
+        return v;
+      }
       switch (cmd) {
         case "os.cwd": return process.cwd();
         case "os.env": return process.env[args[0] as string] ?? null;
@@ -869,6 +894,555 @@ function makePrelude(env: Env): void {
           nodeFs.writeFileSync(s.path, JSON.stringify(s.data, null, 2), "utf-8");
           return true;
         }
+        // --- math natives ---
+        case "math.sin": return Math.sin(args[0] as number);
+        case "math.cos": return Math.cos(args[0] as number);
+        case "math.tan": return Math.tan(args[0] as number);
+        case "math.asin": return Math.asin(args[0] as number);
+        case "math.acos": return Math.acos(args[0] as number);
+        case "math.atan": return Math.atan(args[0] as number);
+        case "math.atan2": return Math.atan2(args[0] as number, args[1] as number);
+        case "math.log": return Math.log(args[0] as number);
+        case "math.log2": return Math.log2(args[0] as number);
+        case "math.log10": return Math.log10(args[0] as number);
+        case "math.exp": return Math.exp(args[0] as number);
+        case "math.hypot": return Math.hypot(args[0] as number, args[1] as number);
+        case "math.cbrt": return Math.cbrt(args[0] as number);
+
+        // --- html natives ---
+        case "html.parse": {
+          const src = args[0] as string;
+          function mkMap(entries: [string, Value][]): MapValue {
+            const m: MapValue = { __map: true, entries: new Map<string, Value>() };
+            for (const [k, v] of entries) m.entries.set(k, v);
+            return m;
+          }
+          function decodeEntities(s: string): string {
+            return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+          }
+          function parseHTML(html: string): Value[] {
+            const nodes: Value[] = [];
+            let i = 0;
+            while (i < html.length) {
+              if (html[i] === '<') {
+                if (html[i+1] === '/') { break; }
+                const tagMatch = html.slice(i).match(/^<([a-zA-Z][a-zA-Z0-9]*)/);
+                if (!tagMatch) { nodes.push(decodeEntities(html[i])); i++; continue; }
+                const tag = tagMatch[1].toLowerCase();
+                i += tagMatch[0].length;
+                const attrEntries: [string, Value][] = [];
+                while (i < html.length && html[i] !== '>' && !(html[i] === '/' && html[i+1] === '>')) {
+                  if (/\s/.test(html[i])) { i++; continue; }
+                  const attrNameMatch = html.slice(i).match(/^([a-zA-Z_][\w\-]*)/);
+                  if (!attrNameMatch) { i++; continue; }
+                  const attrName = attrNameMatch[1];
+                  i += attrName.length;
+                  while (i < html.length && /\s/.test(html[i])) i++;
+                  if (html[i] === '=') {
+                    i++;
+                    while (i < html.length && /\s/.test(html[i])) i++;
+                    let val = '';
+                    if (html[i] === '"' || html[i] === "'") {
+                      const q = html[i]; i++;
+                      const start = i;
+                      while (i < html.length && html[i] !== q) i++;
+                      val = decodeEntities(html.slice(start, i));
+                      i++;
+                    } else {
+                      const start = i;
+                      while (i < html.length && !/[\s>]/.test(html[i])) i++;
+                      val = decodeEntities(html.slice(start, i));
+                    }
+                    attrEntries.push([attrName, val]);
+                  } else {
+                    attrEntries.push([attrName, true]);
+                  }
+                }
+                const selfClosing = html[i] === '/';
+                if (selfClosing) i++;
+                i++;
+                const voidTags = new Set(['br','hr','img','input','meta','link','area','base','col','embed','source','track','wbr']);
+                let children: Value[] = [];
+                if (!selfClosing && !voidTags.has(tag)) {
+                  children = parseHTML(html.slice(i));
+                  const closeTag = `</${tag}>`;
+                  const closeIdx = html.toLowerCase().indexOf(closeTag, i);
+                  if (closeIdx !== -1) { i = closeIdx + closeTag.length; }
+                  else { i = html.length; }
+                }
+                nodes.push(mkMap([['tag', tag], ['attrs', mkMap(attrEntries)], ['children', children]]));
+              } else {
+                const start = i;
+                while (i < html.length && html[i] !== '<') i++;
+                const text = decodeEntities(html.slice(start, i));
+                if (text.trim()) nodes.push(text);
+              }
+            }
+            return nodes;
+          }
+          return parseHTML(src) as Value;
+        }
+        case "html.select": {
+          const root = args[0] as Value;
+          const selector = args[1] as string;
+          const results: Value[] = [];
+          let matchTag = '', matchClass = '', matchId = '';
+          if (selector.startsWith('#')) { matchId = selector.slice(1); }
+          else if (selector.startsWith('.')) { matchClass = selector.slice(1); }
+          else { matchTag = selector.toLowerCase(); }
+          function isMapValue(v: Value): v is MapValue { return v !== null && typeof v === 'object' && '__map' in v; }
+          function walkSelect(node: Value) {
+            if (!isMapValue(node)) return;
+            const tag = node.entries.get('tag') as string;
+            const attrs = node.entries.get('attrs') as MapValue | undefined;
+            const children = node.entries.get('children') as Value[];
+            let match = false;
+            if (matchTag && tag === matchTag) match = true;
+            if (matchId && attrs && attrs.entries.get('id') === matchId) match = true;
+            if (matchClass && attrs) {
+              const cls = (attrs.entries.get('class') as string) || '';
+              if (cls.split(/\s+/).includes(matchClass)) match = true;
+            }
+            if (match) results.push(node);
+            if (children) children.forEach(walkSelect);
+          }
+          if (Array.isArray(root)) { root.forEach(walkSelect); }
+          else { walkSelect(root); }
+          return results as Value;
+        }
+        case "html.text": {
+          const node = args[0] as Value;
+          function isMapVal(v: Value): v is MapValue { return v !== null && typeof v === 'object' && '__map' in v; }
+          function getText(n: Value): string {
+            if (typeof n === 'string') return n;
+            if (isMapVal(n)) {
+              const children = n.entries.get('children') as Value[];
+              return children ? children.map(getText).join('') : '';
+            }
+            if (Array.isArray(n)) return n.map(getText).join('');
+            return '';
+          }
+          return getText(node);
+        }
+        case "html.attr": {
+          const node = args[0] as Value;
+          const attrName = args[1] as string;
+          if (node !== null && typeof node === 'object' && '__map' in node) {
+            const mv = node as MapValue;
+            const attrs = mv.entries.get('attrs') as MapValue | undefined;
+            if (attrs) return attrs.entries.get(attrName) ?? null;
+          }
+          return null;
+        }
+        case "html.render": {
+          const node = args[0] as Value;
+          function isMapR(v: Value): v is MapValue { return v !== null && typeof v === 'object' && '__map' in v; }
+          function renderNode(n: Value): string {
+            if (typeof n === 'string') {
+              return n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+            if (isMapR(n)) {
+              const tag = n.entries.get('tag') as string;
+              const attrs = n.entries.get('attrs') as MapValue | undefined;
+              const children = n.entries.get('children') as Value[];
+              let attrStr = '';
+              if (attrs) {
+                attrs.entries.forEach((v, k) => {
+                  if (v === true) attrStr += ` ${k}`;
+                  else attrStr += ` ${k}="${String(v).replace(/"/g,'&quot;')}"`;
+                });
+              }
+              const voidTags = new Set(['br','hr','img','input','meta','link','area','base','col','embed','source','track','wbr']);
+              if (voidTags.has(tag)) return `<${tag}${attrStr} />`;
+              const inner = children ? children.map(renderNode).join('') : '';
+              return `<${tag}${attrStr}>${inner}</${tag}>`;
+            }
+            if (Array.isArray(n)) return n.map(renderNode).join('');
+            return '';
+          }
+          return renderNode(node);
+        }
+
+        // --- path natives ---
+        case "path.join": return nodePath.join(...(args as string[]));
+        case "path.join_list": return nodePath.join(...(args[0] as unknown as string[]));
+        case "path.dirname": return nodePath.dirname(args[0] as string);
+        case "path.basename": return nodePath.basename(args[0] as string);
+        case "path.extname": return nodePath.extname(args[0] as string);
+        case "path.resolve": return nodePath.resolve(args[0] as string);
+        case "path.normalize": return nodePath.normalize(args[0] as string);
+        case "path.is_absolute": return nodePath.isAbsolute(args[0] as string);
+        case "path.sep": return nodePath.sep;
+
+        // --- env natives ---
+        case "env.get": return process.env[args[0] as string] ?? null;
+        case "env.get_or": return process.env[args[0] as string] ?? args[1];
+        case "env.set": { process.env[args[0] as string] = String(args[1]); return null; }
+        case "env.remove": { delete process.env[args[0] as string]; return null; }
+        case "env.has": return (args[0] as string) in process.env;
+        case "env.list": {
+          const map = new Map<string, Value>();
+          for (const [k, v] of Object.entries(process.env)) {
+            if (v !== undefined) map.set(k, v);
+          }
+          return { __map: true, entries: map } as MapValue;
+        }
+        case "env.require": {
+          const key = args[0] as string;
+          const val = process.env[key];
+          if (val === undefined) throw new ArcRuntimeError(`Required environment variable '${key}' is not set`, { code: ErrorCode.UNDEFINED_VARIABLE });
+          return val;
+        }
+
+        // --- YAML/TOML helpers ---
+        // Convert raw JS values to Arc Values (Map → MapValue, Array → Value[], etc.)
+        // Defined once, used by yaml and toml natives.
+        case "_noop_define_toArcValue": { return null; }
+        // --- YAML natives ---
+        case "yaml.parse": {
+          const src = args[0] as string;
+          function yamlParseValue(s: string): any {
+            s = s.trim();
+            if (s === "" || s === "~" || s === "null") return null;
+            if (s === "true" || s === "True" || s === "TRUE") return true;
+            if (s === "false" || s === "False" || s === "FALSE") return false;
+            if (/^-?\d+$/.test(s)) return parseInt(s, 10);
+            if (/^-?\d+\.\d+$/.test(s)) return parseFloat(s);
+            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")))
+              return s.slice(1, -1);
+            return s;
+          }
+          function yamlParse(lines: string[], baseIndent: number): any {
+            if (lines.length === 0) return new Map<string, any>();
+            // find first non-empty line
+            let firstIdx = 0;
+            while (firstIdx < lines.length && lines[firstIdx].trim() === "") firstIdx++;
+            if (firstIdx >= lines.length) return new Map<string, any>();
+            const first = lines[firstIdx];
+            const trimmed = first.trimStart();
+            if (trimmed.startsWith("- ") || trimmed === "-") {
+              const result: any[] = [];
+              let i = firstIdx;
+              while (i < lines.length) {
+                const line = lines[i];
+                if (line.trim() === "") { i++; continue; }
+                const lt = line.trimStart();
+                if (!lt.startsWith("- ")) { i++; continue; }
+                const itemVal = lt.slice(2);
+                const lineIndent = line.length - line.trimStart().length;
+                const childIndent = lineIndent + 2;
+                const children: string[] = [];
+                let j = i + 1;
+                while (j < lines.length) {
+                  const cl = lines[j];
+                  if (cl.trim() === "") { children.push(cl); j++; continue; }
+                  const ci = cl.length - cl.trimStart().length;
+                  if (ci >= childIndent) { children.push(lines[j]); j++; }
+                  else break;
+                }
+                if (children.length > 0 && children.some(c => c.trim() !== "" && c.trimStart().match(/^[^:]+:\s/))) {
+                  if (itemVal.trim() !== "") {
+                    const allLines = [" ".repeat(childIndent) + itemVal, ...children];
+                    result.push(yamlParse(allLines, childIndent));
+                  } else {
+                    result.push(yamlParse(children, childIndent));
+                  }
+                } else if (itemVal.includes(": ")) {
+                  const allLines = [" ".repeat(childIndent) + itemVal, ...children];
+                  result.push(yamlParse(allLines, childIndent));
+                } else {
+                  result.push(yamlParseValue(itemVal));
+                }
+                i = j;
+              }
+              return result;
+            } else {
+              const result = new Map<string, any>();
+              let i = firstIdx;
+              while (i < lines.length) {
+                const line = lines[i];
+                if (line.trim() === "" || line.trim().startsWith("#")) { i++; continue; }
+                const indent = line.length - line.trimStart().length;
+                if (indent < baseIndent) break;
+                const match = line.trimStart().match(/^([^:]+?):\s*(.*)/);
+                if (!match) { i++; continue; }
+                const key = match[1].trim();
+                const valPart = match[2];
+                if (valPart === "|" || valPart === ">") {
+                  const fold = valPart === ">";
+                  const blockLines: string[] = [];
+                  let j = i + 1;
+                  while (j < lines.length) {
+                    const bl = lines[j];
+                    if (bl.trim() === "") { blockLines.push(""); j++; continue; }
+                    const bi = bl.length - bl.trimStart().length;
+                    if (bi > indent) { blockLines.push(bl.trimStart()); j++; }
+                    else break;
+                  }
+                  result.set(key, fold ? blockLines.join(" ").trim() : blockLines.join("\n"));
+                  i = j;
+                } else if (valPart === "") {
+                  const children: string[] = [];
+                  let j = i + 1;
+                  while (j < lines.length) {
+                    const cl = lines[j];
+                    if (cl.trim() === "") { children.push(cl); j++; continue; }
+                    const ci = cl.length - cl.trimStart().length;
+                    if (ci > indent) { children.push(lines[j]); j++; }
+                    else break;
+                  }
+                  const childIndent = children.length > 0 ?
+                    (children.find(c => c.trim() !== "")?.length ?? indent + 2) - (children.find(c => c.trim() !== "")?.trimStart().length ?? 0) :
+                    indent + 2;
+                  result.set(key, yamlParse(children, childIndent));
+                  i = j;
+                } else {
+                  result.set(key, yamlParseValue(valPart));
+                  i++;
+                }
+              }
+              return result;
+            }
+          }
+          const rawLines = src.split("\n").filter(l => !l.trimStart().startsWith("#"));
+          return toArcValue(yamlParse(rawLines, 0));
+        }
+        case "yaml.stringify": {
+          const val = fromArcValue(args[0]);
+          function yamlStringify(v: any, indent: number): string {
+            const prefix = "  ".repeat(indent);
+            if (v === null || v === undefined) return "null";
+            if (typeof v === "boolean") return v ? "true" : "false";
+            if (typeof v === "number") return String(v);
+            if (typeof v === "string") {
+              if (v.includes("\n") || v.includes(": ") || v.includes("#") || v === "") return JSON.stringify(v);
+              return v;
+            }
+            if (Array.isArray(v)) {
+              if (v.length === 0) return "[]";
+              return v.map(item => {
+                if (item instanceof Map || Array.isArray(item)) {
+                  const s = yamlStringify(item, indent + 1);
+                  return prefix + "-\n" + s;
+                }
+                return prefix + "- " + yamlStringify(item, 0);
+              }).join("\n");
+            }
+            if (v instanceof Map) {
+              if (v.size === 0) return "{}";
+              const entries: string[] = [];
+              for (const [k, val] of v) {
+                const vs = yamlStringify(val, indent + 1);
+                if (val instanceof Map || Array.isArray(val)) {
+                  entries.push(prefix + k + ":\n" + vs);
+                } else {
+                  entries.push(prefix + k + ": " + vs);
+                }
+              }
+              return entries.join("\n");
+            }
+            return String(v);
+          }
+          return yamlStringify(val, 0);
+        }
+
+        // --- TOML natives ---
+        case "toml.parse": {
+          const src = args[0] as string;
+          const root = new Map<string, any>();
+          let current = root;
+          const lines = src.split("\n");
+          function tomlParseValue(s: string): any {
+            s = s.trim();
+            if (s === "true") return true;
+            if (s === "false") return false;
+            if (s.startsWith('"') && s.endsWith('"')) return s.slice(1, -1).replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\\\/g, "\\");
+            if (s.startsWith("'") && s.endsWith("'")) return s.slice(1, -1);
+            if (/^-?\d+$/.test(s)) return parseInt(s, 10);
+            if (/^-?\d+\.\d+$/.test(s)) return parseFloat(s);
+            if (s.startsWith("[")) return tomlParseArray(s);
+            if (s.startsWith("{")) return tomlParseInlineTable(s);
+            return s;
+          }
+          function tomlParseArray(s: string): any[] {
+            s = s.trim().slice(1, -1).trim();
+            if (s === "") return [];
+            const items: any[] = [];
+            let depth = 0; let start = 0; let inStr = false; let strCh = "";
+            for (let i = 0; i < s.length; i++) {
+              if (inStr) { if (s[i] === strCh && s[i-1] !== "\\") inStr = false; continue; }
+              if (s[i] === '"' || s[i] === "'") { inStr = true; strCh = s[i]; continue; }
+              if (s[i] === "[" || s[i] === "{") depth++;
+              else if (s[i] === "]" || s[i] === "}") depth--;
+              else if (s[i] === "," && depth === 0) {
+                items.push(tomlParseValue(s.slice(start, i)));
+                start = i + 1;
+              }
+            }
+            if (s.slice(start).trim() !== "") items.push(tomlParseValue(s.slice(start)));
+            return items;
+          }
+          function tomlParseInlineTable(s: string): Map<string, any> {
+            s = s.trim().slice(1, -1).trim();
+            const m = new Map<string, any>();
+            if (s === "") return m;
+            let depth = 0; let start = 0; let inStr = false; let strCh = "";
+            const parts: string[] = [];
+            for (let i = 0; i < s.length; i++) {
+              if (inStr) { if (s[i] === strCh && s[i-1] !== "\\") inStr = false; continue; }
+              if (s[i] === '"' || s[i] === "'") { inStr = true; strCh = s[i]; continue; }
+              if (s[i] === "[" || s[i] === "{") depth++;
+              else if (s[i] === "]" || s[i] === "}") depth--;
+              else if (s[i] === "," && depth === 0) {
+                parts.push(s.slice(start, i));
+                start = i + 1;
+              }
+            }
+            parts.push(s.slice(start));
+            for (const part of parts) {
+              const eq = part.indexOf("=");
+              if (eq > 0) m.set(part.slice(0, eq).trim(), tomlParseValue(part.slice(eq + 1)));
+            }
+            return m;
+          }
+          function ensurePath(base: Map<string, any>, keys: string[]): Map<string, any> {
+            let cur = base;
+            for (const k of keys) {
+              if (!cur.has(k)) cur.set(k, new Map<string, any>());
+              let v = cur.get(k);
+              if (Array.isArray(v)) v = v[v.length - 1];
+              cur = v as Map<string, any>;
+            }
+            return cur;
+          }
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed === "" || trimmed.startsWith("#")) continue;
+            const arrMatch = trimmed.match(/^\[\[([^\]]+)\]\]$/);
+            if (arrMatch) {
+              const keys = arrMatch[1].split(".").map((k: string) => k.trim());
+              const parentKeys = keys.slice(0, -1);
+              const lastKey = keys[keys.length - 1];
+              const parent = parentKeys.length > 0 ? ensurePath(root, parentKeys) : root;
+              if (!parent.has(lastKey)) parent.set(lastKey, []);
+              const newMap = new Map<string, any>();
+              (parent.get(lastKey) as any[]).push(newMap);
+              current = newMap;
+              continue;
+            }
+            const secMatch = trimmed.match(/^\[([^\]]+)\]$/);
+            if (secMatch) {
+              const keys = secMatch[1].split(".").map((k: string) => k.trim());
+              current = ensurePath(root, keys);
+              continue;
+            }
+            const eq = trimmed.indexOf("=");
+            if (eq > 0) {
+              const key = trimmed.slice(0, eq).trim();
+              const val = tomlParseValue(trimmed.slice(eq + 1));
+              current.set(key, val);
+            }
+          }
+          return toArcValue(root);
+        }
+        case "toml.stringify": {
+          const val = fromArcValue(args[0]);
+          function tomlStringifyValue(v: any): string {
+            if (v === null || v === undefined) return '""';
+            if (typeof v === "boolean") return v ? "true" : "false";
+            if (typeof v === "number") return String(v);
+            if (typeof v === "string") return JSON.stringify(v);
+            if (Array.isArray(v)) {
+              if (v.length > 0 && v[0] instanceof Map) return "";
+              return "[" + v.map((i: any) => tomlStringifyValue(i)).join(", ") + "]";
+            }
+            if (v instanceof Map) {
+              const pairs: string[] = [];
+              for (const [k, val] of v) pairs.push(k + " = " + tomlStringifyValue(val));
+              return "{" + pairs.join(", ") + "}";
+            }
+            return String(v);
+          }
+          function tomlStringifySection(m: Map<string, any>, prefix: string): string {
+            const lines: string[] = [];
+            const subsections: [string, any][] = [];
+            for (const [k, v] of m) {
+              if (v instanceof Map) { subsections.push([k, v]); }
+              else if (Array.isArray(v) && v.length > 0 && v[0] instanceof Map) { subsections.push([k, v]); }
+              else { lines.push(k + " = " + tomlStringifyValue(v)); }
+            }
+            for (const [k, v] of subsections) {
+              const path = prefix ? prefix + "." + k : k;
+              if (Array.isArray(v)) {
+                for (const item of v) {
+                  lines.push("");
+                  lines.push("[[" + path + "]]");
+                  lines.push(tomlStringifySection(item as Map<string, any>, path));
+                }
+              } else {
+                lines.push("");
+                lines.push("[" + path + "]");
+                lines.push(tomlStringifySection(v as Map<string, any>, path));
+              }
+            }
+            return lines.join("\n");
+          }
+          return tomlStringifySection(val as unknown as Map<string, any>, "");
+        }
+
+        // --- log natives ---
+        case "log.emit": {
+          const levelNames = ["debug", "info", "warn", "error", "fatal"];
+          const colors: Record<string, string> = {
+            debug: "\x1b[90m", info: "\x1b[34m", warn: "\x1b[33m",
+            error: "\x1b[31m", fatal: "\x1b[31m\x1b[1m"
+          };
+          const reset = "\x1b[0m";
+          const level = args[0] as string;
+          const msg = args[1] as string;
+          const ctx = args[2] as MapValue | null;
+          const li = levelNames.indexOf(level);
+          const mi = levelNames.indexOf((globalThis as any).__arc_log_level ?? "debug");
+          if (li < mi) return null;
+          const ts = new Date().toTimeString().slice(0, 8);
+          let line = `${colors[level]}[${ts}] ${level.toUpperCase()} ${msg}`;
+          if (ctx && typeof ctx === "object" && "__map" in ctx) {
+            const fields: string[] = [];
+            for (const [k, v] of ctx.entries) fields.push(`${k}=${JSON.stringify(v)}`);
+            if (fields.length) line += ` {${fields.join(", ")}}`;
+          }
+          console.log(line + reset);
+          return null;
+        }
+        case "log.fatal": {
+          const ts = new Date().toTimeString().slice(0, 8);
+          console.log(`\x1b[31m\x1b[1m[${ts}] FATAL ${args[0]}\x1b[0m`);
+          process.exit(1);
+          return null;
+        }
+        case "log.set_level": {
+          (globalThis as any).__arc_log_level = args[0] as string;
+          return null;
+        }
+        case "log.with": {
+          return args[0] as Value;
+        }
+        case "log.json": {
+          const level = args[0] as string;
+          const msg = args[1] as string;
+          const fields = args[2] as MapValue | null;
+          const obj: Record<string, any> = {
+            timestamp: new Date().toISOString(),
+            level: level,
+            msg: msg
+          };
+          if (fields && typeof fields === "object" && "__map" in fields) {
+            for (const [k, v] of fields.entries) obj[k] = v;
+          }
+          console.log(JSON.stringify(obj));
+          return null;
+        }
+
         default: return null;
       }
     },
