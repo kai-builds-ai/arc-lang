@@ -2361,6 +2361,11 @@ class ReturnSignal {
         this.value = value;
     }
 }
+// Break/Continue signals for loops
+class BreakSignal {
+}
+class ContinueSignal {
+}
 // Evaluate expression in tail position — returns TCOSignal for self-recursive tail calls
 function evalExprTCO(expr, env, fnName) {
     // Only handle tail-position expressions specially
@@ -2469,20 +2474,14 @@ function evalExpr(expr, env) {
                     if (typeof left !== "number" || typeof right !== "number")
                         throw new ArcRuntimeError(`TypeError: cannot divide non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     if (right === 0)
-                        throw new ArcRuntimeError(`Division by zero`, {
-                            code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
-                            suggestion: "Check that the divisor is not zero before dividing.",
-                        });
+                        return left === 0 ? null : (left > 0 ? Infinity : -Infinity);
                     return left / right;
                 }
                 case "%": {
                     if (typeof left !== "number" || typeof right !== "number")
                         throw new ArcRuntimeError(`TypeError: cannot modulo non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     if (right === 0)
-                        throw new ArcRuntimeError(`Modulo by zero`, {
-                            code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
-                            suggestion: "Check that the divisor is not zero before dividing.",
-                        });
+                        return null;
                     return left % right;
                 }
                 case "**": {
@@ -2786,10 +2785,11 @@ function evalExpr(expr, env) {
             return resolveAsync(val);
         }
         case "FetchExpr": {
-            return expr.targets.map(t => {
+            const results = expr.targets.map(t => {
                 const val = evalExpr(t, env);
                 return resolveAsync(val);
             });
+            return results.length === 1 ? results[0] : results;
         }
         case "BlockExpr": {
             const blockEnv = new Env(env);
@@ -2894,14 +2894,55 @@ function evalStmt(stmt, env) {
                             loopEnv.set(n, m.get(n) ?? null);
                     }
                 }
-                result = evalExpr(stmt.body, loopEnv);
+                try {
+                    result = evalExpr(stmt.body, loopEnv);
+                }
+                catch (e) {
+                    if (e instanceof BreakSignal)
+                        break;
+                    if (e instanceof ContinueSignal)
+                        continue;
+                    throw e;
+                }
+            }
+            return result;
+        }
+        case "WhileStmt": {
+            let result = null;
+            while (isTruthy(evalExpr(stmt.condition, env))) {
+                try {
+                    result = evalExpr(stmt.body, env);
+                }
+                catch (e) {
+                    if (e instanceof BreakSignal)
+                        break;
+                    if (e instanceof ContinueSignal)
+                        continue;
+                    throw e;
+                }
             }
             return result;
         }
         case "DoStmt": {
             let result = null;
             do {
-                result = evalExpr(stmt.body, env);
+                try {
+                    result = evalExpr(stmt.body, env);
+                }
+                catch (e) {
+                    if (e instanceof BreakSignal) {
+                        break;
+                    }
+                    if (e instanceof ContinueSignal) {
+                        const cond = evalExpr(stmt.condition, env);
+                        if (stmt.isWhile && !isTruthy(cond))
+                            break;
+                        if (!stmt.isWhile && isTruthy(cond))
+                            break;
+                        continue;
+                    }
+                    throw e;
+                }
                 const cond = evalExpr(stmt.condition, env);
                 if (stmt.isWhile && !isTruthy(cond))
                     break;
@@ -2910,6 +2951,8 @@ function evalStmt(stmt, env) {
             } while (true);
             return result;
         }
+        case "BreakStmt": throw new BreakSignal();
+        case "ContinueStmt": throw new ContinueSignal();
         case "AssignStmt": {
             const value = evalExpr(stmt.value, env);
             env.assign(stmt.target, value);

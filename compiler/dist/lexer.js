@@ -38,47 +38,49 @@ export var TokenType;
     TokenType[TokenType["Where"] = 32] = "Where";
     TokenType[TokenType["Matching"] = 33] = "Matching";
     TokenType[TokenType["Fetch"] = 34] = "Fetch";
+    TokenType[TokenType["Break"] = 35] = "Break";
+    TokenType[TokenType["Continue"] = 36] = "Continue";
     // Operators
-    TokenType[TokenType["Plus"] = 35] = "Plus";
-    TokenType[TokenType["Minus"] = 36] = "Minus";
-    TokenType[TokenType["Star"] = 37] = "Star";
-    TokenType[TokenType["Slash"] = 38] = "Slash";
-    TokenType[TokenType["Percent"] = 39] = "Percent";
-    TokenType[TokenType["Power"] = 40] = "Power";
-    TokenType[TokenType["Eq"] = 41] = "Eq";
-    TokenType[TokenType["Neq"] = 42] = "Neq";
-    TokenType[TokenType["Lt"] = 43] = "Lt";
-    TokenType[TokenType["Gt"] = 44] = "Gt";
-    TokenType[TokenType["Lte"] = 45] = "Lte";
-    TokenType[TokenType["Gte"] = 46] = "Gte";
-    TokenType[TokenType["Pipe"] = 47] = "Pipe";
-    TokenType[TokenType["Bar"] = 48] = "Bar";
-    TokenType[TokenType["FatArrow"] = 49] = "FatArrow";
-    TokenType[TokenType["Arrow"] = 50] = "Arrow";
-    TokenType[TokenType["Question"] = 51] = "Question";
-    TokenType[TokenType["QuestionDot"] = 52] = "QuestionDot";
-    TokenType[TokenType["Range"] = 53] = "Range";
-    TokenType[TokenType["Concat"] = 54] = "Concat";
-    TokenType[TokenType["At"] = 55] = "At";
-    TokenType[TokenType["Hash"] = 56] = "Hash";
-    TokenType[TokenType["DotDotDot"] = 57] = "DotDotDot";
-    TokenType[TokenType["Assign"] = 58] = "Assign";
+    TokenType[TokenType["Plus"] = 37] = "Plus";
+    TokenType[TokenType["Minus"] = 38] = "Minus";
+    TokenType[TokenType["Star"] = 39] = "Star";
+    TokenType[TokenType["Slash"] = 40] = "Slash";
+    TokenType[TokenType["Percent"] = 41] = "Percent";
+    TokenType[TokenType["Power"] = 42] = "Power";
+    TokenType[TokenType["Eq"] = 43] = "Eq";
+    TokenType[TokenType["Neq"] = 44] = "Neq";
+    TokenType[TokenType["Lt"] = 45] = "Lt";
+    TokenType[TokenType["Gt"] = 46] = "Gt";
+    TokenType[TokenType["Lte"] = 47] = "Lte";
+    TokenType[TokenType["Gte"] = 48] = "Gte";
+    TokenType[TokenType["Pipe"] = 49] = "Pipe";
+    TokenType[TokenType["Bar"] = 50] = "Bar";
+    TokenType[TokenType["FatArrow"] = 51] = "FatArrow";
+    TokenType[TokenType["Arrow"] = 52] = "Arrow";
+    TokenType[TokenType["Question"] = 53] = "Question";
+    TokenType[TokenType["QuestionDot"] = 54] = "QuestionDot";
+    TokenType[TokenType["Range"] = 55] = "Range";
+    TokenType[TokenType["Concat"] = 56] = "Concat";
+    TokenType[TokenType["At"] = 57] = "At";
+    TokenType[TokenType["Hash"] = 58] = "Hash";
+    TokenType[TokenType["DotDotDot"] = 59] = "DotDotDot";
+    TokenType[TokenType["Assign"] = 60] = "Assign";
     // Delimiters
-    TokenType[TokenType["LParen"] = 59] = "LParen";
-    TokenType[TokenType["RParen"] = 60] = "RParen";
-    TokenType[TokenType["LBrace"] = 61] = "LBrace";
-    TokenType[TokenType["RBrace"] = 62] = "RBrace";
-    TokenType[TokenType["LBracket"] = 63] = "LBracket";
-    TokenType[TokenType["RBracket"] = 64] = "RBracket";
-    TokenType[TokenType["Comma"] = 65] = "Comma";
-    TokenType[TokenType["Colon"] = 66] = "Colon";
-    TokenType[TokenType["Dot"] = 67] = "Dot";
-    TokenType[TokenType["Semicolon"] = 68] = "Semicolon";
-    TokenType[TokenType["Newline"] = 69] = "Newline";
+    TokenType[TokenType["LParen"] = 61] = "LParen";
+    TokenType[TokenType["RParen"] = 62] = "RParen";
+    TokenType[TokenType["LBrace"] = 63] = "LBrace";
+    TokenType[TokenType["RBrace"] = 64] = "RBrace";
+    TokenType[TokenType["LBracket"] = 65] = "LBracket";
+    TokenType[TokenType["RBracket"] = 66] = "RBracket";
+    TokenType[TokenType["Comma"] = 67] = "Comma";
+    TokenType[TokenType["Colon"] = 68] = "Colon";
+    TokenType[TokenType["Dot"] = 69] = "Dot";
+    TokenType[TokenType["Semicolon"] = 70] = "Semicolon";
+    TokenType[TokenType["Newline"] = 71] = "Newline";
     // Regex
-    TokenType[TokenType["Regex"] = 70] = "Regex";
+    TokenType[TokenType["Regex"] = 72] = "Regex";
     // Special
-    TokenType[TokenType["EOF"] = 71] = "EOF";
+    TokenType[TokenType["EOF"] = 73] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.Fn, let: TokenType.Let, mut: TokenType.Mut, type: TokenType.Type,
@@ -89,6 +91,8 @@ const KEYWORDS = {
     true: TokenType.True, false: TokenType.False, nil: TokenType.NilKw,
     and: TokenType.And, or: TokenType.Or, not: TokenType.Not,
     where: TokenType.Where, matching: TokenType.Matching, fetch: TokenType.Fetch,
+    break: TokenType.Break, continue: TokenType.Continue,
+    return: TokenType.Ret, // alias: Arc uses 'ret' but accept 'return' too
 };
 export function lex(source) {
     const tokens = [];
@@ -124,8 +128,8 @@ export function lex(source) {
             tokens.push(tok(TokenType.Newline, "\\n", sl, sc));
             continue;
         }
-        // Comments: # to end of line
-        if (ch === "#") {
+        // Comments: # or // to end of line
+        if (ch === "#" || (ch === "/" && peek(1) === "/")) {
             while (i < source.length && peek() !== "\n")
                 advance();
             continue;

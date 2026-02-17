@@ -44,6 +44,8 @@ See [PHILOSOPHY.md](./PHILOSOPHY.md) for detailed design principles.
 
 ## What It Looks Like
 
+> **Note:** Arc uses `#` for comments (not `//`).
+
 ```arc
 # AI agent that fetches data, analyzes it, and acts
 let [weather, news] = fetch [

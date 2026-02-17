@@ -59,7 +59,10 @@ export class Parser {
       case TokenType.Fn: return this.parseFn(false);
       case TokenType.Async: return this.parseAsync();
       case TokenType.For: return this.parseFor();
+      case TokenType.While: return this.parseWhile();
       case TokenType.Do: return this.parseDo();
+      case TokenType.Break: { const loc = this.loc(); this.advance(); return { kind: "BreakStmt", loc } as AST.BreakStmt; }
+      case TokenType.Continue: { const loc = this.loc(); this.advance(); return { kind: "ContinueStmt", loc } as AST.ContinueStmt; }
       case TokenType.Use: return this.parseUse();
       case TokenType.Type: return this.parseType();
       case TokenType.Ret: return this.parseRet();
@@ -233,6 +236,14 @@ export class Parser {
     const iterable = this.parseExpr();
     const body = this.parseBlock();
     return { kind: "ForStmt", variable, iterable, body, loc };
+  }
+
+  private parseWhile(): AST.WhileStmt {
+    const loc = this.loc();
+    this.expect(TokenType.While);
+    const condition = this.parseExpr(0);
+    const body = this.parseBlock();
+    return { kind: "WhileStmt", condition, body, loc };
   }
 
   private parseDo(): AST.DoStmt {
@@ -476,7 +487,14 @@ export class Parser {
       // Postfix: member access
       if (t.type === TokenType.Dot) {
         this.advance();
-        const prop = this.expect(TokenType.Ident).value;
+        // Allow keywords (like 'match') as property names after dot
+        const propToken = this.peek();
+        let prop: string;
+        if (propToken.type === TokenType.Ident || propToken.type === TokenType.Match || propToken.type === TokenType.Fn || propToken.type === TokenType.Let || propToken.type === TokenType.If || propToken.type === TokenType.For || propToken.type === TokenType.In || propToken.type === TokenType.Do || propToken.type === TokenType.While || propToken.type === TokenType.Until || propToken.type === TokenType.Use || propToken.type === TokenType.Pub || propToken.type === TokenType.Type || propToken.type === TokenType.Ret || propToken.type === TokenType.Where || propToken.type === TokenType.Matching || propToken.type === TokenType.Fetch || propToken.type === TokenType.Async || propToken.type === TokenType.Await) {
+          prop = this.advance().value;
+        } else {
+          prop = this.expect(TokenType.Ident).value;
+        }
         left = { kind: "MemberExpr", object: left, property: prop, loc: left.loc } as AST.MemberExpr;
         continue;
       }
@@ -484,7 +502,14 @@ export class Parser {
       // Postfix: optional chaining ?.
       if (t.type === TokenType.QuestionDot) {
         this.advance();
-        const prop = this.expect(TokenType.Ident).value;
+        // Allow keywords as property names after ?.
+        const propToken = this.peek();
+        let prop: string;
+        if (propToken.type === TokenType.Ident || propToken.type === TokenType.Match || propToken.type === TokenType.Fn || propToken.type === TokenType.Let || propToken.type === TokenType.If || propToken.type === TokenType.For || propToken.type === TokenType.In || propToken.type === TokenType.Do || propToken.type === TokenType.While || propToken.type === TokenType.Until || propToken.type === TokenType.Use || propToken.type === TokenType.Pub || propToken.type === TokenType.Type || propToken.type === TokenType.Ret || propToken.type === TokenType.Where || propToken.type === TokenType.Matching || propToken.type === TokenType.Fetch || propToken.type === TokenType.Async || propToken.type === TokenType.Await) {
+          prop = this.advance().value;
+        } else {
+          prop = this.expect(TokenType.Ident).value;
+        }
         left = { kind: "OptionalMemberExpr", object: left, property: prop, loc: left.loc } as AST.OptionalMemberExpr;
         continue;
       }
@@ -661,17 +686,22 @@ export class Parser {
       return { kind: "AwaitExpr", expr, loc } as AST.AwaitExpr;
     }
 
-    // Fetch expression: fetch [expr1, expr2, ...]
+    // Fetch expression: fetch @GET "url" or fetch [expr1, expr2, ...]
     if (t.type === TokenType.Fetch) {
       this.advance();
-      this.expect(TokenType.LBracket);
-      const targets: AST.Expr[] = [];
-      while (!this.at(TokenType.RBracket)) {
-        targets.push(this.parseExpr());
-        if (this.at(TokenType.Comma)) this.advance();
+      if (this.at(TokenType.LBracket)) {
+        this.advance();
+        const targets: AST.Expr[] = [];
+        while (!this.at(TokenType.RBracket)) {
+          targets.push(this.parseExpr());
+          if (this.at(TokenType.Comma)) this.advance();
+        }
+        this.expect(TokenType.RBracket);
+        return { kind: "FetchExpr", targets, loc } as AST.FetchExpr;
       }
-      this.expect(TokenType.RBracket);
-      return { kind: "FetchExpr", targets, loc } as AST.FetchExpr;
+      // Single target: fetch @GET "url"
+      const target = this.parseExpr();
+      return { kind: "FetchExpr", targets: [target], loc } as AST.FetchExpr;
     }
 
     // Tool call: @GET "url" or @ident(args)

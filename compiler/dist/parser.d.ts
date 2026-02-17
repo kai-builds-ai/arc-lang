@@ -21,6 +21,7 @@ export declare class Parser {
     private parseAsync;
     private parseFn;
     private parseFor;
+    private parseWhile;
     private parseDo;
     private parseUse;
     private parseType;

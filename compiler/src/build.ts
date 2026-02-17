@@ -143,7 +143,7 @@ export function newProject(name: string, parentDir?: string): void {
   };
   writeFileSync(resolve(projectDir, "arc.toml"), serializeArcToml(toml));
 
-  writeFileSync(resolve(projectDir, "src", "main.arc"), `fn main() {\n  let msg = "Hello from ${name}!"\n  print(msg)\n}\n`);
+  writeFileSync(resolve(projectDir, "src", "main.arc"), `# Hello from ${name}!\nlet msg = "Hello from ${name}!"\nprint(msg)\n`);
 
   writeFileSync(resolve(projectDir, "tests", "main.test.arc"), `fn test_main() {\n  let x = 1 + 1\n  print(x)\n}\n`);
 

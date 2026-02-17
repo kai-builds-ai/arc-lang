@@ -45,9 +45,13 @@ export function resolveModule(path: string[], basePath: string): string {
   const relPath = resolve(dirname(basePath), modulePath);
   if (existsSync(relPath)) return relPath;
 
-  // 3. Check compiler's sibling stdlib/
+  // 3. Check compiler's sibling stdlib/ (monorepo layout)
   const compilerStdlib = resolve(__dirname2, "..", "..", "stdlib", modulePath);
   if (existsSync(compilerStdlib)) return compilerStdlib;
+
+  // 4. Check stdlib bundled inside the npm package (npm install -g layout)
+  const bundledStdlib = resolve(__dirname2, "..", "stdlib", modulePath);
+  if (existsSync(bundledStdlib)) return bundledStdlib;
 
   throw new Error(`Module not found: ${path.join("/")} (searched from ${basePath})`);
 }

@@ -1927,6 +1927,10 @@ class ReturnSignal {
   constructor(public value: Value) {}
 }
 
+// Break/Continue signals for loops
+class BreakSignal {}
+class ContinueSignal {}
+
 // Tail Call Optimization signal
 interface TCOSignal {
   __tco: true;
@@ -2030,18 +2034,12 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         }
         case "/": {
           if (typeof left !== "number" || typeof right !== "number") throw new ArcRuntimeError(`TypeError: cannot divide non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
-          if (right === 0) throw new ArcRuntimeError(`Division by zero`, {
-            code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
-            suggestion: "Check that the divisor is not zero before dividing.",
-          });
+          if (right === 0) return left === 0 ? null : (left > 0 ? Infinity : -Infinity);
           return left / right;
         }
         case "%": {
           if (typeof left !== "number" || typeof right !== "number") throw new ArcRuntimeError(`TypeError: cannot modulo non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
-          if (right === 0) throw new ArcRuntimeError(`Modulo by zero`, {
-            code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
-            suggestion: "Check that the divisor is not zero before dividing.",
-          });
+          if (right === 0) return null;
           return left % right;
         }
         case "**": {
@@ -2322,10 +2320,11 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
     }
 
     case "FetchExpr": {
-      return expr.targets.map(t => {
+      const results = expr.targets.map(t => {
         const val = evalExpr(t, env);
         return resolveAsync(val);
       });
+      return results.length === 1 ? results[0] : results;
     }
 
     case "BlockExpr": {
@@ -2424,7 +2423,27 @@ function evalStmt(stmt: AST.Stmt, env: Env): Value {
             for (const n of target.names) loopEnv.set(n, m.get(n) ?? null);
           }
         }
-        result = evalExpr(stmt.body, loopEnv);
+        try {
+          result = evalExpr(stmt.body, loopEnv);
+        } catch (e) {
+          if (e instanceof BreakSignal) break;
+          if (e instanceof ContinueSignal) continue;
+          throw e;
+        }
+      }
+      return result;
+    }
+
+    case "WhileStmt": {
+      let result: Value = null;
+      while (isTruthy(evalExpr(stmt.condition, env))) {
+        try {
+          result = evalExpr(stmt.body, env);
+        } catch (e) {
+          if (e instanceof BreakSignal) break;
+          if (e instanceof ContinueSignal) continue;
+          throw e;
+        }
       }
       return result;
     }
@@ -2432,13 +2451,27 @@ function evalStmt(stmt: AST.Stmt, env: Env): Value {
     case "DoStmt": {
       let result: Value = null;
       do {
-        result = evalExpr(stmt.body, env);
+        try {
+          result = evalExpr(stmt.body, env);
+        } catch (e) {
+          if (e instanceof BreakSignal) { break; }
+          if (e instanceof ContinueSignal) {
+            const cond = evalExpr(stmt.condition, env);
+            if (stmt.isWhile && !isTruthy(cond)) break;
+            if (!stmt.isWhile && isTruthy(cond)) break;
+            continue;
+          }
+          throw e;
+        }
         const cond = evalExpr(stmt.condition, env);
         if (stmt.isWhile && !isTruthy(cond)) break;
         if (!stmt.isWhile && isTruthy(cond)) break;
       } while (true);
       return result;
     }
+
+    case "BreakStmt": throw new BreakSignal();
+    case "ContinueStmt": throw new ContinueSignal();
 
     case "AssignStmt": {
       const value = evalExpr(stmt.value, env);
