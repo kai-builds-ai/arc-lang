@@ -767,7 +767,7 @@ function makePrelude(env: Env): void {
           const vars = args[1] as MapValue;
           if (vars && typeof vars === "object" && "__map" in vars) {
             for (const [k, v] of vars.entries) {
-              text = text.replaceAll(`{${k}}`, String(v ?? ""));
+              text = text.replaceAll(`{{${k}}}`, String(v ?? ""));
             }
           }
           return text;
@@ -830,9 +830,13 @@ function makePrelude(env: Env): void {
         case "store.merge": {
           const s = args[0] as any;
           const m = args[1] as any;
-          if (m && typeof m === "object" && !Array.isArray(m)) {
+          if (m && typeof m === "object" && "__map" in m && m.entries instanceof Map) {
+            for (const [k, v] of m.entries) {
+              s.data[k] = v as Value;
+            }
+          } else if (m && typeof m === "object" && !Array.isArray(m)) {
             for (const [k, v] of Object.entries(m)) {
-              if (k !== "__type" && k !== "__proto__") s.data[k] = v as Value;
+              if (k !== "__type" && k !== "__proto__" && k !== "__map" && k !== "entries") s.data[k] = v as Value;
             }
           }
           nodeFs.writeFileSync(s.path, JSON.stringify(s.data, null, 2), "utf-8");
