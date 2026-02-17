@@ -14,7 +14,7 @@ export type Expr =
   | LambdaExpr | ListLiteral | MapLiteral | ListComprehension
   | ToolCallExpr | RangeExpr | BlockExpr
   | AsyncExpr | AwaitExpr | FetchExpr | SpreadExpr
-  | OptionalMemberExpr | TryExpr | TryCatchExpr;
+  | OptionalMemberExpr | TryExpr | TryCatchExpr | GroupExpr;
 
 export interface IntLiteral { kind: "IntLiteral"; value: number; loc: Loc; }
 export interface FloatLiteral { kind: "FloatLiteral"; value: number; loc: Loc; }
@@ -185,6 +185,12 @@ export interface TryCatchExpr {
   body: Expr;
   catchVar: string;
   catchBody: Expr;
+  loc: Loc;
+}
+
+export interface GroupExpr {
+  kind: "GroupExpr";
+  expr: Expr;
   loc: Loc;
 }
 

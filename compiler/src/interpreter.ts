@@ -41,6 +41,13 @@ class Env {
     if (v !== undefined) return v.value;
     if (this.parent) return this.parent.get(name);
     // Collect all known variable names for "did you mean?" suggestion
+    if (name === "mut" || name === "var") {
+      throw new ArcRuntimeError(`Undefined variable: ${name}`, {
+        code: ErrorCode.UNDEFINED_VARIABLE,
+        category: "RuntimeError",
+        suggestion: "Did you mean 'let mut' to declare a mutable variable?",
+      });
+    }
     const candidates = this.allNames();
     const closest = findClosestMatch(name, candidates);
     throw new ArcRuntimeError(`Undefined variable: ${name}`, {
@@ -2206,7 +2213,18 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       const obj = evalExpr(expr.object, env);
       if (obj === null) return null;
       if (obj && typeof obj === "object" && "__map" in obj) {
-        return (obj as MapValue).entries.get(expr.property) ?? null;
+        const mapObj = obj as MapValue;
+        const val = mapObj.entries.get(expr.property);
+        if (val === undefined && "__module" in obj) {
+          const modName = (obj as any).__module as string;
+          const candidates = [...mapObj.entries.keys()];
+          const closest = findClosestMatch(expr.property, candidates);
+          throw new ArcRuntimeError(
+            `Module '${modName}' has no member '${expr.property}'${closest ? `. Did you mean '${closest}'?` : ""}`,
+            { code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc }
+          );
+        }
+        return val ?? null;
       }
       // Teaching error messages for common method-style access
       const prop = expr.property;
@@ -2467,6 +2485,9 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       }
       return result;
     }
+
+    case "GroupExpr":
+      return evalExpr((expr as any).expr, env);
 
     default:
       throw new Error(`Unknown expression kind: ${(expr as any).kind}`);

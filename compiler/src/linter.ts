@@ -5,6 +5,14 @@ import { lex } from "./lexer.js";
 import { parse } from "./parser.js";
 import * as AST from "./ast.js";
 
+/** Walk an expression to find the root variable name (e.g. `a[b].c` → "a") */
+function getRootVariable(expr: AST.Expr): string | null {
+  if (expr.kind === "Identifier") return expr.name;
+  if (expr.kind === "MemberExpr" || expr.kind === "OptionalMemberExpr") return getRootVariable(expr.object);
+  if (expr.kind === "IndexExpr") return getRootVariable(expr.object);
+  return null;
+}
+
 export type Severity = "error" | "warning" | "info";
 
 export interface LintDiagnostic {
@@ -417,15 +425,21 @@ export function lint(source: string, options?: Partial<LintOptions>): LintDiagno
         scope.markUsed(stmt.target);
         analyzeExpr(stmt.value, scope);
         break;
-      case "MemberAssignStmt":
+      case "MemberAssignStmt": {
         analyzeExpr(stmt.object, scope);
         analyzeExpr(stmt.value, scope);
+        const memberRoot = getRootVariable(stmt.object);
+        if (memberRoot) { scope.markMutated(memberRoot); scope.markUsed(memberRoot); }
         break;
-      case "IndexAssignStmt":
+      }
+      case "IndexAssignStmt": {
         analyzeExpr(stmt.object, scope);
         analyzeExpr(stmt.index, scope);
         analyzeExpr(stmt.value, scope);
+        const indexRoot = getRootVariable(stmt.object);
+        if (indexRoot) { scope.markMutated(indexRoot); scope.markUsed(indexRoot); }
         break;
+      }
     }
   }
 

@@ -67,6 +67,10 @@ export class Parser {
       case TokenType.Type: return this.parseType();
       case TokenType.Ret: return this.parseRet();
       case TokenType.Try: return this.parseTryStmtOrExpr();
+      case TokenType.Mut: {
+        const loc = this.loc();
+        throw new ParseError(`'mut' is not a statement. Did you mean 'let mut' to declare a mutable variable?`, loc);
+      }
       default: {
         const exprLoc = this.loc();
         const expr = this.parseExpr();
@@ -677,7 +681,7 @@ export class Parser {
 
       const expr = this.parseExpr();
       this.expect(TokenType.RParen);
-      return expr;
+      return { kind: "GroupExpr" as const, expr, loc };
     }
 
     // List literal or comprehension
@@ -848,9 +852,14 @@ export class Parser {
     return { kind: "ListLiteral", elements, loc };
   }
 
+  private isIdentOrKeyword(t?: TokenType): boolean {
+    const tt = t ?? this.peek().type;
+    return tt === TokenType.Ident || tt === TokenType.Match || tt === TokenType.Fn || tt === TokenType.Let || tt === TokenType.If || tt === TokenType.For || tt === TokenType.In || tt === TokenType.Do || tt === TokenType.While || tt === TokenType.Until || tt === TokenType.Use || tt === TokenType.Pub || tt === TokenType.Type || tt === TokenType.Ret || tt === TokenType.Where || tt === TokenType.Matching || tt === TokenType.Fetch || tt === TokenType.Async || tt === TokenType.Await || tt === TokenType.Try || tt === TokenType.Catch || tt === TokenType.Mut || tt === TokenType.True || tt === TokenType.False || tt === TokenType.NilKw || tt === TokenType.And || tt === TokenType.Or || tt === TokenType.Not || tt === TokenType.Break || tt === TokenType.Continue || tt === TokenType.El;
+  }
+
   private isMapStart(): boolean {
     // Check if current position (after {) looks like a map entry
-    if (this.at(TokenType.Ident) && this.tokens[this.pos + 1]?.type === TokenType.Colon) return true;
+    if (this.isIdentOrKeyword() && this.tokens[this.pos + 1]?.type === TokenType.Colon) return true;
     if (this.at(TokenType.String) && this.tokens[this.pos + 1]?.type === TokenType.Colon) return true;
     if (this.at(TokenType.Int) && this.tokens[this.pos + 1]?.type === TokenType.Colon) return true;
     if (this.at(TokenType.DotDotDot)) return true;
@@ -898,7 +907,13 @@ export class Parser {
       const value = this.parseExpr();
       return { key, value };
     }
-    // Ident key: name: value
+    // Ident or keyword key: name: value
+    if (this.isIdentOrKeyword()) {
+      const key = this.advance().value;
+      this.expect(TokenType.Colon);
+      const value = this.parseExpr();
+      return { key, value };
+    }
     const key = this.expect(TokenType.Ident).value;
     this.expect(TokenType.Colon);
     const value = this.parseExpr();

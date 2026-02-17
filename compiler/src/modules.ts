@@ -142,7 +142,7 @@ export function handleUse(stmt: AST.UseStmt, env: Env, currentFile: string): voi
   for (const [name, value] of Object.entries(exports)) {
     entries.set(name, value);
   }
-  env.set(nsName, { __map: true, entries } as any);
+  env.set(nsName, { __map: true, __module: nsName, entries } as any);
 }
 
 /**

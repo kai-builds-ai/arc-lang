@@ -36,6 +36,13 @@ function extractComments(source: string): Comment[] {
         i++;
       }
       if (i < source.length) { i++; col++; }
+    } else if (source[i] === '/' && i + 1 < source.length && source[i + 1] === '/') {
+      const startLine = line, startCol = col;
+      let text = '';
+      while (i < source.length && source[i] !== '\n') {
+        text += source[i]; i++; col++;
+      }
+      comments.push({ text, line: startLine, col: startCol });
     } else if (source[i] === '#') {
       const startLine = line, startCol = col;
       let text = '';
@@ -229,6 +236,7 @@ export function format(source: string, options?: Partial<FormatOptions>): string
         const targets = expr.targets.map(t => formatExpr(t, depth)).join(", ");
         return `fetch [${targets}]`;
       }
+      case "GroupExpr": return `(${formatExpr(expr.expr, depth)})`;
       case "SpreadExpr": return `...${formatExpr(expr.expr, depth)}`;
       case "OptionalMemberExpr": return `${formatExpr(expr.object, depth)}?.${expr.property}`;
       case "TryExpr": return `${formatExpr(expr.expr, depth)}?`;
