@@ -2130,8 +2130,24 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       if (obj && typeof obj === "object" && "__map" in obj) {
         return (obj as MapValue).entries.get(expr.property) ?? null;
       }
-      throw new ArcRuntimeError(`Cannot access property '${expr.property}' on ${toStr(obj)}`, {
-        code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc,
+      // Teaching error messages for common method-style access
+      const prop = expr.property;
+      const methodBuiltins: Record<string, string> = {
+        length: "len(value)", repeat: "repeat(str, n)", trim: "trim(str)",
+        split: "split(str, sep)", join: "join(list, sep)", replace: "replace(str, old, new)",
+        includes: "contains(value, sub)", startsWith: "starts(str, prefix)", endsWith: "ends(str, suffix)",
+        toUpperCase: "upper(str)", toLowerCase: "lower(str)", indexOf: "index_of(str, sub)",
+        slice: "slice(value, start, end)", map: "map(list, fn)", filter: "filter(list, fn)",
+        reduce: "reduce(list, fn, init)", find: "find(list, fn)", sort: "sort(list)",
+        reverse: "reverse(list)", push: "push(list, item)", concat: "concat(a, b)",
+        forEach: "for item in list { ... }", charAt: "char_at(str, i)",
+        toString: "str(value)", match: "use regex; regex.find(str, pattern)",
+      };
+      const suggestion = methodBuiltins[prop]
+        ? `Arc uses free functions, not methods. Try: ${methodBuiltins[prop]}`
+        : undefined;
+      throw new ArcRuntimeError(`Cannot access property '${prop}' on ${toStr(obj)}`, {
+        code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc, suggestion,
       });
     }
 

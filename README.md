@@ -103,9 +103,21 @@ Arc ships with a comprehensive standard library. All modules with native runtime
 | [`env`](stdlib/env.arc) | Environment variable utilities |
 | [`log`](stdlib/log.arc) | Structured logging with levels |
 
-Plus many built-in functions available without imports: `map`, `filter`, `reduce`, `print`, `len`, `split`, `join`, `trim`, and more.
+Plus 50+ built-in functions available without imports:
 
-📖 **[Standard Library Reference](docs/stdlib-reference.md)** | **[Standard Library Tutorial](docs/stdlib-tutorial.md)**
+| Category | Functions |
+|----------|-----------|
+| **I/O** | `print` |
+| **Type** | `int`, `float`, `str`, `bool`, `type_of` |
+| **Strings** | `len`, `trim`, `upper`, `lower`, `split`, `join`, `replace`, `contains`, `starts`, `ends`, `repeat`, `chars`, `slice`, `index_of`, `ord`, `chr`, `char_at` |
+| **Lists** | `map`, `filter`, `reduce`, `fold`, `find`, `any`, `all`, `sort`, `head`, `tail`, `last`, `reverse`, `take`, `drop`, `flat`, `zip`, `enumerate`, `push`, `concat`, `sum`, `range` |
+| **Maps** | `keys`, `values`, `entries` |
+| **Math** | `abs`, `min`, `max`, `round` |
+| **Other** | `assert`, `time_ms` |
+
+Run `arc builtins` for full details or `arc builtins --modules` for stdlib reference.
+
+📖 **[Cheat Sheet](CHEATSHEET.md)** | **[Standard Library Reference](docs/stdlib-reference.md)** | **[Standard Library Tutorial](docs/stdlib-tutorial.md)**
 
 ## Documentation
 

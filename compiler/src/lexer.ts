@@ -40,6 +40,7 @@ const KEYWORDS: Record<string, TokenType> = {
   where: TokenType.Where, matching: TokenType.Matching, fetch: TokenType.Fetch,
   break: TokenType.Break, continue: TokenType.Continue,
   return: TokenType.Ret,  // alias: Arc uses 'ret' but accept 'return' too
+  else: TokenType.El,    // alias: Arc uses 'el' but accept 'else' too
   try: TokenType.Try, catch: TokenType.Catch,
 };
 

@@ -83,6 +83,108 @@ if (command === "version" || args.includes("--version") || args.includes("-v")) 
     console.error("Usage: arc pkg <init|add|remove|list|install>");
     process.exit(1);
   }
+} else if (command === "builtins") {
+  console.log("Arc Built-in Functions\n");
+  console.log("I/O:");
+  console.log("  print(...values)          Print values to stdout\n");
+  console.log("Type Conversion:");
+  console.log("  int(v)                    Convert to integer (throws on bad input)");
+  console.log("  float(v)                  Convert to float (throws on bad input)");
+  console.log("  str(v)                    Convert to string");
+  console.log("  bool(v)                   Convert to boolean");
+  console.log("  type_of(v)                Get type: \"int\" \"float\" \"string\" \"bool\" \"list\" \"map\" \"fn\" \"nil\"\n");
+  console.log("Strings:");
+  console.log("  len(s)                    Length (codepoints, not bytes)");
+  console.log("  trim(s)                   Strip whitespace");
+  console.log("  upper(s) / lower(s)       Case conversion");
+  console.log("  split(s, sep)             Split into list");
+  console.log("  join(list, sep)           Join list into string");
+  console.log("  replace(s, old, new)      Replace all occurrences");
+  console.log("  contains(s, sub)          Check substring");
+  console.log("  starts(s, prefix)         Starts with");
+  console.log("  ends(s, suffix)           Ends with");
+  console.log("  repeat(s, n)              Repeat string n times");
+  console.log("  chars(s)                  Split into character list");
+  console.log("  slice(s, start, end?)     Substring");
+  console.log("  index_of(s, sub)          Find index (nil if not found)");
+  console.log("  ord(s)                    Char to code point");
+  console.log("  chr(n)                    Code point to char");
+  console.log("  char_at(s, i)             Character at index\n");
+  console.log("Lists:");
+  console.log("  len(list)                 Length");
+  console.log("  map(list, fn)             Transform each element");
+  console.log("  filter(list, fn)          Keep elements matching predicate");
+  console.log("  reduce(list, fn, init)    Fold left");
+  console.log("  fold(list, init, fn)      Fold (init-first arg order)");
+  console.log("  find(list, fn)            First matching element");
+  console.log("  any(list, fn)             Any element matches?");
+  console.log("  all(list, fn)             All elements match?");
+  console.log("  sort(list)                Sort (numbers or strings)");
+  console.log("  head(list)                First element");
+  console.log("  tail(list)                All but first");
+  console.log("  last(list)                Last element");
+  console.log("  reverse(list)             Reverse");
+  console.log("  take(list, n)             First n elements");
+  console.log("  drop(list, n)             Skip first n");
+  console.log("  flat(list)                Flatten nested lists");
+  console.log("  zip(a, b)                 Zip two lists");
+  console.log("  enumerate(list)           Add indices: [[0,a],[1,b],...]");
+  console.log("  push(list, item)          Append (returns new list)");
+  console.log("  concat(a, b)              Concatenate lists");
+  console.log("  sum(list)                 Sum numbers");
+  console.log("  range(a, b)               Generate [a, a+1, ..., b-1]\n");
+  console.log("Maps:");
+  console.log("  keys(map)                 Get keys as list");
+  console.log("  values(map)               Get values as list");
+  console.log("  entries(map)              Key-value pairs\n");
+  console.log("Math:");
+  console.log("  abs(n)                    Absolute value");
+  console.log("  min(...) / max(...)       Min/max (args or list)");
+  console.log("  round(n)                  Round to integer\n");
+  console.log("Other:");
+  console.log("  assert(cond, msg?)        Assert truth (throws on false)");
+  console.log("  time_ms()                 Unix timestamp in milliseconds\n");
+  console.log("Operators:  +  -  *  /  %  **  ++  ==  !=  <  >  <=  >=  and  or  not  |>  ..  ?.");
+  console.log("Strings:    \"text {expr}\" (interpolation)   \"ha\" * 3 (repetition)");
+  console.log("Comments:   # or //");
+  console.log("Errors:     try { ... } catch e { ... }\n");
+  console.log("Stdlib:     arc builtins --modules    (list all standard library modules)");
+
+  if (args.includes("--modules")) {
+    console.log("\nStandard Library Modules:  (import with: use <module>)\n");
+    const mods = [
+      ["math", "sqrt, pow, ceil, floor, clamp, PI, E, sin, cos, log, 25 functions"],
+      ["strings", "pad_left, pad_right, capitalize, words"],
+      ["collections", "group_by, chunk, flatten, zip_with, partition, sort_by, unique"],
+      ["map", "merge, map_values, filter_map, from_pairs, pick, omit"],
+      ["io", "read_file, write_file, read_lines, exists, append"],
+      ["http", "get, post, put, delete — real HTTP requests"],
+      ["json", "to_json, from_json, pretty, get_path"],
+      ["csv", "parse_csv, to_csv, parse_csv_headers"],
+      ["regex", "match, find, test, replace, split, capture"],
+      ["datetime", "now, today, parse, format, add_days, diff_days"],
+      ["os", "cwd, list_dir, mkdir, exec, platform, env, remove, copy"],
+      ["env", "get, set, has, all — environment variables"],
+      ["crypto", "sha256, sha512, hmac_sha256, uuid, random_bytes"],
+      ["error", "try_catch, try_finally, throw, retry, assert"],
+      ["result", "ok, err, is_ok, unwrap, map_result, try_fn"],
+      ["net", "ws_connect, tcp_connect, dns_lookup, base64_encode"],
+      ["yaml", "parse, stringify"],
+      ["toml", "parse, stringify"],
+      ["html", "parse, create_element, to_html"],
+      ["path", "join, dirname, basename, extname"],
+      ["log", "info, warn, error, debug"],
+      ["store", "get, set, delete — persistent key-value storage"],
+      ["test", "describe, it, expect_eq, run_tests"],
+      ["prompt", "template, count_tokens, window"],
+      ["embed", "similarity, cosine, search"],
+      ["llm", "chat, complete — multi-provider LLM API"],
+    ];
+    for (const [name, desc] of mods) {
+      console.log(`  ${name.padEnd(14)} ${desc}`);
+    }
+  }
+  process.exit(0);
 } else if (command === "help" || command === "--help" || command === "-h" || !command || !file) {
   console.log(`Arc ${ARC_VERSION} — A programming language designed by AI agents, for AI agents.\n`);
   console.log("Usage: arc <command> [options]\n");
@@ -99,6 +201,8 @@ if (command === "version" || args.includes("--version") || args.includes("-v")) 
   console.log("  build                   Build the current project");
   console.log("  test                    Run project tests");
   console.log("  new <name>              Create a new project");
+  console.log("  builtins                List all built-in functions");
+  console.log("  builtins --modules      List all standard library modules");
   console.log("  pkg <sub>               Package manager (init|add|remove|list|install)");
   console.log("  version                 Print version info");
   console.log("\nOptions:");
