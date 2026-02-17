@@ -89,7 +89,7 @@ export function lex(source: string): Token[] {
           str += advance();
           continue;
         }
-        if (peek() === "{") {
+        if (peek() === "{" && /[a-zA-Z_]/.test(peek(1))) {
           hasInterp = true;
           if (str.length > 0 || parts.length === 0) {
             parts.push(tok(TokenType.String, str, sl, sc));

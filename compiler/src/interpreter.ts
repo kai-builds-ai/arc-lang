@@ -220,6 +220,7 @@ function resolveAsync(v: Value): Value {
 function makePrelude(env: Env): void {
   const fns: Record<string, (...args: Value[]) => Value> = {
     print: (...args) => { console.log(args.map(toStr).join(" ")); return null; },
+    throw: (msg) => { throw new Error(toStr(msg ?? "error")); },
     arity: (v) => {
       if (v && typeof v === "object" && (v as any).__fn) return ((v as FnValue).params || []).length;
       return null;
