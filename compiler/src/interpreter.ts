@@ -220,6 +220,10 @@ function resolveAsync(v: Value): Value {
 function makePrelude(env: Env): void {
   const fns: Record<string, (...args: Value[]) => Value> = {
     print: (...args) => { console.log(args.map(toStr).join(" ")); return null; },
+    arity: (v) => {
+      if (v && typeof v === "object" && (v as any).__fn) return ((v as FnValue).params || []).length;
+      return null;
+    },
     len: (v) => {
       if (typeof v === "string") return [...v].length;  // codepoint count, not UTF-16
       if (Array.isArray(v)) return v.length;
@@ -256,6 +260,25 @@ function makePrelude(env: Env): void {
       return [...list].sort((a, b) => {
         if (typeof a === "number" && typeof b === "number") return a - b;
         return String(a).localeCompare(String(b));
+      });
+    },
+    sort_by: (list, fn) => {
+      if (!Array.isArray(list)) throw new Error("sort_by expects a list as first argument");
+      if (!fn || !(fn as any).__fn) throw new Error("sort_by expects a function as second argument");
+      const fnVal = fn as FnValue;
+      const paramCount = fnVal.params ? fnVal.params.length : 0;
+      if (paramCount !== 1) {
+        throw new ArcRuntimeError(
+          `sort_by takes a key function fn(x) that returns a sort key, not a comparator fn(a, b). ` +
+          `For example: sort_by(list, fn(x) => x.name) — not sort_by(list, fn(a, b) => a - b)`,
+          { code: ErrorCode.WRONG_ARITY, category: "TypeError" }
+        );
+      }
+      return [...list].sort((a, b) => {
+        const ka = callFn(fnVal, [a as Value]);
+        const kb = callFn(fnVal, [b as Value]);
+        if (typeof ka === "number" && typeof kb === "number") return ka - kb;
+        return String(ka).localeCompare(String(kb));
       });
     },
     take: (list, n) => Array.isArray(list) ? list.slice(0, n as number) : null,
@@ -504,21 +527,29 @@ function makePrelude(env: Env): void {
       }
     },
     error_throw: (code, message) => {
+      if (message === undefined || message === null) {
+        throw new Error(toStr(code));
+      }
       throw new Error(`[${toStr(code)}] ${toStr(message)}`);
     },
     error_retry: (fn, times) => {
       const n = typeof times === "number" ? times : 1;
       let lastErr: Value = null;
       for (let i = 0; i < n; i++) {
-        const result = typeof fn === "function" ? (fn as any)() : callFn(fn, []);
-        if (result && typeof result === "object" && "__map" in result) {
-          const entries = (result as MapValue).entries;
-          if (entries.has("kind") && entries.has("message")) {
-            lastErr = result;
-            continue;
+        try {
+          const result = typeof fn === "function" ? (fn as any)() : callFn(fn, []);
+          if (result && typeof result === "object" && "__map" in result) {
+            const entries = (result as MapValue).entries;
+            if (entries.has("kind") && entries.has("message")) {
+              lastErr = result;
+              continue;
+            }
           }
+          return result;
+        } catch (e: any) {
+          lastErr = e instanceof Error ? e.message : String(e);
+          continue;
         }
-        return result;
       }
       return lastErr;
     },
@@ -2088,12 +2119,12 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         }
         case "/": {
           if (typeof left !== "number" || typeof right !== "number") throw new ArcRuntimeError(`TypeError: cannot divide non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
-          if (right === 0) return left === 0 ? null : (left > 0 ? Infinity : -Infinity);
+          if (right === 0) throw new ArcRuntimeError("Division by zero", { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
           return left / right;
         }
         case "%": {
           if (typeof left !== "number" || typeof right !== "number") throw new ArcRuntimeError(`TypeError: cannot modulo non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
-          if (right === 0) return null;
+          if (right === 0) throw new ArcRuntimeError("Division by zero", { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
           return left % right;
         }
         case "**": {

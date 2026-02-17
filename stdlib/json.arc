@@ -41,10 +41,12 @@ fn _quote(s) {
 
 pub fn from_json(s) {
   let trimmed = trim(s)
-  if len(trimmed) == 0 { nil }
+  if len(trimmed) == 0 { error_throw("Invalid JSON: empty string") }
   el {
     let parsed = _parse_value(trimmed)
-    parsed.value
+    if parsed == nil { error_throw("Invalid JSON: " ++ s) }
+    el if len(trim(parsed.rest)) > 0 { error_throw("Invalid JSON: unexpected trailing content") }
+    el { parsed.value }
   }
 }
 

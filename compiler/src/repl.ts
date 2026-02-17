@@ -6,6 +6,7 @@ import { lex } from "./lexer.js";
 import { parse } from "./parser.js";
 import { createEnv, interpretWithEnv, toStr } from "./interpreter.js";
 import { createUseHandler } from "./modules.js";
+import { ARC_VERSION } from "./version.js";
 
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
@@ -111,7 +112,7 @@ function main() {
     prompt: "arc> ",
   });
 
-  console.log(`${CYAN}Arc REPL v0.6.4${RESET} — Type ${YELLOW}:help${RESET} for commands, ${YELLOW}:builtins${RESET} for functions`);
+  console.log(`${CYAN}Arc REPL v${ARC_VERSION}${RESET} — Type ${YELLOW}:help${RESET} for commands, ${YELLOW}:builtins${RESET} for functions`);
   rl.prompt();
 
   let buffer = "";
@@ -122,7 +123,7 @@ function main() {
 
     // Handle commands (only when not in multi-line mode)
     if (braceDepth === 0) {
-      if (trimmed === ":quit" || trimmed === ":q") {
+      if (trimmed === ":quit" || trimmed === ":q" || trimmed === ":exit") {
         console.log("Goodbye!");
         process.exit(0);
       }

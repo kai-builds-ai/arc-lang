@@ -110,7 +110,8 @@ pub fn max_by(list, f) {
 }
 
 pub fn sort_by(list, f) {
-  # Insertion sort by key function
+  # sort_by takes a key function fn(x), not a comparator fn(a, b)
+  assert(arity(f) == 1, "sort_by takes a key function fn(x) that returns a sort key, not a comparator fn(a, b). Example: sort_by(list, fn(x) => x.name)")
   let mut arr = map(list, x => x)
   for i in 1..len(arr) {
     let mut j = i

@@ -19,14 +19,14 @@ pub fn test(pattern, text) {
   regex_test(re, text)
 }
 
-# Replaces all occurrences of `pattern` with `replacement` in `text`
-# (For first-occurrence-only replacement, use replace_first)
+# Replaces the first occurrence of `pattern` with `replacement` in `text`
+# (For global replacement, use replace_all)
 pub fn replace(pattern, replacement, text) {
   let re = regex_new(pattern)
   regex_replace(re, replacement, text)
 }
 
-# Replaces only the first occurrence of `pattern` with `replacement` in `text`
+# Alias for replace — replaces only the first occurrence
 pub fn replace_first(pattern, replacement, text) {
   let re = regex_new(pattern)
   regex_replace(re, replacement, text)
