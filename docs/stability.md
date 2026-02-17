@@ -110,7 +110,7 @@ Once Arc reaches 1.0:
 
 ### Current Status
 
-Arc 0.5.6 is pre-release. No LTS guarantees apply until 1.0.
+Arc 0.5.9 is pre-release. No LTS guarantees apply until 1.0.
 
 ### Version Support Timeline (Projected)
 
