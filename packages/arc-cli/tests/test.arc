@@ -1,5 +1,6 @@
 # arc-cli tests
-use std/test: describe, it, expect_eq, expect_true
+use pkg: *
+use test: describe, it, expect_eq, expect_true, run_tests
 
 describe("cli builder", () => {
   it("creates a CLI with name", () => {
@@ -47,7 +48,8 @@ describe("parse", () => {
   it("parses positional args", () => {
     let c = cli("test") |> arg("file", "Input file", true)
     let result = parse(c, ["input.arc"])
-    expect_eq(result.args, ["input.arc"])
+    expect_eq(len(result.args), 1)
+    expect_eq(result.args[0], "input.arc")
   })
 
   it("parses mixed flags and args", () => {
@@ -58,7 +60,8 @@ describe("parse", () => {
     let result = parse(c, ["-v", "--output", "out.js", "input.arc"])
     expect_eq(result.flags["verbose"], true)
     expect_eq(result.flags["output"], "out.js")
-    expect_eq(result.args, ["input.arc"])
+    expect_eq(len(result.args), 1)
+    expect_eq(result.args[0], "input.arc")
   })
 
   it("identifies subcommands", () => {

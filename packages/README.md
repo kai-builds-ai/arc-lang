@@ -23,19 +23,20 @@ my-package/
 ├── src/
 │   └── main.arc      # Entry point (pub exports)
 ├── tests/
-│   └── test.arc      # Tests using std/test
+│   ├── pkg.arc       # Copy of src/main.arc (for test imports)
+│   └── test.arc      # Tests using the test stdlib
 └── README.md         # Documentation
 ```
 
 ## Using Packages
 
 ```arc
-use arc-fetch: get_json, post_json
-use arc-logger: Logger
+use arc-fetch: get_json, post_json, request, send
+use arc-logger: logger, info, level
 
-let log = Logger.new("my-app")
-let data = get_json("https://api.example.com/data")
-log.info("Fetched {len(data)} items")
+let log = logger("my-app") |> level("debug")
+let resp = get_json("https://api.example.com/data")
+info(log, "Fetched data", {status: resp.status})
 ```
 
 ## Creating a Package

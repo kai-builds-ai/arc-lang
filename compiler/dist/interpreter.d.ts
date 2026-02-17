@@ -22,6 +22,7 @@ declare class Env {
     private _depth;
     constructor(parent?: Env | undefined);
     get(name: string): Value;
+    allNames(): string[];
     getEntry(name: string): {
         value: Value;
         mutable: boolean;

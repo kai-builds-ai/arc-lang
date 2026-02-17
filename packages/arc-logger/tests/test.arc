@@ -1,5 +1,6 @@
 # arc-logger tests
-use std/test: describe, it, expect_eq, expect_true, expect_nil
+use pkg: *
+use test: describe, it, expect_eq, expect_true, expect_nil, run_tests
 
 describe("logger creation", () => {
   it("creates a logger with name", () => {

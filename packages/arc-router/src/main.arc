@@ -1,6 +1,8 @@
 # arc-router — HTTP request router for Arc
 # Route matching, path params, middleware pipelines, method routing
 
+use json: to_json, from_json
+
 # --- Router ---
 
 pub fn router() => {
@@ -55,15 +57,15 @@ pub fn cors(opts) => (req, next) => {
 }
 
 pub fn request_logger() => (req, next) => {
-  let start = now()
+  let start = time_ms()
   let response = next(req)
-  let elapsed = now() - start
+  let elapsed = time_ms() - start
   print("{req.method} {req.path} -> {response.status} ({elapsed}ms)")
   response
 }
 
 pub fn json_body() => (req, next) => {
-  let parsed_body = if req.body != nil { json_decode(req.body) } el { nil }
+  let parsed_body = if req.body != nil { from_json(req.body) } el { nil }
   next({method: req.method, path: req.path, headers: req.headers, body: parsed_body, params: req.params, user: req.user})
 }
 
@@ -151,7 +153,7 @@ fn run_middleware(middleware, req, handler) {
 pub fn json_response(data, status) => {
   status: if status { status } el { 200 },
   headers: {content_type: "application/json"},
-  body: json_encode(data)
+  body: to_json(data)
 }
 
 pub fn text_response(text, status) => {

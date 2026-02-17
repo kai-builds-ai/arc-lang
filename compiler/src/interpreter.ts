@@ -5,6 +5,7 @@ import * as nodeCrypto from "crypto";
 import * as nodeOs from "os";
 import * as nodeFs from "fs";
 import { execSync } from "child_process";
+import { ArcRuntimeError, ErrorCode, findClosestMatch } from "./errors.js";
 
 type Value = number | string | boolean | null | Value[] | MapValue | FnValue | AsyncValue;
 
@@ -38,7 +39,25 @@ class Env {
     const v = this.vars.get(name);
     if (v !== undefined) return v.value;
     if (this.parent) return this.parent.get(name);
-    throw new Error(`Undefined variable: ${name}`);
+    // Collect all known variable names for "did you mean?" suggestion
+    const candidates = this.allNames();
+    const closest = findClosestMatch(name, candidates);
+    throw new ArcRuntimeError(`Undefined variable: ${name}`, {
+      code: ErrorCode.UNDEFINED_VARIABLE,
+      category: "RuntimeError",
+      suggestion: closest ? `Did you mean '${closest}'?` : undefined,
+    });
+  }
+
+  allNames(): string[] {
+    const names = new Set<string>();
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let env: Env | undefined = this;
+    while (env) {
+      for (const key of env.vars.keys()) names.add(key);
+      env = env.parent;
+    }
+    return [...names];
   }
 
   // Fast lookup that returns the entry directly (avoids repeated Map lookups in hot paths)
@@ -56,12 +75,20 @@ class Env {
   assign(name: string, value: Value): void {
     const v = this.vars.get(name);
     if (v) {
-      if (!v.mutable) throw new Error(`Cannot reassign immutable variable: ${name}`);
+      if (!v.mutable) throw new ArcRuntimeError(`Cannot reassign immutable variable: ${name}`, {
+        code: ErrorCode.IMMUTABLE_REASSIGN,
+        suggestion: "Use 'let mut' to declare a mutable variable",
+      });
       v.value = value;
       return;
     }
     if (this.parent) { this.parent.assign(name, value); return; }
-    throw new Error(`Undefined variable: ${name}`);
+    const candidates = this.allNames();
+    const closest = findClosestMatch(name, candidates);
+    throw new ArcRuntimeError(`Undefined variable: ${name}`, {
+      code: ErrorCode.UNDEFINED_VARIABLE,
+      suggestion: closest ? `Did you mean '${closest}'?` : undefined,
+    });
   }
 
   has(name: string): boolean {
@@ -1056,7 +1083,12 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       return expr.parts.map(p => typeof p === "string" ? p : toStr(evalExpr(p, env))).join("");
     }
 
-    case "Identifier": return env.get(expr.name);
+    case "Identifier": {
+      try { return env.get(expr.name); } catch (e) {
+        if (e instanceof ArcRuntimeError && !e.loc) e.loc = expr.loc;
+        throw e;
+      }
+    }
 
     case "BinaryExpr": {
       // Short-circuit for logical operators
@@ -1080,11 +1112,17 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         case "-": return (left as number) - (right as number);
         case "*": return (left as number) * (right as number);
         case "/": {
-          if (right === 0) throw new Error(`Division by zero at line ${expr.loc.line}`);
+          if (right === 0) throw new ArcRuntimeError(`Division by zero`, {
+            code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
+            suggestion: "Check that the divisor is not zero before dividing.",
+          });
           return (left as number) / (right as number);
         }
         case "%": {
-          if (right === 0) throw new Error(`Modulo by zero at line ${expr.loc.line}`);
+          if (right === 0) throw new ArcRuntimeError(`Modulo by zero`, {
+            code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
+            suggestion: "Check that the divisor is not zero before dividing.",
+          });
           return (left as number) % (right as number);
         }
         case "**": return Math.pow(left as number, right as number);
@@ -1098,7 +1136,9 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
           if (Array.isArray(left) && Array.isArray(right)) return [...left, ...right];
           return toStr(left) + toStr(right);
         }
-        default: throw new Error(`Unknown operator: ${expr.op} at line ${expr.loc.line}`);
+        default: throw new ArcRuntimeError(`Unknown operator: ${expr.op}`, {
+          code: ErrorCode.INVALID_OPERATOR, category: "TypeError", loc: expr.loc,
+        });
       }
     }
 
@@ -1142,7 +1182,10 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
           }
         }
       } else {
-        throw new Error(`Not callable: ${toStr(callee)} at line ${expr.loc.line}`);
+        throw new ArcRuntimeError(`Not callable: ${toStr(callee)}`, {
+          code: ErrorCode.NOT_CALLABLE, loc: expr.loc,
+          suggestion: "Only functions can be called. Check that the value is a function.",
+        });
       }
       // Auto-await async function results
       return resolveAsync(result);
@@ -1154,7 +1197,9 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       if (obj && typeof obj === "object" && "__map" in obj) {
         return (obj as MapValue).entries.get(expr.property) ?? null;
       }
-      throw new Error(`Cannot access property '${expr.property}' on ${toStr(obj)}`);
+      throw new ArcRuntimeError(`Cannot access property '${expr.property}' on ${toStr(obj)}`, {
+        code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc,
+      });
     }
 
     case "OptionalMemberExpr": {
@@ -1163,7 +1208,9 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       if (obj && typeof obj === "object" && "__map" in obj) {
         return (obj as MapValue).entries.get(expr.property) ?? null;
       }
-      throw new Error(`Cannot access property '${expr.property}' on ${toStr(obj)}`);
+      throw new ArcRuntimeError(`Cannot access property '${expr.property}' on ${toStr(obj)}`, {
+        code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc,
+      });
     }
 
     case "TryExpr": {
@@ -1219,7 +1266,10 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
           try { return evalExpr(fn.body, fnEnv); } catch (e) { if (e instanceof ReturnSignal) return e.value; throw e; }
         }
       }
-      throw new Error(`Pipeline target must be a function at line ${expr.loc.line}`);
+      throw new ArcRuntimeError(`Pipeline target must be a function`, {
+        code: ErrorCode.NOT_CALLABLE, loc: expr.loc,
+        suggestion: "The right side of |> must be a function or function call.",
+      });
     }
 
     case "IfExpr": {

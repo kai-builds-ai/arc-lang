@@ -1,8 +1,7 @@
 # arc-fetch — HTTP utilities for Arc
 # Convenience wrappers around @GET/@POST with retry, timeout, caching, and builders
 
-use std/time: now, sleep
-use std/json: encode, decode
+use time: now, sleep
 
 # --- Response Cache ---
 

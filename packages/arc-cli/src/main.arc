@@ -73,10 +73,14 @@ pub fn parse(c, argv) {
     flags[f.long] = f.default_val
   }
 
+  if len(argv) == 0 { ret {flags: flags, args: args, command: cmd} }
+
   do {
     let token = argv[i]
 
-    if starts(token, "--") {
+    if token == nil {
+      # skip nil tokens
+    } el if starts(token, "--") {
       let name = slice(token, 2, len(token))
       let flag_def = c._flags |> find(f => f.long == name)
       if flag_def != nil and flag_def.flag_type == "value" {

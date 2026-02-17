@@ -2,13 +2,17 @@
 
 ## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/kai-builds-ai/arc-lang.git
-cd arc-lang
+### Option A: Global Install (recommended)
 
-# Install compiler dependencies
-cd compiler
+```bash
+npm install -g arc-lang
+```
+
+### Option B: From Source (for contributors)
+
+```bash
+git clone https://github.com/kai-builds-ai/arc-lang.git
+cd arc-lang/compiler
 npm install
 cd ..
 ```
@@ -27,6 +31,10 @@ print("Hello, {name}!")
 Run it:
 
 ```bash
+# If installed globally
+arc run hello.arc
+
+# If running from source
 npx tsx compiler/src/index.ts run hello.arc
 ```
 
@@ -40,6 +48,10 @@ Hello, World!
 Start an interactive session:
 
 ```bash
+# If installed globally
+arc repl
+
+# If running from source
 npx tsx compiler/src/index.ts repl
 ```
 
@@ -120,6 +132,8 @@ let user = @GET "api/users/{id}"
 ## Next Steps
 
 - **[Language Tour](language-tour.md)** — Complete walkthrough of every feature
+- **[Learn Arc](../examples/learn/)** — Step-by-step examples (basics → async → modules)
+- **[Standard Library Reference](stdlib-reference.md)** — Full stdlib API
 - **[Examples](../examples/)** — Real-world programs with token comparisons
 - **[FAQ](FAQ.md)** — Common questions answered
 - **[Grammar Spec](../spec/grammar.md)** — Formal language specification

@@ -13,6 +13,13 @@ let BLOCK_END = "\{\{% end }}"
 let BLOCK_ELSE = "\{\{% el }}"
 let BLOCK_FOR = "\{\{% for "
 
+# Helper: index_of with start position (since built-in only takes 2 args)
+fn find_from(s, sub, start) {
+  let rest = slice(s, start, len(s))
+  let idx = index_of(rest, sub)
+  if idx == nil { nil } el { idx + start }
+}
+
 # --- Built-in Filters ---
 
 let mut _filters = {
@@ -22,7 +29,7 @@ let mut _filters = {
   capitalize: v => upper(slice(v, 0, 1)) ++ slice(v, 1, len(v)),
   reverse: v => reverse(v),
   length: v => str(len(v)),
-  json: v => json_encode(v)
+  json: v => str(v)
 }
 
 pub fn register_filter(name, f) {
@@ -52,31 +59,31 @@ pub fn render(tpl, data) {
 fn strip_comments(tpl) {
   let mut result = tpl
   let mut start = index_of(result, OPEN_COMMENT)
+  if start == nil { ret result }
   do {
-    if start == -1 { ret result }
-    let end = index_of(result, CLOSE_COMMENT, start)
-    if end == -1 { ret result }
+    let end = find_from(result, CLOSE_COMMENT, start)
+    if end == nil { ret result }
     result = slice(result, 0, start) ++ slice(result, end + 3, len(result))
     start = index_of(result, OPEN_COMMENT)
-  } until start == -1
+  } until start == nil
   result
 }
 
 fn process_conditionals(tpl, data) {
   let mut result = tpl
   let mut start = index_of(result, BLOCK_IF)
+  if start == nil { ret result }
 
   do {
-    if start == -1 { ret result }
-    let cond_end = index_of(result, CLOSE_VAR, start)
+    let cond_end = find_from(result, CLOSE_VAR, start)
     let condition = slice(result, start + 7, cond_end) |> trim
 
-    let end_tag = index_of(result, BLOCK_END, start)
-    let else_tag = index_of(result, BLOCK_ELSE, start)
+    let end_tag = find_from(result, BLOCK_END, start)
+    let else_tag = find_from(result, BLOCK_ELSE, start)
 
     let truthy = resolve_value(condition, data)
 
-    if else_tag != -1 and else_tag < end_tag {
+    if else_tag != nil and else_tag < end_tag {
       let true_block = slice(result, cond_end + 2, else_tag)
       let false_block = slice(result, else_tag + 9, end_tag)
       let replacement = if truthy { true_block } el { false_block }
@@ -88,24 +95,24 @@ fn process_conditionals(tpl, data) {
     }
 
     start = index_of(result, BLOCK_IF)
-  } until start == -1
+  } until start == nil
   result
 }
 
 fn process_loops(tpl, data) {
   let mut result = tpl
   let mut start = index_of(result, BLOCK_FOR)
+  if start == nil { ret result }
 
   do {
-    if start == -1 { ret result }
-    let tag_end = index_of(result, CLOSE_VAR, start)
+    let tag_end = find_from(result, CLOSE_VAR, start)
     let loop_expr = slice(result, start + 8, tag_end) |> trim
 
     let parts = split(loop_expr, " in ")
     let item_name = parts[0] |> trim
     let list_name = parts[1] |> trim
 
-    let end_tag = index_of(result, BLOCK_END, start)
+    let end_tag = find_from(result, BLOCK_END, start)
     let body = slice(result, tag_end + 2, end_tag)
 
     let list = resolve_value(list_name, data)
@@ -120,7 +127,7 @@ fn process_loops(tpl, data) {
 
     result = slice(result, 0, start) ++ rendered ++ slice(result, end_tag + 10, len(result))
     start = index_of(result, BLOCK_FOR)
-  } until start == -1
+  } until start == nil
   result
 }
 
@@ -129,41 +136,45 @@ fn process_variables(tpl, data) {
 
   # Process escaped {{! var }}
   let mut start = index_of(result, OPEN_ESC)
-  do {
-    if start == -1 { ret result }
-    let end = index_of(result, CLOSE_VAR, start)
-    let expr = slice(result, start + 3, end) |> trim
-    let value = resolve_value(expr, data)
-    let escaped = escape_html(str(if value != nil { value } el { "" }))
-    result = slice(result, 0, start) ++ escaped ++ slice(result, end + 2, len(result))
-    start = index_of(result, OPEN_ESC)
-  } until start == -1
+  if start != nil {
+    do {
+      let end = find_from(result, CLOSE_VAR, start)
+      if end == nil { ret result }
+      let expr = slice(result, start + 3, end) |> trim
+      let value = resolve_value(expr, data)
+      let escaped = escape_html(str(if value != nil { value } el { "" }))
+      result = slice(result, 0, start) ++ escaped ++ slice(result, end + 2, len(result))
+      start = index_of(result, OPEN_ESC)
+    } until start == nil
+  }
 
   # Process {{ var }} and {{ var | filter }}
   start = index_of(result, OPEN_VAR)
-  do {
-    if start == -1 { ret result }
-    # Skip if it's a block tag
-    if slice(result, start, start + 3) == OPEN_BLOCK {
-      start = index_of(result, OPEN_VAR, start + 2)
-    } el {
-      let end = index_of(result, CLOSE_VAR, start)
-      let expr = slice(result, start + 2, end) |> trim
-
-      let value = if contains(expr, "|") {
-        let parts = split(expr, "|")
-        let var_name = parts[0] |> trim
-        let filter_name = parts[1] |> trim
-        let raw = resolve_value(var_name, data)
-        apply_filter(filter_name, raw)
+  if start != nil {
+    do {
+      # Skip if it's a block tag
+      if slice(result, start, start + 3) == OPEN_BLOCK {
+        start = find_from(result, OPEN_VAR, start + 2)
       } el {
-        resolve_value(expr, data)
-      }
+        let end = find_from(result, CLOSE_VAR, start)
+        if end == nil { ret result }
+        let expr = slice(result, start + 2, end) |> trim
 
-      result = slice(result, 0, start) ++ str(if value != nil { value } el { "" }) ++ slice(result, end + 2, len(result))
-      start = index_of(result, OPEN_VAR)
-    }
-  } until start == -1
+        let value = if contains(expr, "|") {
+          let parts = split(expr, "|")
+          let var_name = parts[0] |> trim
+          let filter_name = parts[1] |> trim
+          let raw = resolve_value(var_name, data)
+          apply_filter(filter_name, raw)
+        } el {
+          resolve_value(expr, data)
+        }
+
+        result = slice(result, 0, start) ++ str(if value != nil { value } el { "" }) ++ slice(result, end + 2, len(result))
+        start = index_of(result, OPEN_VAR)
+      }
+    } until start == nil
+  }
 
   result
 }
@@ -207,6 +218,6 @@ pub fn to_string(t) => render(t._template, t._data)
 pub fn render_string(tpl, data) => render(tpl, data)
 
 pub fn from_file(path) {
-  let content = read_file(path)
+  let content = read(path)
   template(content)
 }

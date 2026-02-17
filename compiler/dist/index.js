@@ -13,8 +13,8 @@ import { generateJS } from "./codegen-js.js";
 import { generateWAT } from "./codegen.js";
 import { format } from "./formatter.js";
 import { lint, formatDiagnostic } from "./linter.js";
-import { printVersion } from "./version.js";
-import { setPrettyErrors } from "./errors.js";
+import { printVersion, ARC_VERSION } from "./version.js";
+import { prettyPrintError, setPrettyErrors } from "./errors.js";
 import { build, test as buildTest, newProject } from "./build.js";
 import { pkgInit, pkgAdd, pkgRemove, pkgList, pkgInstall } from "./package-manager.js";
 const args = process.argv.slice(2);
@@ -101,21 +101,32 @@ else if (command === "pkg") {
         process.exit(1);
     }
 }
-else if (!command || !file) {
-    console.log("Usage:");
-    console.log("  npx tsx src/index.ts run <file.arc>   - Execute an Arc file");
-    console.log("  npx tsx src/index.ts parse <file.arc>  - Print the AST");
-    console.log("  npx tsx src/index.ts ir <file.arc>     - Print the IR");
-    console.log("  npx tsx src/index.ts opt <file.arc>    - Print optimized IR");
-    console.log("  npx tsx src/index.ts compile <file.arc> - Compile to JS (or --target=wat)");
-    console.log("  npx tsx src/index.ts check <file.arc>  - Run semantic analysis");
-    console.log("  npx tsx src/index.ts fmt <file.arc>    - Format source code");
-    console.log("  npx tsx src/index.ts lint <file.arc>   - Lint source code");
-    console.log("  npx tsx src/index.ts repl              - Start interactive REPL");
-    console.log("  npx tsx src/index.ts fuzz [--iterations=N] - Fuzz test the language");
-    console.log("  npx tsx src/index.ts bench             - Run performance benchmarks");
-    console.log("  npx tsx src/index.ts bench --tokens    - Run token efficiency comparison");
-    process.exit(1);
+else if (command === "help" || command === "--help" || command === "-h" || !command || !file) {
+    console.log(`Arc ${ARC_VERSION} — A programming language designed by AI agents, for AI agents.\n`);
+    console.log("Usage: arc <command> [options]\n");
+    console.log("Commands:");
+    console.log("  run <file.arc>          Execute an Arc file");
+    console.log("  parse <file.arc>        Print the AST");
+    console.log("  ir <file.arc>           Print the IR");
+    console.log("  opt <file.arc>          Print optimized IR");
+    console.log("  compile <file.arc>      Compile to JS (or --target=wat)");
+    console.log("  check <file.arc>        Run semantic analysis");
+    console.log("  fmt <file.arc>          Format source code (--write to overwrite)");
+    console.log("  lint <file.arc>         Lint source code");
+    console.log("  repl                    Start interactive REPL");
+    console.log("  build                   Build the current project");
+    console.log("  test                    Run project tests");
+    console.log("  new <name>              Create a new project");
+    console.log("  pkg <sub>               Package manager (init|add|remove|list|install)");
+    console.log("  version                 Print version info");
+    console.log("\nOptions:");
+    console.log("  --version, -v           Print version");
+    console.log("  --help, -h              Show this help");
+    console.log("  --no-pretty-errors      Disable pretty error formatting");
+    if (!command || (command !== "help" && command !== "--help" && command !== "-h"))
+        process.exit(1);
+    else
+        process.exit(0);
 }
 else {
     const filePath = resolve(file);
@@ -210,7 +221,12 @@ else {
         }
     }
     catch (e) {
-        console.error(e.message);
+        if (e instanceof Error) {
+            console.error(prettyPrintError(e, source, true, filePath));
+        }
+        else {
+            console.error(e.message ?? String(e));
+        }
         process.exit(1);
     }
 }

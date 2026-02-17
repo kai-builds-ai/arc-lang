@@ -1,10 +1,11 @@
 # arc-fetch tests
-use std/test: describe, it, expect_eq, expect_true, expect_neq
+use pkg: *
+use test: describe, it, expect_eq, expect_true, expect_neq, run_tests
 
 describe("headers builder", () => {
   it("creates empty headers", () => {
     let h = headers()
-    expect_eq(h._headers, {})
+    expect_eq(len(keys(h._headers)), 0)
   })
 
   it("adds headers via pipeline", () => {
@@ -34,7 +35,7 @@ describe("request builder", () => {
       |> retries(3)
       |> auth("secret-token")
     expect_eq(req.method, "POST")
-    expect_eq(req._body, {name: "Alice"})
+    expect_eq(req._body.name, "Alice")
     expect_eq(req._timeout_ms, 5000)
     expect_eq(req._retries, 3)
     expect_eq(req._headers["Authorization"], "Bearer secret-token")

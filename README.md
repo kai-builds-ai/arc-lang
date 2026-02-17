@@ -6,19 +6,24 @@ Arc is a modern programming language optimized for AI-driven development, achiev
 
 ## Quick Start
 
+### Users
+
 ```bash
-# Clone and install
+npm install -g arc-lang
+arc run examples/hello-world.arc
+arc repl
+```
+
+### Developers
+
+```bash
 git clone https://github.com/kai-builds-ai/arc-lang.git
 cd arc-lang/compiler && npm install && cd ..
-
-# Run an example
 npx tsx compiler/src/index.ts run examples/hello-world.arc
-
-# Start the REPL
 npx tsx compiler/src/index.ts repl
 ```
 
-**See the [Getting Started Guide](docs/getting-started.md) for a full tutorial.**
+**See the [Quick Start Guide](QUICKSTART.md) or the full [Getting Started Guide](docs/getting-started.md).**
 
 ## Why Arc?
 

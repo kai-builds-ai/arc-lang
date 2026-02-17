@@ -1,5 +1,7 @@
 # arc-router tests
-use std/test: describe, it, expect_eq, expect_true
+use pkg: *
+use json: from_json
+use test: describe, it, expect_eq, expect_true, run_tests
 
 describe("router creation", () => {
   it("creates empty router", () => {
@@ -37,7 +39,7 @@ describe("route matching", () => {
     let r = router() |> get("/users/:id", (req) => ok({id: req.params.id}))
     let response = handle(r, {method: "GET", path: "/users/42"})
     expect_eq(response.status, 200)
-    let body = json_decode(response.body)
+    let body = from_json(response.body)
     expect_eq(body.id, "42")
   })
 
@@ -46,7 +48,7 @@ describe("route matching", () => {
       ok({user: req.params.userId, post: req.params.postId})
     })
     let response = handle(r, {method: "GET", path: "/users/1/posts/99"})
-    let body = json_decode(response.body)
+    let body = from_json(response.body)
     expect_eq(body.user, "1")
     expect_eq(body.post, "99")
   })
@@ -132,7 +134,7 @@ describe("custom 404", () => {
       |> not_found((req) => json_response({error: "Oops", path: req.path}, 404))
     let response = handle(r, {method: "GET", path: "/nope"})
     expect_eq(response.status, 404)
-    let body = json_decode(response.body)
+    let body = from_json(response.body)
     expect_eq(body.path, "/nope")
   })
 })

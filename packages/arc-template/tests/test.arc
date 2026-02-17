@@ -1,5 +1,6 @@
 # arc-template tests
-use std/test: describe, it, expect_eq, expect_true
+use pkg: *
+use test: describe, it, expect_eq, expect_true, run_tests
 
 let OPEN = "\{\{"
 let CLOSE = "}}"

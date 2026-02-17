@@ -40,13 +40,25 @@ export interface ArcError {
 }
 export declare function levenshtein(a: string, b: string): number;
 export declare function findClosestMatch(name: string, candidates: string[], maxDistance?: number): string | null;
-export declare function formatError(error: ArcError, useColor?: boolean): string;
+export declare function formatError(error: ArcError, useColor?: boolean, filePath?: string): string;
 export declare function undefinedVariableError(name: string, candidates: string[], loc?: AST.Loc, source?: string): ArcError;
 export declare function parseError(message: string, loc?: AST.Loc, source?: string, suggestion?: string): ArcError;
 export declare function typeError(message: string, loc?: AST.Loc, source?: string): ArcError;
 export declare function runtimeError(code: ErrorCode, message: string, loc?: AST.Loc, source?: string, suggestion?: string): ArcError;
 export declare function importError(message: string, loc?: AST.Loc, source?: string): ArcError;
 export declare function securityError(code: ErrorCode, message: string): ArcError;
-export declare function prettyPrintError(err: Error, source?: string, useColor?: boolean): string;
+export declare function prettyPrintError(err: Error, source?: string, useColor?: boolean, filePath?: string): string;
+export declare class ArcRuntimeError extends Error {
+    loc?: AST.Loc;
+    arcCode: ErrorCode;
+    arcCategory: ErrorCategory;
+    suggestion?: string;
+    constructor(message: string, options?: {
+        code?: ErrorCode;
+        category?: ErrorCategory;
+        loc?: AST.Loc;
+        suggestion?: string;
+    });
+}
 export declare function setPrettyErrors(enabled: boolean): void;
 export declare function isPrettyErrorsEnabled(): boolean;

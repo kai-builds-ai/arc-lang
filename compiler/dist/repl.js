@@ -4,6 +4,7 @@ import { readFileSync } from "fs";
 import { lex } from "./lexer.js";
 import { parse } from "./parser.js";
 import { createEnv, interpretWithEnv, toStr } from "./interpreter.js";
+import { createUseHandler } from "./modules.js";
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
 const CYAN = "\x1b[36m";
@@ -11,6 +12,7 @@ const YELLOW = "\x1b[33m";
 const RESET = "\x1b[0m";
 let showAst = false;
 let env = createEnv();
+const useHandler = createUseHandler(process.cwd() + "/repl.arc");
 function printHelp() {
     console.log(`${CYAN}Arc REPL Commands:${RESET}`);
     console.log(`  ${YELLOW}:help${RESET}          Show this help message`);
@@ -29,7 +31,7 @@ function execute(source) {
         if (showAst) {
             console.log(`${CYAN}AST:${RESET}`, JSON.stringify(ast, null, 2));
         }
-        const result = interpretWithEnv(ast, env);
+        const result = interpretWithEnv(ast, env, useHandler);
         if (result !== null && result !== undefined) {
             console.log(`${GREEN}${toStr(result)}${RESET}`);
         }

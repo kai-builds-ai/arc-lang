@@ -84,11 +84,18 @@ export function findClosestMatch(name, candidates, maxDistance = 3) {
     return best;
 }
 // Format a rich error message with source snippet
-export function formatError(error, useColor = true) {
+export function formatError(error, useColor = true, filePath) {
     const c = useColor ? COLORS : { red: "", yellow: "", cyan: "", gray: "", bold: "", reset: "", underline: "" };
     const lines = [];
     // Header: category[code]: message
     lines.push(`${c.red}${c.bold}${error.category}[${error.code}]${c.reset}: ${c.bold}${error.message}${c.reset}`);
+    // Location line
+    if (filePath && error.loc) {
+        lines.push(`${c.cyan}  --> ${filePath}:${error.loc.line}:${error.loc.col}${c.reset}`);
+    }
+    else if (error.loc) {
+        lines.push(`${c.cyan}  --> line ${error.loc.line}:${error.loc.col}${c.reset}`);
+    }
     // Source snippet with error pointer
     if (error.source && error.loc) {
         const sourceLines = error.source.split("\n");
@@ -188,10 +195,54 @@ export function securityError(code, message) {
     };
 }
 // Pretty-print an error that was caught during execution
-export function prettyPrintError(err, source, useColor = true) {
+export function prettyPrintError(err, source, useColor = true, filePath) {
+    // Check for ParseError (has loc property)
+    if ("loc" in err && err.loc && err.message.startsWith("Parse error")) {
+        const loc = err.loc;
+        let cleanMsg = err.message.replace(/^Parse error at line \d+, col \d+: /, "");
+        // Make token names more human-friendly
+        cleanMsg = cleanMsg
+            .replace(/\bRBrace\b/g, "'}'")
+            .replace(/\bLBrace\b/g, "'{'")
+            .replace(/\bRParen\b/g, "')'")
+            .replace(/\bLParen\b/g, "'('")
+            .replace(/\bRBracket\b/g, "']'")
+            .replace(/\bLBracket\b/g, "'['")
+            .replace(/\bEOF ''/g, "end of file")
+            .replace(/^Expected /, "Expected ");
+        const rawMsg = err.message.replace(/^Parse error at line \d+, col \d+: /, "");
+        let suggestion;
+        if (rawMsg.includes("Expected RBrace"))
+            suggestion = "Add a closing '}' to match the opening brace.";
+        else if (rawMsg.includes("Expected RParen"))
+            suggestion = "Add a closing ')' to match the opening parenthesis.";
+        else if (rawMsg.includes("Expected RBracket"))
+            suggestion = "Add a closing ']' to match the opening bracket.";
+        return formatError({
+            code: ErrorCode.UNEXPECTED_TOKEN,
+            category: "ParseError",
+            message: cleanMsg,
+            loc,
+            source,
+            suggestion,
+        }, useColor, filePath);
+    }
+    // If it's already a structured ArcRuntimeError, use its fields directly
+    if (err instanceof ArcRuntimeError) {
+        const cleanMsg = err.message.replace(/ at line \d+(?:, col \d+)?$/, "");
+        return formatError({
+            code: err.arcCode,
+            category: err.arcCategory,
+            message: cleanMsg,
+            loc: err.loc,
+            source,
+            suggestion: err.suggestion,
+        }, useColor, filePath);
+    }
     // Try to extract location from error message
     const locMatch = err.message.match(/at line (\d+)(?:, col (\d+))?/);
     const loc = locMatch ? { line: parseInt(locMatch[1]), col: parseInt(locMatch[2] || "1") } : undefined;
+    const cleanMsg = err.message.replace(/ at line \d+(?:, col \d+)?$/, "");
     // Detect error category
     let category = "RuntimeError";
     let code = ErrorCode.UNDEFINED_VARIABLE;
@@ -199,13 +250,16 @@ export function prettyPrintError(err, source, useColor = true) {
     if (err.message.includes("Parse error")) {
         category = "ParseError";
         code = ErrorCode.UNEXPECTED_TOKEN;
+        // Extract suggestion for parse errors
+        if (err.message.includes("Expected RBrace"))
+            suggestion = "Missing closing brace '}'";
+        else if (err.message.includes("Expected RParen"))
+            suggestion = "Missing closing parenthesis ')'";
+        else if (err.message.includes("Expected RBracket"))
+            suggestion = "Missing closing bracket ']'";
     }
     else if (err.message.includes("Undefined variable")) {
         code = ErrorCode.UNDEFINED_VARIABLE;
-        const nameMatch = err.message.match(/Undefined variable: (\w+)/);
-        if (nameMatch) {
-            suggestion = `Check that '${nameMatch[1]}' is defined before use`;
-        }
     }
     else if (err.message.includes("Cannot reassign immutable")) {
         code = ErrorCode.IMMUTABLE_REASSIGN;
@@ -213,12 +267,39 @@ export function prettyPrintError(err, source, useColor = true) {
     }
     else if (err.message.includes("Not callable")) {
         code = ErrorCode.NOT_CALLABLE;
+        suggestion = "Only functions can be called. Check that the value is a function.";
+    }
+    else if (err.message.includes("Division by zero")) {
+        code = ErrorCode.DIVISION_BY_ZERO;
+        suggestion = "Check that the divisor is not zero before dividing.";
+    }
+    else if (err.message.includes("Module not found")) {
+        category = "ImportError";
+        code = ErrorCode.MODULE_NOT_FOUND;
     }
     else if (err.message.includes("SecurityError") || err.name === "SecurityError") {
         category = "SecurityError";
         code = ErrorCode.EXECUTION_LIMIT;
     }
-    return formatError({ code, category, message: err.message, loc, source, suggestion }, useColor);
+    else if (err.message.includes("Cannot access property")) {
+        code = ErrorCode.PROPERTY_ACCESS;
+    }
+    return formatError({ code, category, message: cleanMsg, loc, source, suggestion }, useColor, filePath);
+}
+// Custom error class that carries structured location info
+export class ArcRuntimeError extends Error {
+    loc;
+    arcCode;
+    arcCategory;
+    suggestion;
+    constructor(message, options = {}) {
+        super(message);
+        this.name = "ArcRuntimeError";
+        this.arcCode = options.code ?? ErrorCode.UNDEFINED_VARIABLE;
+        this.arcCategory = options.category ?? "RuntimeError";
+        this.loc = options.loc;
+        this.suggestion = options.suggestion;
+    }
 }
 let prettyErrorsEnabled = true;
 export function setPrettyErrors(enabled) {

@@ -1,11 +1,11 @@
 # arc-logger — Structured logging for Arc
 # Log levels, JSON output, timestamps, context/scope, colorized console
 
-use std/time: now, format_time
+use json: to_json
 
 # --- Log Levels ---
 
-let LEVELS = {
+pub let LEVELS = {
   debug: 0,
   info: 1,
   warn: 2,
@@ -93,8 +93,8 @@ fn emit(log, lvl, msg, data) {
       level: lvl,
       msg: msg,
       name: log._name,
-      time: now(),
-      timestamp: format_time(now(), "ISO"),
+      time: time_ms(),
+      timestamp: str(time_ms()),
       data: data,
       context: log._context
     }
@@ -131,7 +131,7 @@ fn json_format(entry) {
   if len(entry.context) > 0 {
     obj["context"] = entry.context
   }
-  json_encode(obj)
+  to_json(obj)
 }
 
 fn pretty_format(entry) {
@@ -165,9 +165,9 @@ pub fn json_logger(name) => logger(name) |> format("json")
 # --- Timer Utility ---
 
 pub fn timed(log, label, f) {
-  let start = now()
+  let start = time_ms()
   let result = f()
-  let elapsed = now() - start
+  let elapsed = time_ms() - start
   info(log, "{label} completed", {duration_ms: elapsed})
   result
 }
@@ -179,5 +179,5 @@ pub fn file_output(path) => (fmt, entry) => {
     "json" => json_format(entry)
     _ => "{entry.timestamp} [{upper(entry.level)}] [{entry.name}] {entry.msg}"
   }
-  append_file(path, line ++ "\n")
+  write(path, line)
 }

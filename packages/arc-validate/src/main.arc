@@ -20,7 +20,8 @@ pub fn is_string() => validator(v => {
 })
 
 pub fn is_number() => validator(v => {
-  if type_of(v) == "number" { ok_result(v) } el { err_result("Expected number, got {type_of(v)}") }
+  let t = type_of(v)
+  if t == "int" or t == "float" { ok_result(v) } el { err_result("Expected number, got {t}") }
 })
 
 pub fn is_bool() => validator(v => {
@@ -50,7 +51,7 @@ pub fn max_length(n) => validator(v => {
 })
 
 pub fn matches(pattern) => validator(v => {
-  if regex_match(pattern, v) { ok_result(v) } el { err_result("Does not match pattern {pattern}") }
+  if contains(v, pattern) { ok_result(v) } el { err_result("Does not match pattern {pattern}") }
 })
 
 pub fn email() => validator(v => {
@@ -100,7 +101,7 @@ pub fn positive() => validator(v => {
 })
 
 pub fn integer() => validator(v => {
-  if type_of(v) == "number" and v == floor(v) { ok_result(v) }
+  if type_of(v) == "int" { ok_result(v) }
   el { err_result("Must be an integer, got {v}") }
 })
 
