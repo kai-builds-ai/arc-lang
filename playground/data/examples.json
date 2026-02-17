@@ -1,0 +1,122 @@
+[
+  {
+    "category": "Basics",
+    "name": "Hello World",
+    "description": "Your first Arc program — variables, string interpolation, and print",
+    "code": "// Hello World\nlet name = \"World\"\nprint(\"Hello, {name}!\")\nprint(\"Welcome to Arc!\")"
+  },
+  {
+    "category": "Basics",
+    "name": "Variables & Types",
+    "description": "Immutable and mutable variables with strings, numbers, bools, lists, and maps",
+    "code": "// Variables and Types\nlet name = \"Alice\"\nlet age = 30\nlet pi = 3.14159\nlet active = true\nlet colors = [\"red\", \"green\", \"blue\"]\nlet user = {name: \"Bob\", score: 95}\n\nprint(\"Name: {name}, Age: {age}\")\nprint(\"Pi: {pi}, Active: {active}\")\nprint(\"Colors: {colors}\")\nprint(\"User: {user.name} scored {user.score}\")\n\nlet mut count = 0\ncount = count + 1\ncount = count + 1\nprint(\"Count: {count}\")"
+  },
+  {
+    "category": "Basics",
+    "name": "Functions",
+    "description": "Expression functions, block functions, recursion, and closures",
+    "code": "// Functions\nfn add(a, b) => a + b\nfn greet(name) => \"Hello, {name}!\"\n\nfn factorial(n) {\n  if n <= 1 { 1 }\n  el { n * factorial(n - 1) }\n}\n\nfn make_adder(n) => x => x + n\nlet add5 = make_adder(5)\n\nprint(greet(\"Arc\"))\nprint(\"2 + 3 = {add(2, 3)}\")\nprint(\"5! = {factorial(5)}\")\nprint(\"add5(10) = {add5(10)}\")"
+  },
+  {
+    "category": "Basics",
+    "name": "Control Flow",
+    "description": "If/else expressions, match patterns, and guards",
+    "code": "// Control Flow\nlet x = 42\nlet size = if x > 100 { \"big\" } el if x > 10 { \"medium\" } el { \"small\" }\nprint(\"x is {size}\")\n\nlet day = \"Saturday\"\nlet plan = match day {\n  \"Saturday\" | \"Sunday\" => \"relax\",\n  \"Friday\" => \"party\",\n  _ => \"work\"\n}\nprint(\"{day}: {plan}\")\n\nfn classify(n) => match n {\n  n if n < 0 => \"negative\",\n  0 => \"zero\",\n  n if n > 100 => \"huge\",\n  _ => \"positive\"\n}\n\nfor val in [-5, 0, 42, 200] {\n  print(\"{val} is {classify(val)}\")\n}"
+  },
+  {
+    "category": "Basics",
+    "name": "While Loops",
+    "description": "While loops with the Collatz conjecture as a fun example",
+    "code": "// While Loops\nlet mut sum = 0\nlet mut i = 1\nwhile i <= 10 {\n  sum = sum + i\n  i = i + 1\n}\nprint(\"Sum 1..10 = {sum}\")\n\n// Collatz conjecture\nlet mut n = 27\nlet mut steps = 0\nwhile n != 1 {\n  n = if n % 2 == 0 { n / 2 } el { n * 3 + 1 }\n  steps = steps + 1\n}\nprint(\"Collatz(27) took {steps} steps\")"
+  },
+  {
+    "category": "Pipelines",
+    "name": "Simple Pipeline",
+    "description": "The |> operator passes values left-to-right through functions",
+    "code": "// Simple Pipeline\nlet result = \"  hello world  \"\n  |> trim\n  |> upper\nprint(result)\n\nlet nums = [1, 2, 3, 4, 5]\nlet doubled = nums |> map(x => x * 2)\nprint(\"Doubled: {doubled}\")\n\nlet total = nums |> sum\nprint(\"Sum: {total}\")"
+  },
+  {
+    "category": "Pipelines",
+    "name": "Chaining Transforms",
+    "description": "Chain multiple operations into a readable data pipeline",
+    "code": "// Chaining Transforms\nlet words = [\"hello\", \"world\", \"arc\", \"lang\", \"is\", \"cool\"]\nlet result = words\n  |> filter(w => len(w) > 3)\n  |> map(upper)\n  |> sort\n  |> join(\", \")\nprint(result)\n\nlet data = [5, 3, 8, 1, 9, 2, 7]\nlet top3 = data |> sort |> reverse |> take(3)\nprint(\"Top 3: {top3}\")"
+  },
+  {
+    "category": "Pipelines",
+    "name": "Map / Filter / Reduce",
+    "description": "Process a list of orders using functional pipeline operations",
+    "code": "// Pipeline with Map/Filter/Reduce\nlet orders = [\n  {item: \"Coffee\", price: 4.50, qty: 2},\n  {item: \"Muffin\", price: 3.00, qty: 1},\n  {item: \"Tea\", price: 3.50, qty: 3},\n  {item: \"Cookie\", price: 2.00, qty: 5}\n]\n\nlet total = orders\n  |> map(o => o.price * o.qty)\n  |> reduce((sum, x) => sum + x, 0)\nprint(\"Order total: ${total}\")\n\nlet expensive = orders\n  |> filter(o => o.price > 3.00)\n  |> map(o => o.item)\nprint(\"Premium items: {expensive}\")"
+  },
+  {
+    "category": "Strings",
+    "name": "String Interpolation",
+    "description": "Embed expressions directly inside strings with {curly braces}",
+    "code": "// String Interpolation\nlet name = \"Arc\"\nlet version = 1\nprint(\"Welcome to {name} v{version}!\")\n\nlet a = 7\nlet b = 6\nprint(\"{a} x {b} = {a * b}\")\n\nlet items = [\"apples\", \"bananas\", \"cherries\"]\nprint(\"I have {len(items)} fruits: {join(items, \", \")}\")"
+  },
+  {
+    "category": "Strings",
+    "name": "String Methods",
+    "description": "Built-in string operations: split, join, replace, trim, and more",
+    "code": "// String Methods\nlet s = \"Hello, World!\"\nprint(\"Upper: {upper(s)}\")\nprint(\"Lower: {lower(s)}\")\nprint(\"Length: {len(s)}\")\n\nlet csv_line = \"alice,bob,carol,dave\"\nlet names = split(csv_line, \",\")\nprint(\"Names: {names}\")\nprint(\"Joined: {join(names, \" & \")}\")\n\nlet msg = \"I love JavaScript\"\nlet fixed = replace(msg, \"JavaScript\", \"Arc\")\nprint(fixed)\n\nprint(\"Trimmed: '{trim(\"  spaces  \")}'\")\nprint(\"Repeat: {repeat(\"ha\", 3)}\")"
+  },
+  {
+    "category": "Collections",
+    "name": "List Operations",
+    "description": "Map, filter, reduce, sort, sort_by — all the list essentials",
+    "code": "// List Operations\nlet nums = [5, 2, 8, 1, 9, 3, 7, 4, 6]\n\nprint(\"Sorted: {sort(nums)}\")\nprint(\"Reversed: {reverse(nums)}\")\nprint(\"First: {head(nums)}, Rest: {tail(nums)}\")\n\nlet evens = nums |> filter(x => x % 2 == 0)\nlet squares = nums |> map(x => x * x)\nlet total = nums |> reduce((acc, x) => acc + x, 0)\n\nprint(\"Evens: {evens}\")\nprint(\"Squares: {squares}\")\nprint(\"Total: {total}\")\n\n// Sort by custom criteria\nlet words = [\"banana\", \"fig\", \"cherry\", \"apple\"]\nlet by_len = sort_by(words, w => len(w))\nprint(\"By length: {by_len}\")"
+  },
+  {
+    "category": "Collections",
+    "name": "Maps",
+    "description": "Create, access, and iterate over key-value maps",
+    "code": "// Maps and Iteration\nlet scores = {alice: 95, bob: 82, carol: 91, dave: 78}\n\nprint(\"Keys: {keys(scores)}\")\nprint(\"Values: {values(scores)}\")\nprint(\"Alice: {scores.alice}\")\n\n// Build a map dynamically\nlet mut inventory = {}\ninventory[\"apples\"] = 5\ninventory[\"bananas\"] = 3\ninventory[\"cherries\"] = 12\nprint(\"Inventory: {inventory}\")\n\n// Iterate with for\nfor name in keys(scores) {\n  print(\"{name}: {scores[name]}\")\n}"
+  },
+  {
+    "category": "Collections",
+    "name": "Ranges & Comprehensions",
+    "description": "Range expressions and list comprehensions for concise generation",
+    "code": "// Ranges and Comprehensions\nfor i in 1..6 {\n  print(\"Step {i}\")\n}\n\nlet squares = [x * x for x in 1..11]\nprint(\"Squares 1-10: {squares}\")\n\nlet fizz = [match [n % 3, n % 5] {\n  [0, 0] => \"FizzBuzz\",\n  [0, _] => \"Fizz\",\n  [_, 0] => \"Buzz\",\n  _ => str(n)\n} for n in 1..16]\nprint(\"FizzBuzz: {fizz}\")"
+  },
+  {
+    "category": "Error Handling",
+    "name": "Try / Catch",
+    "description": "Try/catch as expressions — catch errors and provide fallback values",
+    "code": "// Try/Catch Expressions\nlet result = try {\n  let x = 10 / 0\n  print(\"Got: {x}\")\n} catch e {\n  print(\"Caught error: {e}\")\n}\n\n// Try/catch as expression\nlet safe = try { int(\"not a number\") } catch e { -1 }\nprint(\"Safe parse: {safe}\")\n\nlet good = try { int(\"42\") } catch e { -1 }\nprint(\"Good parse: {good}\")"
+  },
+  {
+    "category": "Error Handling",
+    "name": "Throw & Recovery",
+    "description": "Custom errors with throw() and structured error recovery",
+    "code": "// Throw and Error Recovery\nfn divide(a, b) {\n  if b == 0 { throw(\"Cannot divide by zero!\") }\n  a / b\n}\n\nlet result = try { divide(10, 0) } catch e { \"Error: {e}\" }\nprint(result)\n\nlet ok = try { divide(10, 2) } catch e { \"Error: {e}\" }\nprint(\"10 / 2 = {ok}\")\n\nfn parse_age(s) {\n  let n = try { int(s) } catch e { throw(\"Not a number: {s}\") }\n  if n < 0 or n > 150 { throw(\"Invalid age: {n}\") }\n  n\n}\n\nfor input in [\"25\", \"abc\", \"200\"] {\n  let age = try { parse_age(input) } catch e { \"Error: {e}\" }\n  print(\"parse_age(\\\"{input}\\\") = {age}\")\n}"
+  },
+  {
+    "category": "Error Handling",
+    "name": "Result Type",
+    "description": "Ok/Err result types with pattern matching for typed error handling",
+    "code": "// Result Pattern\nlet r1 = Ok(42)\nlet r2 = Err(\"not found\")\n\nprint(\"r1: {r1}, r2: {r2}\")\n\nlet val = match r1 {\n  Ok(v) => \"Success: {v}\",\n  Err(e) => \"Failed: {e}\"\n}\nprint(val)\n\nprint(\"is_ok: {is_ok(r1)}, is_err: {is_err(r2)}\")\nprint(\"unwrap: {unwrap(r1)}\")\nprint(\"unwrap_or: {unwrap_or(r2, 0)}\")"
+  },
+  {
+    "category": "Stdlib Showcase",
+    "name": "Math Functions",
+    "description": "The math stdlib: constants, powers, roots, factorials, and trig",
+    "code": "// Math Functions\nuse math\n\nprint(\"PI = {math.PI}\")\nprint(\"abs(-42) = {math.abs(-42)}\")\nprint(\"pow(2, 10) = {math.pow(2, 10)}\")\nprint(\"sqrt(144) = {math.sqrt(144)}\")\nprint(\"factorial(10) = {math.factorial(10)}\")\nprint(\"gcd(48, 18) = {math.gcd(48, 18)}\")\n\nlet nums = [4, 7, 2, 9, 1]\nprint(\"sum: {math.sum(nums)}\")\nprint(\"product: {math.product(nums)}\")\n\nprint(\"sin(PI/2) = {math.sin(math.PI / 2)}\")\nprint(\"log2(1024) = {math.log2(1024)}\")"
+  },
+  {
+    "category": "Stdlib Showcase",
+    "name": "JSON",
+    "description": "Parse and generate JSON with the json stdlib module",
+    "code": "// JSON Parsing and Generation\nuse json\n\nlet data = {\n  name: \"Arc Lang\",\n  version: 1,\n  features: [\"pipelines\", \"pattern matching\", \"stdlib\"]\n}\n\nlet json_str = json.to_json(data)\nprint(\"JSON: {json_str}\")\n\nlet pretty_str = json.pretty(data)\nprint(\"Pretty:\\n{pretty_str}\")\n\n// Parse JSON back\nlet parsed = json.from_json(\"[1, 2, 3]\")\nprint(\"Parsed: {parsed}\")\n\n// Nested access\nlet config = json.from_json(\"{\\\"db\\\": {\\\"host\\\": \\\"localhost\\\", \\\"port\\\": 5432}}\")\nprint(\"DB host: {json.get_path(config, \"db.host\")}\")"
+  },
+  {
+    "category": "Stdlib Showcase",
+    "name": "Regex",
+    "description": "Pattern matching, extraction, and replacement with regular expressions",
+    "code": "// Regex\nuse regex\n\nlet text = \"Call me at 555-1234 or 555-5678\"\nlet phones = regex.find_all(\"\\\\d{3}-\\\\d{4}\", text)\n  |> map(m => m.match)\nprint(\"Phone numbers: {phones}\")\n\nlet has_email = regex.test(\"[a-z]+@[a-z]+\\\\.[a-z]+\", \"hello user@example.com\")\nprint(\"Has email: {has_email}\")\n\nlet cleaned = regex.replace_all(\"\\\\s+\", \" \", \"too   many    spaces\")\nprint(\"Cleaned: {cleaned}\")\n\nlet parts = regex.split(\"[,;]\", \"a,b;c,d;e\")\nprint(\"Split: {parts}\")\n\nlet caps = regex.capture(\"(\\\\w+)@(\\\\w+)\", \"user@example\")\nprint(\"Captures: {caps}\")"
+  },
+  {
+    "category": "Stdlib Showcase",
+    "name": "CSV Processing",
+    "description": "Parse CSV data into records and generate CSV from maps",
+    "code": "// CSV Processing\nuse csv\n\nlet data = \"name,age,city\\nAlice,30,NYC\\nBob,25,LA\\nCarol,28,Chicago\"\nlet records = csv.parse_csv_headers(data)\nprint(\"Records: {records}\")\n\nfor person in records {\n  print(\"{person.name} is {person.age}, lives in {person.city}\")\n}\n\n// Generate CSV from data\nlet rows = [\n  {name: \"Dave\", score: 95},\n  {name: \"Eve\", score: 87}\n]\nlet output = csv.to_csv(rows)\nprint(\"\\nGenerated CSV:\\n{output}\")"
+  }
+]

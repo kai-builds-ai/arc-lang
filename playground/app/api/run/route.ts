@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFileSync, unlinkSync } from "fs";
-import { join } from "path";
+import { writeFileSync, unlinkSync, existsSync, readFileSync } from "fs";
+import { join, resolve, dirname } from "path";
 import { randomUUID } from "crypto";
 import { tmpdir } from "os";
+import { createRequire } from "module";
 
 export const runtime = "nodejs";
 export const maxDuration = 10;
@@ -36,17 +37,28 @@ export async function POST(req: NextRequest) {
       const { lex } = await import("arc-lang/dist/lexer.js");
       const { parse } = await import("arc-lang/dist/parser.js");
       const { interpret } = await import("arc-lang/dist/interpreter.js");
-      const { createUseHandler, clearModuleCache } = await import("arc-lang/dist/modules.js");
+      const { clearModuleCache, loadModule, handleUse } = await import("arc-lang/dist/modules.js");
 
-      // Write code to a temp file so the module resolver can find stdlib
-      // relative to it (stdlib is bundled inside the arc-lang npm package)
+      // Find the stdlib directory inside the arc-lang npm package
+      const require2 = createRequire(import.meta.url);
+      const arcPkgJson = require2.resolve("arc-lang/package.json");
+      const arcRoot = dirname(arcPkgJson);
+      const stdlibDir = join(arcRoot, "stdlib");
+
+      // Write code to a temp file (needed for error messages)
       const tmpDir = tmpdir();
       const filename = `arc-playground-${randomUUID()}.arc`;
       const filepath = join(tmpDir, filename);
       writeFileSync(filepath, code, "utf-8");
 
-      // Clear module cache between runs to avoid stale state
+      // Clear module cache between runs
       clearModuleCache();
+
+      // Custom use handler that resolves stdlib from the npm package directly
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const useHandler = (stmt: any, env: any) => {
+        return handleUse(stmt, env, join(stdlibDir, "__playground__.arc"));
+      };
 
       // Capture console.log output
       const outputLines: string[] = [];
@@ -64,8 +76,6 @@ export async function POST(req: NextRequest) {
       try {
         const tokens = lex(code);
         const ast = parse(tokens);
-        const useHandler = createUseHandler(filepath);
-
         // Run with a timeout
         await Promise.race([
           new Promise<void>((resolve, reject) => {
