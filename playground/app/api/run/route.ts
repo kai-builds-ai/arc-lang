@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFileSync, unlinkSync, existsSync, readFileSync } from "fs";
-import { join, resolve, dirname } from "path";
+import { writeFileSync, unlinkSync } from "fs";
+import { join } from "path";
 import { randomUUID } from "crypto";
 import { tmpdir } from "os";
-import { createRequire } from "module";
 
 export const runtime = "nodejs";
 export const maxDuration = 10;
@@ -40,10 +39,8 @@ export async function POST(req: NextRequest) {
       const { clearModuleCache, loadModule, handleUse } = await import("arc-lang/dist/modules.js");
 
       // Find the stdlib directory inside the arc-lang npm package
-      const require2 = createRequire(import.meta.url);
-      const arcPkgJson = require2.resolve("arc-lang/package.json");
-      const arcRoot = dirname(arcPkgJson);
-      const stdlibDir = join(arcRoot, "stdlib");
+      // On Vercel, process.cwd() is /var/task
+      const stdlibDir = join(process.cwd(), "node_modules", "arc-lang", "stdlib");
 
       // Write code to a temp file (needed for error messages)
       const tmpDir = tmpdir();
