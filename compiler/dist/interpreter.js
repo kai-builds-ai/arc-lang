@@ -182,7 +182,7 @@ function makePrelude(env) {
         print: (...args) => { console.log(args.map(toStr).join(" ")); return null; },
         len: (v) => {
             if (typeof v === "string")
-                return v.length;
+                return [...v].length; // codepoint count, not UTF-16
             if (Array.isArray(v))
                 return v.length;
             if (v && typeof v === "object" && "__map" in v)

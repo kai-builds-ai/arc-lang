@@ -194,7 +194,7 @@ function makePrelude(env: Env): void {
   const fns: Record<string, (...args: Value[]) => Value> = {
     print: (...args) => { console.log(args.map(toStr).join(" ")); return null; },
     len: (v) => {
-      if (typeof v === "string") return v.length;
+      if (typeof v === "string") return [...v].length;  // codepoint count, not UTF-16
       if (Array.isArray(v)) return v.length;
       if (v && typeof v === "object" && "__map" in v) return (v as MapValue).entries.size;
       return 0;

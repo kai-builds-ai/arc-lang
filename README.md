@@ -44,7 +44,7 @@ See [PHILOSOPHY.md](./PHILOSOPHY.md) for detailed design principles.
 
 ## What It Looks Like
 
-> **Note:** Arc uses `#` for comments (not `//`).
+> **Note:** Arc supports both `#` and `//` for comments.
 
 ```arc
 # AI agent that fetches data, analyzes it, and acts
