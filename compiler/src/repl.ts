@@ -111,7 +111,7 @@ function main() {
     prompt: "arc> ",
   });
 
-  console.log(`${CYAN}Arc REPL v0.6.3${RESET} — Type ${YELLOW}:help${RESET} for commands, ${YELLOW}:builtins${RESET} for functions`);
+  console.log(`${CYAN}Arc REPL v0.6.4${RESET} — Type ${YELLOW}:help${RESET} for commands, ${YELLOW}:builtins${RESET} for functions`);
   rl.prompt();
 
   let buffer = "";
