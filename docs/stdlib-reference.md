@@ -2,7 +2,7 @@
 
 Complete API reference for all Arc standard library modules.
 
-> All 17 stdlib modules are implemented and tested. The 8 modules requiring native runtime access (regex, datetime, os, io, http, crypto, error, net) all have full native implementations backed by real system calls.
+> All 21 stdlib modules are implemented and tested. The 8 modules requiring native runtime access (regex, datetime, os, io, http, crypto, error, net) all have full native implementations backed by real system calls. 4 AI-native modules (prompt, embed, llm, store) provide first-class support for agent workflows.
 
 ---
 
@@ -25,6 +25,10 @@ Complete API reference for all Arc standard library modules.
 - [error](#error) ✅ Native
 - [net](#net) ✅ Native
 - [crypto](#crypto) ✅ Native
+- [prompt](#prompt) ✅ AI-Native
+- [embed](#embed) ✅ AI-Native
+- [llm](#llm) ✅ AI-Native
+- [store](#store) ✅ AI-Native
 
 ---
 
@@ -537,3 +541,162 @@ use crypto
 | `uuid` | `() -> String` | Generate UUID v4 |
 | `random_bytes` | `(n) -> String` | Random bytes (hex) |
 | `md5` | `(str) -> String` | MD5 hash |
+
+---
+
+## prompt
+
+Template management, token counting, and context windowing for AI agents.
+
+```arc
+use prompt
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `template` | `(tmpl, vars) -> String` | Fill `<<var>>` placeholders from a map |
+| `token_count` | `(text) -> Int` | Estimate token count (~4 chars/token) |
+| `token_truncate` | `(text, max_tokens) -> String` | Truncate text to fit token limit |
+| `context_window` | `(messages, max_tokens) -> [Message]` | Fit messages within token budget (keeps newest) |
+| `chunk` | `(text, max_tokens) -> [String]` | Split text into token-sized chunks |
+| `system_prompt` | `(role, instructions) -> Message` | Format a system message |
+| `user_message` | `(text) -> Message` | Format a user message |
+| `assistant_message` | `(text) -> Message` | Format an assistant message |
+| `format_chat` | `(messages) -> String` | Format message list into chat string |
+
+### Example
+
+```arc
+use prompt
+
+let tmpl = "Hello <<name>>, you have <<count>> messages."
+let filled = prompt.template(tmpl, {name: "Alice", count: "3"})
+# => "Hello Alice, you have 3 messages."
+
+let tokens = prompt.token_count(filled)
+# => ~11
+```
+
+---
+
+## embed
+
+Vector embeddings, similarity search, and distance calculations.
+
+```arc
+use embed
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `dot_product` | `(vec_a, vec_b) -> Number` | Dot product of two vectors |
+| `magnitude` | `(vec) -> Number` | Vector magnitude (L2 norm) |
+| `cosine_similarity` | `(vec_a, vec_b) -> Number` | Cosine similarity (-1 to 1) |
+| `normalize` | `(vec) -> [Number]` | Normalize to unit vector |
+| `euclidean_distance` | `(vec_a, vec_b) -> Number` | Euclidean distance |
+| `centroid` | `(vectors) -> [Number]` | Average vector (centroid) |
+| `most_similar` | `(query_vec, candidates, top_k) -> [{id, score}]` | Top-k most similar vectors |
+| `chunk_and_embed` | `(text, chunk_size) -> [{chunk, index}]` | Split text into chunks |
+
+### Example
+
+```arc
+use embed
+
+let a = [1.0, 0.0, 0.0]
+let b = [0.0, 1.0, 0.0]
+embed.cosine_similarity(a, b)  # => 0.0 (orthogonal)
+
+let candidates = [
+  {id: "doc1", vector: [0.9, 0.1, 0.0]},
+  {id: "doc2", vector: [0.0, 0.8, 0.2]}
+]
+embed.most_similar(a, candidates, 1)  # => [{id: "doc1", score: ~0.99}]
+```
+
+---
+
+## llm
+
+Multi-provider LLM API integration for AI agent workflows.
+
+```arc
+use llm
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `chat` | `(provider, model, messages, options?) -> Result` | Send chat completion request |
+| `complete` | `(provider, model, prompt, options?) -> Result` | Simple text completion |
+| `stream` | `(provider, model, messages, callback) -> Result` | Streaming chat (calls callback with response) |
+| `models` | `(provider) -> [String]` | List available models |
+| `estimate_cost` | `(model, input_tokens, output_tokens) -> Cost` | Estimate API cost in USD |
+| `providers` | `() -> [Provider]` | List supported providers |
+
+**Supported providers:** `"openai"`, `"anthropic"`
+
+### Example
+
+```arc
+use llm
+
+let result = llm.chat("openai", "gpt-4o", [
+  {role: "system", content: "You are a helpful assistant."},
+  {role: "user", content: "What is Arc?"}
+], {temperature: 0.7})
+
+if result.ok {
+  print(result.content)
+}
+
+# Estimate costs
+let cost = llm.estimate_cost("gpt-4o", 1000, 500)
+print("Cost: ${cost.total}")
+```
+
+---
+
+## store
+
+Persistent JSON-backed key-value storage.
+
+```arc
+use store
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `store_open` | `(path) -> Store` | Open or create a JSON store file |
+| `store_get` | `(store, key) -> Any \| nil` | Get value by key |
+| `store_set` | `(store, key, value) -> nil` | Set key-value pair |
+| `store_delete` | `(store, key) -> nil` | Delete a key |
+| `store_has` | `(store, key) -> Bool` | Check if key exists |
+| `store_keys` | `(store) -> [String]` | Get all keys |
+| `store_values` | `(store) -> [Any]` | Get all values |
+| `store_entries` | `(store) -> [(String, Any)]` | Get all key-value pairs |
+| `store_clear` | `(store) -> nil` | Remove all entries |
+| `store_size` | `(store) -> Int` | Number of entries |
+| `store_merge` | `(store, map) -> nil` | Merge a map into the store |
+| `store_get_or_set` | `(store, key, default_fn) -> Any` | Get existing or set default |
+
+### Example
+
+```arc
+use store
+
+let db = store.store_open("settings.json")
+store.store_set(db, "theme", "dark")
+store.store_set(db, "lang", "en")
+
+let theme = store.store_get(db, "theme")  # => "dark"
+store.store_has(db, "lang")               # => true
+store.store_keys(db)                      # => ["theme", "lang"]
+```

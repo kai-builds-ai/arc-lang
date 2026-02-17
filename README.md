@@ -85,6 +85,10 @@ Arc ships with a comprehensive standard library. All modules with native runtime
 | [`error`](stdlib/error.arc) | try_catch, try_finally, throw, panic, retry, timeout, assert |
 | [`net`](stdlib/net.arc) | ws_connect, tcp_connect, dns_lookup, base64_encode, url_encode, parse_query |
 | [`crypto`](stdlib/crypto.arc) | sha256, sha512, hmac_sha256, uuid, random_bytes, encrypt, decrypt |
+| [`prompt`](stdlib/prompt.arc) | Template filling, token counting, context windowing |
+| [`embed`](stdlib/embed.arc) | Vector math, similarity search, cosine similarity |
+| [`llm`](stdlib/llm.arc) | Multi-provider LLM API (OpenAI, Anthropic) |
+| [`store`](stdlib/store.arc) | Persistent JSON-backed key-value storage |
 
 Plus many built-in functions available without imports: `map`, `filter`, `reduce`, `print`, `len`, `split`, `join`, `trim`, and more.
 
@@ -104,7 +108,7 @@ Plus many built-in functions available without imports: `map`, `filter`, `reduce
 
 ## Status
 
-🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 17 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 1,291+ tests passing.
+🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 21 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 1,291+ tests passing.
 
 Current phase: **Phase 6 — Community & Adoption**
 

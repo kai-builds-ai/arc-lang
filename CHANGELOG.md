@@ -2,6 +2,34 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.9] — 2026-02-16
+
+### Added — AI-Native Stdlib Modules
+
+**4 new standard library modules for AI agent workflows (21 stdlib modules total):**
+
+- **`prompt`** — Template filling (`template`), token counting (`token_count`, `token_truncate`), context windowing (`context_window`, `chunk`), message formatting (`system_prompt`, `user_message`, `assistant_message`, `format_chat`)
+- **`embed`** — Vector math (`dot_product`, `magnitude`, `cosine_similarity`, `normalize`, `euclidean_distance`, `centroid`), similarity search (`most_similar`), text chunking (`chunk_and_embed`)
+- **`llm`** — Multi-provider LLM API (`chat`, `complete`, `stream`, `models`, `estimate_cost`, `providers`) supporting OpenAI and Anthropic
+- **`store`** — Persistent JSON-backed key-value storage (`store_open`, `store_get`, `store_set`, `store_delete`, `store_has`, `store_keys`, `store_values`, `store_entries`, `store_clear`, `store_size`, `store_merge`, `store_get_or_set`)
+
+## [0.5.8] — 2026-02-16
+
+### Fixed — Parser, Examples & Native IO/HTTP
+
+**Parser fixes:**
+- Fixed multiple parser edge cases identified during example verification
+
+**Example fixes:**
+- Corrected syntax across example files to match current language spec
+
+**Native implementations:**
+- Native IO module (read/write via Node.js fs)
+- Native HTTP module (real fetch via sync bridge)
+
+**Security:**
+- Added SECURITY.md with vulnerability reporting guidelines
+
 ## [0.5.6] — 2026-02-16
 
 ### Changed — Restructure, Verify, Integrate

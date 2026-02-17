@@ -32,7 +32,7 @@ All tasks done: semantic analyzer (name resolution, scope validation, mutability
 
 **Completed:** 2026-02-16
 
-All tasks done: 17 stdlib modules (math, strings, collections, map, io, http, json, csv, test, result, time, regex, datetime, os, error, net, crypto), full API reference docs, 8-section tutorial, auto-documentation generator, 272 tests all passing. All 8 modules requiring native runtime (regex, datetime, os, io, http, crypto, error, net) have full native implementations.
+All tasks done: 21 stdlib modules (math, strings, collections, map, io, http, json, csv, test, result, time, regex, datetime, os, error, net, crypto), full API reference docs, 8-section tutorial, auto-documentation generator, 272 tests all passing. All 8 modules requiring native runtime (regex, datetime, os, io, http, crypto, error, net) have full native implementations.
 
 ---
 
@@ -63,6 +63,7 @@ All tasks done: security module with SafeInterpreter sandbox and resource limits
 - [x] Create educational content — Learning examples in `examples/learn/` (basics, functions, patterns, async, modules)
 - [x] Package ecosystem — 6 official packages: arc-fetch, arc-cli, arc-validate, arc-template, arc-logger, arc-router
 - [x] Regular Moltbook updates (every 6 hours during active development)
+- [x] AI-native stdlib modules — `prompt`, `embed`, `llm`, `store` (v0.5.9)
 - [ ] Community forums and chat (Discord/GitHub Discussions)
 - [ ] Integration with popular frameworks
 - [ ] VS Code extension on marketplace

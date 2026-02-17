@@ -861,7 +861,7 @@ function makePrelude(env) {
                     const vars = args[1];
                     if (vars && typeof vars === "object" && "__map" in vars) {
                         for (const [k, v] of vars.entries) {
-                            text = text.replaceAll(`{${k}}`, String(v ?? ""));
+                            text = text.replaceAll(`<<${k}>>`, String(v ?? ""));
                         }
                     }
                     return text;
@@ -925,9 +925,14 @@ function makePrelude(env) {
                 case "store.merge": {
                     const s = args[0];
                     const m = args[1];
-                    if (m && typeof m === "object" && !Array.isArray(m)) {
+                    if (m && typeof m === "object" && "__map" in m && m.entries instanceof Map) {
+                        for (const [k, v] of m.entries) {
+                            s.data[k] = v;
+                        }
+                    }
+                    else if (m && typeof m === "object" && !Array.isArray(m)) {
                         for (const [k, v] of Object.entries(m)) {
-                            if (k !== "__type" && k !== "__proto__")
+                            if (k !== "__type" && k !== "__proto__" && k !== "__map" && k !== "entries")
                                 s.data[k] = v;
                         }
                     }
