@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { writeFileSync, unlinkSync } from "fs";
+import { join } from "path";
+import { randomUUID } from "crypto";
+import { tmpdir } from "os";
 
 export const runtime = "nodejs";
 export const maxDuration = 10;
@@ -28,10 +32,21 @@ export async function POST(req: NextRequest) {
     const start = performance.now();
 
     try {
-      // Import Arc compiler modules directly (no subprocess needed)
+      // Import Arc compiler modules directly (in-process, no subprocess)
       const { lex } = await import("arc-lang/dist/lexer.js");
       const { parse } = await import("arc-lang/dist/parser.js");
       const { interpret } = await import("arc-lang/dist/interpreter.js");
+      const { createUseHandler, clearModuleCache } = await import("arc-lang/dist/modules.js");
+
+      // Write code to a temp file so the module resolver can find stdlib
+      // relative to it (stdlib is bundled inside the arc-lang npm package)
+      const tmpDir = tmpdir();
+      const filename = `arc-playground-${randomUUID()}.arc`;
+      const filepath = join(tmpDir, filename);
+      writeFileSync(filepath, code, "utf-8");
+
+      // Clear module cache between runs to avoid stale state
+      clearModuleCache();
 
       // Capture console.log output
       const outputLines: string[] = [];
@@ -49,12 +64,13 @@ export async function POST(req: NextRequest) {
       try {
         const tokens = lex(code);
         const ast = parse(tokens);
+        const useHandler = createUseHandler(filepath);
 
-        // Run with a timeout using AbortController pattern
+        // Run with a timeout
         await Promise.race([
           new Promise<void>((resolve, reject) => {
             try {
-              interpret(ast);
+              interpret(ast, useHandler);
               resolve();
             } catch (e: unknown) {
               reject(e);
@@ -73,6 +89,7 @@ export async function POST(req: NextRequest) {
       } finally {
         console.log = origLog;
         console.error = origError;
+        try { unlinkSync(filepath); } catch {}
       }
 
       const executionTime = Math.round(performance.now() - start);
