@@ -26,7 +26,7 @@ fn _provider_config(provider) {
 
 fn _api_key(provider) {
   let config = _provider_config(provider)
-  let key = os.env(config.env_key)
+  let key = os.get_env(config.env_key)
   if key == nil { error_new("llm", "Missing API key: set " ++ config.env_key ++ " environment variable") }
   key
 }

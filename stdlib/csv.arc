@@ -8,16 +8,15 @@ pub fn to_csv(rows) {
 }
 
 pub fn parse_csv_headers(text) {
-  let lines = split(trim(text), "\n")
-  if len(lines) < 2 { [] }
+  let rows = __native("csv.parse", text)
+  if len(rows) < 2 { [] }
   el {
-    let headers = _parse_csv_line(head(lines))
-    let data_lines = tail(lines)
-    map(data_lines, line => {
-      let cells = _parse_csv_line(line)
+    let headers = head(rows)
+    let data_rows = tail(rows)
+    map(data_rows, cells => {
       let mut row = {}
       for i in 0..len(headers) {
-        let key = headers[i]
+        let key = trim(headers[i])
         let val = if i < len(cells) { cells[i] } el { "" }
         row[key] = val
       }

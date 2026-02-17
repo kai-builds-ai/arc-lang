@@ -170,6 +170,7 @@ export class Parser {
       if (this.at(TokenType.DotDotDot)) {
         this.advance();
         const pname = this.expect(TokenType.Ident).value;
+        if (params.includes(pname)) throw new ParseError(`Duplicate parameter name '${pname}'`, this.loc());
         params.push(pname);
         richParams.push({ name: pname, rest: true });
         hasRichParams = true;
@@ -177,6 +178,7 @@ export class Parser {
         break;
       }
       const pname = this.expect(TokenType.Ident).value;
+      if (params.includes(pname)) throw new ParseError(`Duplicate parameter name '${pname}'`, this.loc());
       params.push(pname);
       if (this.at(TokenType.Assign)) {
         this.advance();

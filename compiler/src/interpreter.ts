@@ -209,12 +209,12 @@ function makePrelude(env: Env): void {
     },
     reduce: (list, fn, init) => {
       if (!Array.isArray(list)) throw new Error("reduce expects a list");
-      let acc = init ?? list[0];
+      let acc = init !== undefined ? init : list[0];
       const start = init !== undefined ? 0 : 1;
       for (let i = start; i < list.length; i++) {
         acc = callFn(fn as FnValue, [acc, list[i]]);
       }
-      return acc;
+      return acc === undefined ? null : acc;
     },
     fold: (list, init, fn) => {
       if (!Array.isArray(list)) throw new Error("fold expects a list");
@@ -249,7 +249,7 @@ function makePrelude(env: Env): void {
       if (!Array.isArray(list)) return 0;
       return list.reduce((a: number, b) => a + (typeof b === "number" ? b : 0), 0);
     },
-    flat: (list) => Array.isArray(list) ? list.flat() : list,
+    flat: (list) => Array.isArray(list) ? (list as any[]).flat(Infinity) : list,
     zip: (a, b) => {
       if (!Array.isArray(a) || !Array.isArray(b)) return [];
       const minLen = Math.min(a.length, b.length);
@@ -260,7 +260,7 @@ function makePrelude(env: Env): void {
       return list.map((v, i) => [i, v] as Value[]);
     },
     trim: (s) => typeof s === "string" ? s.trim() : s,
-    split: (s, sep) => typeof s === "string" ? s.split(sep as string) : [],
+    split: (s, sep) => typeof s === "string" ? (sep === "" ? [...s] : s.split(sep as string)) : [],
     join: (list, sep) => Array.isArray(list) ? list.map(toStr).join(sep as string) : "",
     upper: (s) => typeof s === "string" ? s.toUpperCase() : s,
     lower: (s) => typeof s === "string" ? s.toLowerCase() : s,
@@ -315,7 +315,7 @@ function makePrelude(env: Env): void {
       if (Array.isArray(a) && Array.isArray(b)) return [...a, ...b];
       return toStr(a) + toStr(b);
     },
-    chars: (s) => typeof s === "string" ? s.split("") : [],
+    chars: (s) => typeof s === "string" ? [...s] : [],
     repeat: (s, n) => typeof s === "string" ? s.repeat(n as number) : s,
     slice: (v, start, end) => {
       const endVal = (end === null || end === undefined) ? undefined : end as number;
@@ -345,10 +345,12 @@ function makePrelude(env: Env): void {
       return nodeCrypto.createHash(algorithm as string).update(data == null ? "" : data as string).digest("hex");
     },
     crypto_hmac: (algorithm, key, data) => {
-      return nodeCrypto.createHmac(algorithm as string, key as string).update(data as string).digest("hex");
+      return nodeCrypto.createHmac(algorithm as string, key == null ? "" : key as string).update(data == null ? "" : data as string).digest("hex");
     },
     crypto_random_bytes: (n) => {
-      const buf = nodeCrypto.randomBytes(n as number);
+      const count = n as number;
+      if (count <= 0) return [] as Value[];
+      const buf = nodeCrypto.randomBytes(count);
       return Array.from(buf) as Value[];
     },
     crypto_random_int: (min, max) => {
@@ -358,7 +360,7 @@ function makePrelude(env: Env): void {
     },
     crypto_uuid: () => nodeCrypto.randomUUID(),
     crypto_encode_base64: (s) => Buffer.from(s == null ? "" : s as string).toString("base64"),
-    crypto_decode_base64: (s) => Buffer.from(s as string, "base64").toString("utf-8"),
+    crypto_decode_base64: (s) => s == null ? "" : Buffer.from(s as string, "base64").toString("utf-8"),
 
     // --- net natives ---
     net_url_parse: (url) => {
@@ -383,7 +385,18 @@ function makePrelude(env: Env): void {
       const str = (s as string).startsWith("?") ? (s as string).slice(1) : s as string;
       const params = new URLSearchParams(str);
       const m = new Map<string, Value>();
-      params.forEach((v, k) => m.set(k, v));
+      params.forEach((v, k) => {
+        const existing = m.get(k);
+        if (existing !== undefined) {
+          if (Array.isArray(existing)) {
+            (existing as Value[]).push(v);
+          } else {
+            m.set(k, [existing, v] as Value[]);
+          }
+        } else {
+          m.set(k, v);
+        }
+      });
       return { __map: true, entries: m } as MapValue;
     },
     net_query_stringify: (map) => {
@@ -400,7 +413,7 @@ function makePrelude(env: Env): void {
       const str = s as string;
       // IPv4
       const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(str);
-      if (v4) return v4.slice(1).every(n => parseInt(n) <= 255);
+      if (v4) return v4.slice(1).every(n => parseInt(n) <= 255 && (n === "0" || !n.startsWith("0")));
       // IPv6 (simplified check)
       if (str.includes(":")) {
         try { new URL(`http://[${str}]`); return true; } catch { return false; }
@@ -441,40 +454,40 @@ function makePrelude(env: Env): void {
           const errMap = new Map<string, Value>();
           errMap.set("ok", false);
           errMap.set("error", "argument is not a function");
-          return { __map: true, entries: errMap } as MapValue;
+          return { __map: true, __result: true, entries: errMap } as MapValue;
         }
         const result = typeof fn === "function" ? (fn as any)() : callFn(fn, []);
         const okMap = new Map<string, Value>();
         okMap.set("ok", true);
         okMap.set("value", result);
-        return { __map: true, entries: okMap } as MapValue;
+        return { __map: true, __result: true, entries: okMap } as MapValue;
       } catch (e: any) {
         const errMap = new Map<string, Value>();
         errMap.set("ok", false);
         errMap.set("error", e.message ?? toStr(e as Value));
-        return { __map: true, entries: errMap } as MapValue;
+        return { __map: true, __result: true, entries: errMap } as MapValue;
       }
     },
     Ok: (v) => {
       const m = new Map<string, Value>();
       m.set("ok", true);
       m.set("value", v);
-      return { __map: true, entries: m } as MapValue;
+      return { __map: true, __result: true, entries: m } as MapValue;
     },
     Err: (e) => {
       const m = new Map<string, Value>();
       m.set("ok", false);
       m.set("error", e);
-      return { __map: true, entries: m } as MapValue;
+      return { __map: true, __result: true, entries: m } as MapValue;
     },
     is_ok: (v) => {
-      if (v && typeof v === "object" && "__map" in v) {
+      if (v && typeof v === "object" && "__map" in v && "__result" in v) {
         return (v as MapValue).entries.get("ok") === true;
       }
       return false;
     },
     is_err: (v) => {
-      if (v && typeof v === "object" && "__map" in v) {
+      if (v && typeof v === "object" && "__map" in v && "__result" in v) {
         return (v as MapValue).entries.get("ok") === false;
       }
       return false;
@@ -503,7 +516,7 @@ function makePrelude(env: Env): void {
           const newMap = new Map<string, Value>();
           newMap.set("ok", true);
           newMap.set("value", result);
-          return { __map: true, entries: newMap } as MapValue;
+          return { __map: true, __result: true, entries: newMap } as MapValue;
         }
         return v; // pass Err through
       }
@@ -535,7 +548,12 @@ function makePrelude(env: Env): void {
     },
     regex_try_new: (pattern) => {
       try {
-        new RegExp(pattern as string);
+        const p = pattern as string;
+        // ReDoS protection: same check as regex_new
+        if (/(\+|\*|\{)\s*(\+|\*|\{)/.test(p) || /\([^)]*(\+|\*)\)[+*]/.test(p)) {
+          return null;
+        }
+        new RegExp(p);
         const m = new Map<string, Value>();
         m.set("pattern", pattern);
         m.set("__regex", true as any);
@@ -657,8 +675,12 @@ function makePrelude(env: Env): void {
         else if (fmt.slice(fi, fi + 2) === "ss") { sec = parseInt(s.slice(si, si + 2)); fi += 2; si += 2; }
         else { fi++; si++; }
       }
-      const result = new Date(year, month - 1, day, hour, min, sec).getTime();
-      return isNaN(result) ? null : result;
+      const d = new Date(year, month - 1, day, hour, min, sec);
+      const result = d.getTime();
+      if (isNaN(result)) return null;
+      // Validate that JS didn't roll over an invalid date (e.g. Feb 30 → Mar 2)
+      if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+      return result;
     },
     __builtin_date_format: (ts, fmt) => {
       const d = new Date(ts as number);
@@ -777,9 +799,11 @@ function makePrelude(env: Env): void {
             if (dangerous.test(cmd)) {
               throw new Error(`Potentially unsafe command (injection risk): ${cmd}`);
             }
-            return execSync(cmd, { encoding: "utf-8", timeout: 10000 }).trim();
+            return execSync(cmd, { encoding: "utf-8", timeout: 10000, stdio: ["pipe", "pipe", "pipe"] }).trim();
           } catch (e: any) {
             if (e.message?.includes("injection risk")) throw e;
+            // Return stderr if available
+            if (e.stderr) return e.stderr.toString().trim();
             return null;
           }
         }
@@ -799,23 +823,25 @@ function makePrelude(env: Env): void {
         // --- prompt natives ---
         case "prompt.token_count": {
           const text = String(args[0] ?? "");
-          return Math.ceil(text.length / 4);
+          return Math.ceil([...text].length / 4);
         }
         case "prompt.token_truncate": {
           const text = String(args[0] ?? "");
           const maxTokens = args[1] as number;
+          const codepoints = [...text];
           const maxChars = maxTokens * 4;
-          if (text.length <= maxChars) return text;
-          return text.slice(0, maxChars);
+          if (codepoints.length <= maxChars) return text;
+          return codepoints.slice(0, maxChars).join("");
         }
         case "prompt.chunk": {
           const text = String(args[0] ?? "");
           const maxTokens = args[1] as number;
           if (maxTokens <= 0) return [];
           const chunkSize = maxTokens * 4;
+          const codepoints = [...text];
           const chunks: string[] = [];
-          for (let i = 0; i < text.length; i += chunkSize) {
-            chunks.push(text.slice(i, i + chunkSize));
+          for (let i = 0; i < codepoints.length; i += chunkSize) {
+            chunks.push(codepoints.slice(i, i + chunkSize).join(""));
           }
           return chunks.length > 0 ? chunks : [""];
         }
@@ -888,7 +914,12 @@ function makePrelude(env: Env): void {
         }
         case "store.entries": {
           const s = args[0] as any;
-          return Object.entries(s.data).map(([k, v]) => ({ key: k, value: v }) as unknown as Value);
+          return Object.entries(s.data).map(([k, v]) => {
+            const m = new Map<string, Value>();
+            m.set("key", k);
+            m.set("value", v as Value);
+            return { __map: true, entries: m } as MapValue;
+          });
         }
         case "store.clear": {
           const s = args[0] as any;
@@ -931,6 +962,10 @@ function makePrelude(env: Env): void {
         case "math.cbrt": return Math.cbrt(args[0] as number);
         case "math.pow": return Math.pow(args[0] as number, args[1] as number);
         case "math.ceil": return Math.ceil(args[0] as number);
+        case "json.from_codepoint": {
+          const hex = args[0] as string;
+          return String.fromCodePoint(parseInt(hex, 16));
+        }
         case "csv.parse": {
           const text = (args[0] as string).trim();
           if (text === "") return [] as Value[];
@@ -962,7 +997,7 @@ function makePrelude(env: Env): void {
                   i++;
                 }
               }
-              row.push(value.trim());
+              row.push(value);
               if (i < text.length && text[i] === ',') {
                 i++;
               } else {
@@ -1058,9 +1093,29 @@ function makePrelude(env: Env): void {
                     } else { i = html.length; }
                   } else {
                     children = parseHTML(html.slice(i));
+                    // Bug #13: use depth counter to find correct closing tag for nested same-name elements
                     const closeTag = `</${tag}>`;
-                    const closeIdx = html.toLowerCase().indexOf(closeTag, i);
-                    if (closeIdx !== -1) { i = closeIdx + closeTag.length; }
+                    const openTag = `<${tag}`;
+                    let searchPos = i;
+                    let depth = 1;
+                    while (searchPos < html.length && depth > 0) {
+                      const nextOpen = html.toLowerCase().indexOf(openTag, searchPos);
+                      const nextClose = html.toLowerCase().indexOf(closeTag, searchPos);
+                      if (nextClose === -1) { searchPos = html.length; break; }
+                      if (nextOpen !== -1 && nextOpen < nextClose) {
+                        // Check it's a real open tag (followed by space, >, or /)
+                        const afterOpen = html[nextOpen + openTag.length];
+                        if (afterOpen === ' ' || afterOpen === '>' || afterOpen === '/' || afterOpen === undefined) {
+                          depth++;
+                        }
+                        searchPos = nextOpen + openTag.length;
+                      } else {
+                        depth--;
+                        if (depth === 0) { searchPos = nextClose; break; }
+                        searchPos = nextClose + closeTag.length;
+                      }
+                    }
+                    if (depth === 0) { i = searchPos + closeTag.length; }
                     else { i = html.length; }
                   }
                 }
@@ -1195,12 +1250,25 @@ function makePrelude(env: Env): void {
         // --- YAML natives ---
         case "yaml.parse": {
           const src = args[0] as string;
+          function flowSplit(inner: string): string[] {
+            const parts: string[] = [];
+            let depth = 0, start = 0, inStr = false, strCh = "";
+            for (let i = 0; i < inner.length; i++) {
+              const ch = inner[i];
+              if (inStr) { if (ch === strCh && inner[i-1] !== "\\") inStr = false; continue; }
+              if (ch === '"' || ch === "'") { inStr = true; strCh = ch; continue; }
+              if (ch === "{" || ch === "[") depth++;
+              else if (ch === "}" || ch === "]") depth--;
+              else if (ch === "," && depth === 0) { parts.push(inner.slice(start, i)); start = i + 1; }
+            }
+            if (inner.slice(start).trim() !== "") parts.push(inner.slice(start));
+            return parts;
+          }
           function yamlParseFlowMapping(s: string): Map<string, any> {
             const inner = s.slice(1, -1).trim();
             const m = new Map<string, any>();
             if (inner === "") return m;
-            // Simple comma-split (doesn't handle nested structures)
-            const parts = inner.split(",");
+            const parts = flowSplit(inner);
             for (const part of parts) {
               const colon = part.indexOf(":");
               if (colon > 0) {
@@ -1212,10 +1280,15 @@ function makePrelude(env: Env): void {
           function yamlParseFlowSequence(s: string): any[] {
             const inner = s.slice(1, -1).trim();
             if (inner === "") return [];
-            return inner.split(",").map(x => yamlParseValue(x.trim()));
+            return flowSplit(inner).map(x => yamlParseValue(x.trim()));
           }
           function yamlParseValue(s: string): any {
             s = s.trim();
+            // Strip inline comments from unquoted values (bug #1)
+            if (s !== "" && !s.startsWith('"') && !s.startsWith("'") && !s.startsWith("{") && !s.startsWith("[")) {
+              const hashIdx = s.indexOf(" #");
+              if (hashIdx >= 0) s = s.slice(0, hashIdx).trim();
+            }
             if (s === "" || s === "~" || s === "null") return null;
             if (s === "true" || s === "True" || s === "TRUE" || s === "yes" || s === "Yes" || s === "YES" || s === "on" || s === "On" || s === "ON") return true;
             if (s === "false" || s === "False" || s === "FALSE" || s === "no" || s === "No" || s === "NO" || s === "off" || s === "Off" || s === "OFF") return false;
@@ -1340,7 +1413,7 @@ function makePrelude(env: Env): void {
               return result;
             }
           }
-          const rawLines = src.split("\n").filter(l => !l.trimStart().startsWith("#"));
+          const rawLines = src.split("\n").filter(l => !l.trimStart().startsWith("#") && l.trim() !== "---" && l.trim() !== "...");
           return toArcValue(yamlParse(rawLines, 0));
         }
         case "yaml.stringify": {
@@ -1389,19 +1462,45 @@ function makePrelude(env: Env): void {
           let current = root;
           const lines = src.split("\n");
           function tomlStripComment(s: string): string {
-            // Strip inline comments (not inside strings)
+            // Strip inline comments (not inside strings), handling escapes properly
             let inStr = false; let strCh = "";
             for (let i = 0; i < s.length; i++) {
-              if (inStr) { if (s[i] === strCh && s[i-1] !== "\\") inStr = false; continue; }
+              if (inStr) {
+                if (s[i] === "\\") { i++; continue; } // skip escaped char (handles \\ and \")
+                if (s[i] === strCh) inStr = false;
+                continue;
+              }
               if (s[i] === '"' || s[i] === "'") { inStr = true; strCh = s[i]; continue; }
               if (s[i] === "#") return s.slice(0, i).trim();
             }
             return s;
           }
+          function tomlExtractString(s: string): string {
+            // Walk char by char to find closing quote, handling \" escapes
+            let result = "";
+            for (let i = 1; i < s.length; i++) {
+              if (s[i] === "\\") {
+                if (i + 1 < s.length) {
+                  const next = s[i + 1];
+                  if (next === '"') { result += '"'; i++; }
+                  else if (next === '\\') { result += '\\'; i++; }
+                  else if (next === 'n') { result += '\n'; i++; }
+                  else if (next === 't') { result += '\t'; i++; }
+                  else { result += s[i]; }
+                }
+              } else if (s[i] === '"') {
+                return result;
+              } else {
+                result += s[i];
+              }
+            }
+            return result;
+          }
           function tomlParseValue(s: string): any {
             s = tomlStripComment(s).trim();
             if (s === "true") return true;
             if (s === "false") return false;
+            if (s === "True" || s === "False") return s; // bug #6: reject capitalized booleans
             if (s === "inf" || s === "+inf") return Infinity;
             if (s === "-inf") return -Infinity;
             if (s === "nan" || s === "+nan" || s === "-nan") return NaN;
@@ -1415,10 +1514,20 @@ function makePrelude(env: Env): void {
               const end = s.indexOf("'''", 3);
               if (end !== -1) return s.slice(3, end).replace(/^\n/, "");
             }
-            if (s.startsWith('"') && s.endsWith('"')) return s.slice(1, -1).replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\\\/g, "\\");
+            if (s.startsWith('"')) return tomlExtractString(s); // bug #3: handle escaped quotes
             if (s.startsWith("'") && s.endsWith("'")) return s.slice(1, -1);
-            if (/^-?\d+$/.test(s)) return parseInt(s, 10);
-            if (/^-?\d+\.\d+$/.test(s)) return parseFloat(s);
+            // bug #7: ISO 8601 datetime
+            if (/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?/.test(s)) {
+              const t = new Date(s).getTime();
+              if (!isNaN(t)) return t;
+            }
+            // bug #8: hex/octal/binary integers
+            if (/^0x[0-9a-fA-F_]+$/.test(s)) return parseInt(s.replace(/_/g, ""), 16);
+            if (/^0o[0-7_]+$/.test(s)) return parseInt(s.replace(/_/g, "").replace("0o",""), 8);
+            if (/^0b[01_]+$/.test(s)) return parseInt(s.replace(/_/g, "").replace("0b",""), 2);
+            // bug #8: integers with underscores
+            if (/^[+-]?\d[\d_]*$/.test(s)) return parseInt(s.replace(/_/g, ""), 10);
+            if (/^[+-]?\d[\d_]*\.[\d_]+$/.test(s)) return parseFloat(s.replace(/_/g, ""));
             if (s.startsWith("[")) return tomlParseArray(s);
             if (s.startsWith("{")) return tomlParseInlineTable(s);
             return s;
@@ -1474,6 +1583,7 @@ function makePrelude(env: Env): void {
             }
             return cur;
           }
+          const seenSections = new Set<string>(); // bug #9
           for (let li = 0; li < lines.length; li++) {
             const trimmed = lines[li].trim();
             if (trimmed === "" || trimmed.startsWith("#")) continue;
@@ -1491,7 +1601,10 @@ function makePrelude(env: Env): void {
             }
             const secMatch = trimmed.match(/^\[([^\]]+)\]$/);
             if (secMatch) {
-              const keys = secMatch[1].split(".").map((k: string) => k.trim());
+              const secKey = secMatch[1].trim();
+              if (seenSections.has(secKey)) throw new Error(`Duplicate TOML section: [${secKey}]`);
+              seenSections.add(secKey);
+              const keys = secKey.split(".").map((k: string) => k.trim());
               current = ensurePath(root, keys);
               continue;
             }
@@ -1512,6 +1625,18 @@ function makePrelude(env: Env): void {
                   li++; valStr += "\n" + lines[li];
                 }
                 if (li + 1 < lines.length) { li++; valStr += "\n" + lines[li]; }
+              }
+              // Bug #5: Handle multiline arrays
+              if (valStr.startsWith("[") && !valStr.startsWith("[[")) {
+                let depth = 0;
+                for (const ch of valStr) { if (ch === "[") depth++; else if (ch === "]") depth--; }
+                while (depth > 0 && li + 1 < lines.length) {
+                  li++;
+                  const cont = lines[li].trim();
+                  if (cont === "" || cont.startsWith("#")) { valStr += " "; continue; }
+                  valStr += " " + cont;
+                  for (const ch of cont) { if (ch === "[") depth++; else if (ch === "]") depth--; }
+                }
               }
               const val = tomlParseValue(valStr);
               // Expand dotted keys: a.b.c = 1 → nested maps
@@ -1623,6 +1748,15 @@ function makePrelude(env: Env): void {
           const level = args[0] as string;
           const msg = args[1] as string;
           const fields = args[2] as MapValue | null;
+          // Bug #12: validate level
+          const validLogLevels = ["debug", "info", "warn", "error", "fatal"];
+          if (!validLogLevels.includes(level)) {
+            throw new ArcRuntimeError(`Invalid log level '${level}'. Must be one of: ${validLogLevels.join(", ")}`, { code: ErrorCode.UNDEFINED_VARIABLE });
+          }
+          // Bug #11: check level threshold
+          const li = validLogLevels.indexOf(level);
+          const mi = validLogLevels.indexOf((globalThis as any).__arc_log_level ?? "debug");
+          if (li < mi) return null;
           const obj: Record<string, any> = {
             timestamp: new Date().toISOString(),
             level: level,
@@ -1744,7 +1878,7 @@ function makePrelude(env: Env): void {
 
   function callFn(fn: FnValue | Value, args: Value[]): Value {
     if (fn && typeof fn === "object" && "__fn" in fn) {
-      if (++callDepth > 10000) { callDepth = 0; throw new ArcRuntimeError("Maximum call stack depth exceeded"); }
+      if (++callDepth > 2000) { callDepth = 0; throw new ArcRuntimeError("Maximum call stack depth exceeded"); }
       const f = fn as FnValue;
       const fnEnv = new Env(f.closure);
       bindParams(f, args, fnEnv, evalExpr);
@@ -1946,13 +2080,13 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
         result = (callee as any)(...args);
       } else if (callee && typeof callee === "object" && "__fn" in callee) {
         let fn = callee as FnValue;
-        if (++callDepth > 10000) { callDepth = 0; throw new ArcRuntimeError("Maximum call stack depth exceeded"); }
+        if (++callDepth > 2000) { callDepth = 0; throw new ArcRuntimeError("Maximum call stack depth exceeded"); }
         // Tail call optimization loop: if the function body resolves to
         // a tail call back to itself, reuse the frame instead of recursing
         let tcoIterations = 0;
         try {
           tailLoop: while (true) {
-            if (++tcoIterations > 10000) { callDepth--; throw new ArcRuntimeError("Maximum call stack depth exceeded"); }
+            if (++tcoIterations > 2000) { callDepth--; throw new ArcRuntimeError("Maximum call stack depth exceeded"); }
             const fnEnv = new Env(fn.closure);
             bindParams(fn, args, fnEnv, evalExpr);
             const bodyResult = evalExprTCO(fn.body, fnEnv, fn.name);
@@ -2025,8 +2159,15 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
     case "IndexExpr": {
       const obj = evalExpr(expr.object, env);
       const idx = evalExpr(expr.index, env);
-      if (typeof obj === "string" && typeof idx === "number") return idx >= 0 && idx < obj.length ? obj.charAt(idx) : null;
-      if (Array.isArray(obj) && typeof idx === "number") return obj[idx] ?? null;
+      if (typeof obj === "string" && typeof idx === "number") {
+        if (idx !== Math.floor(idx)) throw new ArcRuntimeError("String index must be an integer");
+        let i = idx < 0 ? obj.length + idx : idx;
+        return i >= 0 && i < obj.length ? obj.charAt(i) : null;
+      }
+      if (Array.isArray(obj) && typeof idx === "number") {
+        let i = idx < 0 ? obj.length + idx : idx;
+        return obj[i] ?? null;
+      }
       if (obj && typeof obj === "object" && "__map" in obj) {
         const key = typeof idx === "string" ? idx : toStr(idx);
         return (obj as MapValue).entries.get(key) ?? null;

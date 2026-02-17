@@ -34,6 +34,7 @@ pub fn to_json(value) {
 fn _quote(s) {
   let escaped = replace(replace(s, "\\", "\\\\"), "\n", "\\n")
   let escaped = replace(escaped, "\t", "\\t")
+  let escaped = replace(escaped, "\r", "\\r")
   let escaped = replace(escaped, "\"", "\\\"")
   _Q ++ escaped ++ _Q
 }
@@ -75,6 +76,11 @@ fn _parse_string(s) {
     if escaped {
       if ch == "n" { result = result ++ "\n" }
       el if ch == "t" { result = result ++ "\t" }
+      el if ch == "u" {
+        let hex = slice(s, i + 1, i + 5)
+        i = i + 4
+        result = result ++ __native("json.from_codepoint", hex)
+      }
       el { result = result ++ ch }
       escaped = false
     } el if ch == "\\" {
@@ -95,7 +101,7 @@ fn _parse_number(s) {
   if slice(s, 0, 1) == "-" { i = 1 }
   do {
     let ch = slice(s, i, i + 1)
-    if ch == "." { is_float = true }
+    if ch == "." or ch == "e" or ch == "E" { is_float = true }
     i = i + 1
   } until i >= len(s) or not _is_num_char(slice(s, i, i + 1))
   let num_str = slice(s, 0, i)
@@ -106,7 +112,7 @@ fn _parse_number(s) {
 fn _is_num_char(c) {
   c == "0" or c == "1" or c == "2" or c == "3" or c == "4" or
   c == "5" or c == "6" or c == "7" or c == "8" or c == "9" or
-  c == "." or c == "-"
+  c == "." or c == "-" or c == "e" or c == "E" or c == "+"
 }
 
 fn _parse_array(s) {

@@ -2,6 +2,62 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.2] — 2026-02-16
+
+### Fixed — 42 Bug Fixes (Stress Test Round 2)
+
+**Language core (5 fixes):**
+- Recursion limit reduced to 2000 (catches before Node.js stack overflow)
+- Negative indexing: `"hello"[-1]` → `"o"`, `[1,2,3][-1]` → `3`
+- Float string index now throws TypeError
+- Duplicate function parameter names now caught by parser
+- String/list negative index wrapping
+
+**JSON/CSV/Collections (11 fixes):**
+- JSON: `\uXXXX` unicode escapes now parsed
+- JSON: Scientific notation (`1e5`, `1.5e-3`) now parsed
+- JSON: `\r` now escaped in `to_json`
+- `reduce([], fn, nil)` no longer leaks JS `undefined`
+- `parse_csv_headers` now uses native RFC 4180 parser
+- CSV native parser no longer trims field whitespace
+- `chars()` and `split("", "")` now handle emoji/surrogate pairs correctly
+- `flatten()` now deep-flattens (`flat(Infinity)`)
+- `factorial(171+)` returns nil instead of Infinity
+- `pow()` uses O(log n) exponentiation by squaring
+- `lcm()` divides before multiplying to avoid precision loss
+
+**YAML/TOML/HTML/Log (13 fixes):**
+- YAML: inline comments stripped from values
+- YAML: nested flow mappings with depth-aware splitting
+- YAML: `---`/`...` document separators filtered
+- TOML: escaped quotes `\"` properly handled
+- TOML: comment stripper fixed for `\\"`
+- TOML: multiline arrays with bracket balancing
+- TOML: `True`/`False` returned as strings (spec compliance)
+- TOML: datetime values parsed to timestamps
+- TOML: hex/octal/binary/underscore integers supported
+- TOML: duplicate section headers throw error
+- HTML: nested same-tag elements correctly matched
+- `log.json` now respects `set_level` threshold
+- `log.json` validates level parameter
+
+**System modules (7 fixes):**
+- `os.env()` renamed to `os.get_env()` to prevent shadowing `env` module
+- `datetime.day_of_week` fixed for pre-1960 dates (negative modulo)
+- `datetime.parse` rejects invalid dates (Feb 30 → nil)
+- `os.exec` now captures stderr
+- `regex.is_valid` applies ReDoS protection
+- `ip_is_valid` rejects leading zeros in octets
+- `parse_query` preserves repeated keys as arrays
+
+**AI-native modules (8 fixes):**
+- `crypto_hmac`/`crypto_decode_base64` nil guards
+- `crypto_random_bytes(-1)` returns empty
+- `store.entries()` returns proper Arc MapValue objects
+- `prompt.chunk` preserves emoji/unicode (codepoint splitting)
+- `token_count` counts codepoints not UTF-16 units
+- `is_ok`/`is_err` now tagged — won't false-positive on arbitrary maps
+
 ## [0.6.1] — 2026-02-16
 
 ### Fixed — 51 Bug Fixes (Stress Test Audit)

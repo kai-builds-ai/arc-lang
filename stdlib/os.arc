@@ -5,7 +5,7 @@
 pub fn cwd() => __native("os.cwd")
 
 # Get environment variable by name, returns nil if not set
-pub fn env(name) => __native("os.env", name)
+pub fn get_env(name) => __native("os.env", name)
 
 # Set environment variable
 pub fn set_env(name, value) => __native("os.set_env", name, value)

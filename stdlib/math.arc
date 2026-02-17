@@ -36,9 +36,13 @@ pub fn pow(base, exp) {
   el if exp < 0 { 1.0 / pow(base, 0 - exp) }
   el {
     let mut result = 1
-    for i in 0..exp {
-      result = result * base
-    }
+    let mut b = base
+    let mut e = exp
+    do {
+      if e % 2 == 1 { result = result * b }
+      e = int(e / 2)
+      b = b * b
+    } until e == 0
     result
   }
 }
@@ -86,7 +90,8 @@ pub fn factorial(n) {
     for i in 2..n + 1 {
       result = result * i
     }
-    result
+    if str(result) == "Infinity" { nil }
+    el { result }
   }
 }
 
@@ -107,7 +112,7 @@ pub fn gcd(a, b) {
 pub fn lcm(a, b) {
   let d = gcd(a, b)
   if d == 0 { 0 }
-  el { abs(a * b) / d }
+  el { abs(a / d) * b }
 }
 
 # === Aggregation ===
