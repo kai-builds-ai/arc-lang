@@ -91,11 +91,18 @@ function toStr(v: Value): string {
 function syncFetch(method: string, url: string, body: Value): MapValue {
   // Build a small Node script that does fetch and prints JSON result
   // Extract body string: if it's a map with a "data" field, use that; otherwise stringify
+  // Also extract optional "headers" map for custom HTTP headers
   let bodyStr: string | null = null;
+  let customHeaders: Record<string, string> = {};
   if (body != null) {
     if (typeof body === "object" && "__map" in body) {
       const m = (body as MapValue).entries;
       const d = m.get("data");
+      const h = m.get("headers");
+      if (h != null && typeof h === "object" && "__map" in h) {
+        const hm = (h as MapValue).entries;
+        for (const [k, v] of hm) customHeaders[k] = toStr(v);
+      }
       bodyStr = d != null ? toStr(d) : toStr(body);
     } else {
       bodyStr = toStr(body);
@@ -103,8 +110,8 @@ function syncFetch(method: string, url: string, body: Value): MapValue {
   }
   const bodyJson = bodyStr != null ? JSON.stringify(bodyStr) : "null";
   // Pass config via env to avoid shell escaping issues
-  const fetchConfig = JSON.stringify({ method, url, body: bodyStr });
-  const script = `const c=JSON.parse(process.env.ARC_FETCH);(async()=>{const o={method:c.method};if(c.body!==null){o.body=c.body;o.headers={"Content-Type":"application/json"};}try{const r=await fetch(c.url,o);const t=await r.text();let d;try{d=JSON.parse(t)}catch{d=t}console.log(JSON.stringify({ok:true,status:r.status,data:d}))}catch(e){console.log(JSON.stringify({ok:false,status:0,data:e.message}))}})()`;
+  const fetchConfig = JSON.stringify({ method, url, body: bodyStr, headers: customHeaders });
+  const script = `const c=JSON.parse(process.env.ARC_FETCH);(async()=>{const o={method:c.method,headers:{...c.headers}};if(c.body!==null){o.body=c.body;if(!o.headers["Content-Type"])o.headers["Content-Type"]="application/json";}try{const r=await fetch(c.url,o);const t=await r.text();let d;try{d=JSON.parse(t)}catch{d=t}console.log(JSON.stringify({ok:true,status:r.status,data:d}))}catch(e){console.log(JSON.stringify({ok:false,status:0,data:e.message}))}})()`;
   try {
     const raw = execSync(`node -e "${script.replace(/"/g, '\\"')}"`, {
       timeout: 30000,
@@ -717,8 +724,208 @@ function makePrelude(env: Env): void {
             return null;
           }
         }
+        // --- prompt natives ---
+        case "prompt.token_count": {
+          const text = String(args[0] ?? "");
+          return Math.ceil(text.length / 4);
+        }
+        case "prompt.token_truncate": {
+          const text = String(args[0] ?? "");
+          const maxTokens = args[1] as number;
+          const maxChars = maxTokens * 4;
+          if (text.length <= maxChars) return text;
+          return text.slice(0, maxChars);
+        }
+        case "prompt.chunk": {
+          const text = String(args[0] ?? "");
+          const maxTokens = args[1] as number;
+          const chunkSize = maxTokens * 4;
+          const chunks: string[] = [];
+          for (let i = 0; i < text.length; i += chunkSize) {
+            chunks.push(text.slice(i, i + chunkSize));
+          }
+          return chunks.length > 0 ? chunks : [""];
+        }
+        case "prompt.context_window": {
+          const messages = args[0] as Value[];
+          const maxTokens = args[1] as number;
+          if (!Array.isArray(messages)) return [];
+          let budget = maxTokens;
+          const result: Value[] = [];
+          for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i] as MapValue;
+            const content = msg?.entries?.get("content") ?? "";
+            const tokens = Math.ceil(String(content).length / 4);
+            if (tokens > budget) break;
+            budget -= tokens;
+            result.unshift(msg);
+          }
+          return result;
+        }
+        case "prompt.template": {
+          let text = String(args[0] ?? "");
+          const vars = args[1] as MapValue;
+          if (vars && typeof vars === "object" && "__map" in vars) {
+            for (const [k, v] of vars.entries) {
+              text = text.replaceAll(`{${k}}`, String(v ?? ""));
+            }
+          }
+          return text;
+        }
+        // --- store natives ---
+        case "store.open": {
+          const p = args[0] as string;
+          let data: Record<string, Value> = {};
+          try {
+            const raw = nodeFs.readFileSync(p, "utf-8");
+            data = JSON.parse(raw);
+          } catch { /* file doesn't exist or invalid JSON — start empty */ }
+          return { __store: true, path: p, data } as any;
+        }
+        case "store.get": {
+          const s = args[0] as any;
+          const k = args[1] as string;
+          return s.data[k] ?? null;
+        }
+        case "store.set": {
+          const s = args[0] as any;
+          s.data[args[1] as string] = args[2];
+          nodeFs.writeFileSync(s.path, JSON.stringify(s.data, null, 2), "utf-8");
+          return args[2];
+        }
+        case "store.delete": {
+          const s = args[0] as any;
+          const k = args[1] as string;
+          const had = k in s.data;
+          delete s.data[k];
+          nodeFs.writeFileSync(s.path, JSON.stringify(s.data, null, 2), "utf-8");
+          return had;
+        }
+        case "store.has": {
+          const s = args[0] as any;
+          return (args[1] as string) in s.data;
+        }
+        case "store.keys": {
+          const s = args[0] as any;
+          return Object.keys(s.data) as Value[];
+        }
+        case "store.values": {
+          const s = args[0] as any;
+          return Object.values(s.data) as Value[];
+        }
+        case "store.entries": {
+          const s = args[0] as any;
+          return Object.entries(s.data).map(([k, v]) => ({ key: k, value: v }) as unknown as Value);
+        }
+        case "store.clear": {
+          const s = args[0] as any;
+          s.data = {};
+          nodeFs.writeFileSync(s.path, JSON.stringify(s.data, null, 2), "utf-8");
+          return true;
+        }
+        case "store.size": {
+          const s = args[0] as any;
+          return Object.keys(s.data).length;
+        }
+        case "store.merge": {
+          const s = args[0] as any;
+          const m = args[1] as any;
+          if (m && typeof m === "object" && !Array.isArray(m)) {
+            for (const [k, v] of Object.entries(m)) {
+              if (k !== "__type" && k !== "__proto__") s.data[k] = v as Value;
+            }
+          }
+          nodeFs.writeFileSync(s.path, JSON.stringify(s.data, null, 2), "utf-8");
+          return true;
+        }
         default: return null;
       }
+    },
+
+    // --- embed/vector natives ---
+    embed_dot_product: (a, b) => {
+      if (!Array.isArray(a) || !Array.isArray(b)) return 0;
+      let sum = 0;
+      for (let i = 0; i < a.length; i++) sum += (a[i] as number) * (b[i] as number);
+      return sum;
+    },
+    embed_magnitude: (v) => {
+      if (!Array.isArray(v)) return 0;
+      let sum = 0;
+      for (let i = 0; i < v.length; i++) sum += (v[i] as number) * (v[i] as number);
+      return Math.sqrt(sum);
+    },
+    embed_cosine_similarity: (a, b) => {
+      if (!Array.isArray(a) || !Array.isArray(b)) return 0;
+      let dot = 0, magA = 0, magB = 0;
+      for (let i = 0; i < a.length; i++) {
+        const ai = a[i] as number, bi = b[i] as number;
+        dot += ai * bi;
+        magA += ai * ai;
+        magB += bi * bi;
+      }
+      const denom = Math.sqrt(magA) * Math.sqrt(magB);
+      return denom === 0 ? 0 : dot / denom;
+    },
+    embed_normalize: (v) => {
+      if (!Array.isArray(v)) return [];
+      let sum = 0;
+      for (let i = 0; i < v.length; i++) sum += (v[i] as number) * (v[i] as number);
+      const mag = Math.sqrt(sum);
+      if (mag === 0) return v;
+      return v.map(x => (x as number) / mag);
+    },
+    embed_euclidean_distance: (a, b) => {
+      if (!Array.isArray(a) || !Array.isArray(b)) return 0;
+      let sum = 0;
+      for (let i = 0; i < a.length; i++) {
+        const d = (a[i] as number) - (b[i] as number);
+        sum += d * d;
+      }
+      return Math.sqrt(sum);
+    },
+    embed_centroid: (vectors) => {
+      if (!Array.isArray(vectors) || vectors.length === 0) return [];
+      const first = vectors[0] as Value[];
+      const dim = first.length;
+      const sums = new Float64Array(dim);
+      for (let i = 0; i < vectors.length; i++) {
+        const v = vectors[i] as Value[];
+        for (let j = 0; j < dim; j++) sums[j] += v[j] as number;
+      }
+      const n = vectors.length;
+      const result: Value[] = new Array(dim);
+      for (let j = 0; j < dim; j++) result[j] = sums[j] / n;
+      return result;
+    },
+    embed_most_similar: (query, candidates, topK) => {
+      if (!Array.isArray(query) || !Array.isArray(candidates)) return [];
+      const k = topK as number;
+      const scored: { score: number; idx: number }[] = [];
+      for (let i = 0; i < candidates.length; i++) {
+        const c = candidates[i] as MapValue;
+        const vec = c.entries.get("vector") as Value[];
+        let dot = 0, magA = 0, magB = 0;
+        for (let j = 0; j < query.length; j++) {
+          const qj = query[j] as number, vj = vec[j] as number;
+          dot += qj * vj;
+          magA += qj * qj;
+          magB += vj * vj;
+        }
+        const denom = Math.sqrt(magA) * Math.sqrt(magB);
+        scored.push({ score: denom === 0 ? 0 : dot / denom, idx: i });
+      }
+      scored.sort((a, b) => b.score - a.score);
+      const results: Value[] = [];
+      for (let i = 0; i < Math.min(k, scored.length); i++) {
+        const s = scored[i];
+        const c = candidates[s.idx] as MapValue;
+        const m = new Map<string, Value>();
+        m.set("id", c.entries.get("id") ?? null);
+        m.set("score", s.score);
+        results.push({ __map: true, entries: m } as MapValue);
+      }
+      return results;
     },
 
     // --- file I/O (used by stdlib/io.arc) ---
