@@ -1,7 +1,7 @@
 # Arc Standard Library: time module
 # Simulated time utilities
 
-pub fn now() => 0
+pub fn now() => __native("time.now")
 
 pub fn format_duration(ms) {
   let total_s = int(ms / 1000)
@@ -16,4 +16,4 @@ pub fn format_duration(ms) {
   result
 }
 
-pub fn sleep(ms) => nil
+pub fn sleep(ms) => __native("time.sleep", ms)

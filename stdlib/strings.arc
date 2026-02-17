@@ -2,25 +2,31 @@
 
 pub fn pad_left(s, width, ch) {
   let mut result = str(s)
-  let pad_char = slice(str(ch), 0, 1)
-  if len(result) >= width { result }
+  if len(str(ch)) == 0 { result }
   el {
-    do {
-      result = pad_char ++ result
-    } until len(result) >= width
-    result
+    let pad_char = slice(str(ch), 0, 1)
+    if len(result) >= width { result }
+    el {
+      do {
+        result = pad_char ++ result
+      } until len(result) >= width
+      result
+    }
   }
 }
 
 pub fn pad_right(s, width, ch) {
   let mut result = str(s)
-  let pad_char = slice(str(ch), 0, 1)
-  if len(result) >= width { result }
+  if len(str(ch)) == 0 { result }
   el {
-    do {
-      result = result ++ pad_char
-    } until len(result) >= width
-    result
+    let pad_char = slice(str(ch), 0, 1)
+    if len(result) >= width { result }
+    el {
+      do {
+        result = result ++ pad_char
+      } until len(result) >= width
+      result
+    }
   }
 }
 

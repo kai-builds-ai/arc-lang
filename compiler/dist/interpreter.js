@@ -170,6 +170,7 @@ function jsToArc(v) {
     }
     return String(v);
 }
+let callDepth = 0;
 function resolveAsync(v) {
     if (v && typeof v === "object" && "__async" in v) {
         return v.thunk();
@@ -356,7 +357,7 @@ function makePrelude(env) {
         time_ms: () => Date.now(),
         // --- crypto natives ---
         crypto_hash: (algorithm, data) => {
-            return nodeCrypto.createHash(algorithm).update(data).digest("hex");
+            return nodeCrypto.createHash(algorithm).update(data == null ? "" : data).digest("hex");
         },
         crypto_hmac: (algorithm, key, data) => {
             return nodeCrypto.createHmac(algorithm, key).update(data).digest("hex");
@@ -371,7 +372,7 @@ function makePrelude(env) {
             return nodeCrypto.randomInt(lo, hi + 1);
         },
         crypto_uuid: () => nodeCrypto.randomUUID(),
-        crypto_encode_base64: (s) => Buffer.from(s).toString("base64"),
+        crypto_encode_base64: (s) => Buffer.from(s == null ? "" : s).toString("base64"),
         crypto_decode_base64: (s) => Buffer.from(s, "base64").toString("utf-8"),
         // --- net natives ---
         net_url_parse: (url) => {
@@ -391,8 +392,15 @@ function makePrelude(env) {
             }
         },
         net_url_encode: (s) => encodeURIComponent(s),
-        net_url_decode: (s) => decodeURIComponent(s),
+        net_url_decode: (s) => { try {
+            return decodeURIComponent(s);
+        }
+        catch {
+            return null;
+        } },
         net_query_parse: (s) => {
+            if (s == null)
+                return { __map: true, entries: new Map() };
             const str = s.startsWith("?") ? s.slice(1) : s;
             const params = new URLSearchParams(str);
             const m = new Map();
@@ -409,6 +417,8 @@ function makePrelude(env) {
             return "";
         },
         net_ip_is_valid: (s) => {
+            if (s == null)
+                return false;
             const str = s;
             // IPv4
             const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(str);
@@ -455,8 +465,13 @@ function makePrelude(env) {
         },
         error_try: (fn) => {
             try {
-                const result = typeof fn === "function" ? fn() :
-                    (fn && typeof fn === "object" && "__fn" in fn) ? callFn(fn, []) : null;
+                if (typeof fn !== "function" && !(fn && typeof fn === "object" && "__fn" in fn)) {
+                    const errMap = new Map();
+                    errMap.set("ok", false);
+                    errMap.set("error", "argument is not a function");
+                    return { __map: true, entries: errMap };
+                }
+                const result = typeof fn === "function" ? fn() : callFn(fn, []);
                 const okMap = new Map();
                 okMap.set("ok", true);
                 okMap.set("value", result);
@@ -664,7 +679,8 @@ function makePrelude(env) {
             const fmt = format;
             // Support ISO format and custom format tokens
             if (fmt === "ISO" || fmt === "iso") {
-                return new Date(s).getTime();
+                const t = new Date(s).getTime();
+                return isNaN(t) ? null : t;
             }
             // Parse using format tokens: YYYY, MM, DD, hh, mm, ss
             let year = 2000, month = 1, day = 1, hour = 0, min = 0, sec = 0;
@@ -705,21 +721,22 @@ function makePrelude(env) {
                     si++;
                 }
             }
-            return new Date(year, month - 1, day, hour, min, sec).getTime();
+            const result = new Date(year, month - 1, day, hour, min, sec).getTime();
+            return isNaN(result) ? null : result;
         },
         __builtin_date_format: (ts, fmt) => {
             const d = new Date(ts);
             let result = fmt;
-            result = result.replace("YYYY", String(d.getFullYear()));
-            result = result.replace("MM", String(d.getMonth() + 1).padStart(2, "0"));
-            result = result.replace("DD", String(d.getDate()).padStart(2, "0"));
-            result = result.replace("hh", String(d.getHours()).padStart(2, "0"));
-            result = result.replace("mm", String(d.getMinutes()).padStart(2, "0"));
-            result = result.replace("ss", String(d.getSeconds()).padStart(2, "0"));
+            result = result.replaceAll("YYYY", String(d.getFullYear()));
+            result = result.replaceAll("MM", String(d.getMonth() + 1).padStart(2, "0"));
+            result = result.replaceAll("DD", String(d.getDate()).padStart(2, "0"));
+            result = result.replaceAll("hh", String(d.getHours()).padStart(2, "0"));
+            result = result.replaceAll("mm", String(d.getMinutes()).padStart(2, "0"));
+            result = result.replaceAll("ss", String(d.getSeconds()).padStart(2, "0"));
             return result;
         },
         __builtin_date_to_iso: (ts) => new Date(ts).toISOString(),
-        __builtin_date_from_iso: (s) => new Date(s).getTime(),
+        __builtin_date_from_iso: (s) => { const t = new Date(s).getTime(); return isNaN(t) ? null : t; },
         // --- os natives ---
         __native: (name, ...args) => {
             const cmd = name;
@@ -734,6 +751,13 @@ function makePrelude(env) {
                 if (v instanceof Map) {
                     const entries = new Map();
                     for (const [k, val] of v)
+                        entries.set(k, toArcValue(val));
+                    return { __map: true, entries };
+                }
+                if (typeof v === "object" && v !== null && !("__map" in v)) {
+                    // Convert plain objects to MapValue to prevent re-evaluation as Arc code
+                    const entries = new Map();
+                    for (const [k, val] of Object.entries(v))
                         entries.set(k, toArcValue(val));
                     return { __map: true, entries };
                 }
@@ -774,7 +798,6 @@ function makePrelude(env) {
                 case "os.temp_dir": return nodeOs.tmpdir();
                 case "os.list_dir": {
                     try {
-                        const fs = require("fs");
                         return nodeFs.readdirSync(args[0]);
                     }
                     catch {
@@ -783,7 +806,6 @@ function makePrelude(env) {
                 }
                 case "os.is_file": {
                     try {
-                        const fs = require("fs");
                         return nodeFs.statSync(args[0]).isFile();
                     }
                     catch {
@@ -792,7 +814,6 @@ function makePrelude(env) {
                 }
                 case "os.is_dir": {
                     try {
-                        const fs = require("fs");
                         return nodeFs.statSync(args[0]).isDirectory();
                     }
                     catch {
@@ -801,7 +822,6 @@ function makePrelude(env) {
                 }
                 case "os.mkdir": {
                     try {
-                        const fs = require("fs");
                         nodeFs.mkdirSync(args[0], { recursive: true });
                         return true;
                     }
@@ -811,7 +831,6 @@ function makePrelude(env) {
                 }
                 case "os.rmdir": {
                     try {
-                        const fs = require("fs");
                         nodeFs.rmdirSync(args[0]);
                         return true;
                     }
@@ -821,7 +840,6 @@ function makePrelude(env) {
                 }
                 case "os.remove": {
                     try {
-                        const fs = require("fs");
                         nodeFs.unlinkSync(args[0]);
                         return true;
                     }
@@ -831,7 +849,6 @@ function makePrelude(env) {
                 }
                 case "os.rename": {
                     try {
-                        const fs = require("fs");
                         nodeFs.renameSync(args[0], args[1]);
                         return true;
                     }
@@ -841,7 +858,6 @@ function makePrelude(env) {
                 }
                 case "os.copy": {
                     try {
-                        const fs = require("fs");
                         nodeFs.copyFileSync(args[0], args[1]);
                         return true;
                     }
@@ -851,7 +867,6 @@ function makePrelude(env) {
                 }
                 case "os.file_size": {
                     try {
-                        const fs = require("fs");
                         return nodeFs.statSync(args[0]).size;
                     }
                     catch {
@@ -861,12 +876,11 @@ function makePrelude(env) {
                 case "os.exec": {
                     try {
                         const cmd = args[0];
-                        // Command injection protection: reject commands with common shell injection patterns
-                        const dangerous = /[;&|`$]|\$\(|>\s*>|<\s*<|\beval\b|\bsource\b/;
+                        // Command injection protection: block backticks and $() subshells
+                        const dangerous = /`|\$\(|>\s*>|<\s*<|\beval\b|\bsource\b/;
                         if (dangerous.test(cmd)) {
                             throw new Error(`Potentially unsafe command (injection risk): ${cmd}`);
                         }
-                        const cp = require("child_process");
                         return execSync(cmd, { encoding: "utf-8", timeout: 10000 }).trim();
                     }
                     catch (e) {
@@ -874,6 +888,19 @@ function makePrelude(env) {
                             throw e;
                         return null;
                     }
+                }
+                case "regex.escape": {
+                    const s = String(args[0] ?? "");
+                    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                }
+                case "time.now": return Date.now();
+                case "time.sleep": {
+                    const ms = args[0];
+                    if (ms > 0) {
+                        const end = Date.now() + ms;
+                        while (Date.now() < end) { /* busy wait */ }
+                    }
+                    return null;
                 }
                 // --- prompt natives ---
                 case "prompt.token_count": {
@@ -891,6 +918,8 @@ function makePrelude(env) {
                 case "prompt.chunk": {
                     const text = String(args[0] ?? "");
                     const maxTokens = args[1];
+                    if (maxTokens <= 0)
+                        return [];
                     const chunkSize = maxTokens * 4;
                     const chunks = [];
                     for (let i = 0; i < text.length; i += chunkSize) {
@@ -1013,6 +1042,60 @@ function makePrelude(env) {
                 case "math.exp": return Math.exp(args[0]);
                 case "math.hypot": return Math.hypot(args[0], args[1]);
                 case "math.cbrt": return Math.cbrt(args[0]);
+                case "math.pow": return Math.pow(args[0], args[1]);
+                case "math.ceil": return Math.ceil(args[0]);
+                case "csv.parse": {
+                    const text = args[0].trim();
+                    if (text === "")
+                        return [];
+                    const rows = [];
+                    let i = 0;
+                    while (i < text.length) {
+                        const row = [];
+                        while (true) {
+                            let value = "";
+                            if (i < text.length && text[i] === '"') {
+                                i++; // skip opening quote
+                                while (i < text.length) {
+                                    if (text[i] === '"') {
+                                        if (i + 1 < text.length && text[i + 1] === '"') {
+                                            value += '"';
+                                            i += 2;
+                                        }
+                                        else {
+                                            i++; // skip closing quote
+                                            break;
+                                        }
+                                    }
+                                    else {
+                                        value += text[i];
+                                        i++;
+                                    }
+                                }
+                            }
+                            else {
+                                while (i < text.length && text[i] !== ',' && text[i] !== '\n' && text[i] !== '\r') {
+                                    value += text[i];
+                                    i++;
+                                }
+                            }
+                            row.push(value.trim());
+                            if (i < text.length && text[i] === ',') {
+                                i++;
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                        // skip line ending
+                        if (i < text.length && text[i] === '\r')
+                            i++;
+                        if (i < text.length && text[i] === '\n')
+                            i++;
+                        rows.push(row);
+                    }
+                    return rows;
+                }
                 // --- html natives ---
                 case "html.parse": {
                     const src = args[0];
@@ -1023,7 +1106,9 @@ function makePrelude(env) {
                         return m;
                     }
                     function decodeEntities(s) {
-                        return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                        return s.replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+                            .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+                            .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
                     }
                     function parseHTML(html) {
                         const nodes = [];
@@ -1032,6 +1117,18 @@ function makePrelude(env) {
                             if (html[i] === '<') {
                                 if (html[i + 1] === '/') {
                                     break;
+                                }
+                                // Skip comments
+                                if (html.slice(i, i + 4) === '<!--') {
+                                    const endComment = html.indexOf('-->', i + 4);
+                                    i = endComment !== -1 ? endComment + 3 : html.length;
+                                    continue;
+                                }
+                                // Skip DOCTYPE
+                                if (html.slice(i, i + 9).toLowerCase() === '<!doctype') {
+                                    const endDoc = html.indexOf('>', i);
+                                    i = endDoc !== -1 ? endDoc + 1 : html.length;
+                                    continue;
                                 }
                                 const tagMatch = html.slice(i).match(/^<([a-zA-Z][a-zA-Z0-9]*)/);
                                 if (!tagMatch) {
@@ -1088,15 +1185,32 @@ function makePrelude(env) {
                                 i++;
                                 const voidTags = new Set(['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr']);
                                 let children = [];
+                                const rawTags = new Set(['script', 'style']);
                                 if (!selfClosing && !voidTags.has(tag)) {
-                                    children = parseHTML(html.slice(i));
-                                    const closeTag = `</${tag}>`;
-                                    const closeIdx = html.toLowerCase().indexOf(closeTag, i);
-                                    if (closeIdx !== -1) {
-                                        i = closeIdx + closeTag.length;
+                                    if (rawTags.has(tag)) {
+                                        // Treat script/style content as raw text — don't parse inner content
+                                        const closeTag = `</${tag}>`;
+                                        const closeIdx = html.toLowerCase().indexOf(closeTag, i);
+                                        if (closeIdx !== -1) {
+                                            const rawText = html.slice(i, closeIdx);
+                                            if (rawText.trim())
+                                                children = [rawText];
+                                            i = closeIdx + closeTag.length;
+                                        }
+                                        else {
+                                            i = html.length;
+                                        }
                                     }
                                     else {
-                                        i = html.length;
+                                        children = parseHTML(html.slice(i));
+                                        const closeTag = `</${tag}>`;
+                                        const closeIdx = html.toLowerCase().indexOf(closeTag, i);
+                                        if (closeIdx !== -1) {
+                                            i = closeIdx + closeTag.length;
+                                        }
+                                        else {
+                                            i = html.length;
+                                        }
                                     }
                                 }
                                 nodes.push(mkMap([['tag', tag], ['attrs', mkMap(attrEntries)], ['children', children]]));
@@ -1231,7 +1345,12 @@ function makePrelude(env) {
                 case "env.get": return process.env[args[0]] ?? null;
                 case "env.get_or": return process.env[args[0]] ?? args[1];
                 case "env.set": {
-                    process.env[args[0]] = String(args[1]);
+                    if (args[1] == null) {
+                        delete process.env[args[0]];
+                    }
+                    else {
+                        process.env[args[0]] = String(args[1]);
+                    }
                     return null;
                 }
                 case "env.remove": {
@@ -1263,13 +1382,34 @@ function makePrelude(env) {
                 // --- YAML natives ---
                 case "yaml.parse": {
                     const src = args[0];
+                    function yamlParseFlowMapping(s) {
+                        const inner = s.slice(1, -1).trim();
+                        const m = new Map();
+                        if (inner === "")
+                            return m;
+                        // Simple comma-split (doesn't handle nested structures)
+                        const parts = inner.split(",");
+                        for (const part of parts) {
+                            const colon = part.indexOf(":");
+                            if (colon > 0) {
+                                m.set(part.slice(0, colon).trim(), yamlParseValue(part.slice(colon + 1).trim()));
+                            }
+                        }
+                        return m;
+                    }
+                    function yamlParseFlowSequence(s) {
+                        const inner = s.slice(1, -1).trim();
+                        if (inner === "")
+                            return [];
+                        return inner.split(",").map(x => yamlParseValue(x.trim()));
+                    }
                     function yamlParseValue(s) {
                         s = s.trim();
                         if (s === "" || s === "~" || s === "null")
                             return null;
-                        if (s === "true" || s === "True" || s === "TRUE")
+                        if (s === "true" || s === "True" || s === "TRUE" || s === "yes" || s === "Yes" || s === "YES" || s === "on" || s === "On" || s === "ON")
                             return true;
-                        if (s === "false" || s === "False" || s === "FALSE")
+                        if (s === "false" || s === "False" || s === "FALSE" || s === "no" || s === "No" || s === "NO" || s === "off" || s === "Off" || s === "OFF")
                             return false;
                         if (/^-?\d+$/.test(s))
                             return parseInt(s, 10);
@@ -1277,6 +1417,10 @@ function makePrelude(env) {
                             return parseFloat(s);
                         if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")))
                             return s.slice(1, -1);
+                        if (s.startsWith("{") && s.endsWith("}"))
+                            return yamlParseFlowMapping(s);
+                        if (s.startsWith("[") && s.endsWith("]"))
+                            return yamlParseFlowSequence(s);
                         return s;
                     }
                     function yamlParse(lines, baseIndent) {
@@ -1300,13 +1444,36 @@ function makePrelude(env) {
                                     continue;
                                 }
                                 const lt = line.trimStart();
-                                if (!lt.startsWith("- ")) {
+                                if (!lt.startsWith("- ") && lt !== "-") {
                                     i++;
                                     continue;
                                 }
-                                const itemVal = lt.slice(2);
+                                const itemVal = lt === "-" ? "" : lt.slice(2);
                                 const lineIndent = line.length - line.trimStart().length;
                                 const childIndent = lineIndent + 2;
+                                // Handle nested list: `- - val`
+                                if (itemVal.startsWith("- ") || itemVal === "-") {
+                                    const nestedLines = [" ".repeat(childIndent) + itemVal];
+                                    let j = i + 1;
+                                    while (j < lines.length) {
+                                        const cl = lines[j];
+                                        if (cl.trim() === "") {
+                                            nestedLines.push(cl);
+                                            j++;
+                                            continue;
+                                        }
+                                        const ci = cl.length - cl.trimStart().length;
+                                        if (ci >= childIndent) {
+                                            nestedLines.push(lines[j]);
+                                            j++;
+                                        }
+                                        else
+                                            break;
+                                    }
+                                    result.push(yamlParse(nestedLines, childIndent));
+                                    i = j;
+                                    continue;
+                                }
                                 const children = [];
                                 let j = i + 1;
                                 while (j < lines.length) {
@@ -1324,7 +1491,11 @@ function makePrelude(env) {
                                     else
                                         break;
                                 }
-                                if (children.length > 0 && children.some(c => c.trim() !== "" && c.trimStart().match(/^[^:]+:\s/))) {
+                                if (itemVal.trim() === "" && children.length === 0) {
+                                    // Empty list item: `- ` or bare `-`
+                                    result.push(null);
+                                }
+                                else if (children.length > 0 && children.some(c => c.trim() !== "" && c.trimStart().match(/^[^:]+:\s/))) {
                                     if (itemVal.trim() !== "") {
                                         const allLines = [" ".repeat(childIndent) + itemVal, ...children];
                                         result.push(yamlParse(allLines, childIndent));
@@ -1403,10 +1574,14 @@ function makePrelude(env) {
                                         else
                                             break;
                                     }
-                                    const childIndent = children.length > 0 ?
-                                        (children.find(c => c.trim() !== "")?.length ?? indent + 2) - (children.find(c => c.trim() !== "")?.trimStart().length ?? 0) :
-                                        indent + 2;
-                                    result.set(key, yamlParse(children, childIndent));
+                                    if (children.length === 0 || children.every(c => c.trim() === "")) {
+                                        // No children → nil, not empty map
+                                        result.set(key, null);
+                                    }
+                                    else {
+                                        const childIndent = (children.find(c => c.trim() !== "")?.length ?? indent + 2) - (children.find(c => c.trim() !== "")?.trimStart().length ?? 0);
+                                        result.set(key, yamlParse(children, childIndent));
+                                    }
                                     i = j;
                                 }
                                 else {
@@ -1471,12 +1646,50 @@ function makePrelude(env) {
                     const root = new Map();
                     let current = root;
                     const lines = src.split("\n");
+                    function tomlStripComment(s) {
+                        // Strip inline comments (not inside strings)
+                        let inStr = false;
+                        let strCh = "";
+                        for (let i = 0; i < s.length; i++) {
+                            if (inStr) {
+                                if (s[i] === strCh && s[i - 1] !== "\\")
+                                    inStr = false;
+                                continue;
+                            }
+                            if (s[i] === '"' || s[i] === "'") {
+                                inStr = true;
+                                strCh = s[i];
+                                continue;
+                            }
+                            if (s[i] === "#")
+                                return s.slice(0, i).trim();
+                        }
+                        return s;
+                    }
                     function tomlParseValue(s) {
-                        s = s.trim();
+                        s = tomlStripComment(s).trim();
                         if (s === "true")
                             return true;
                         if (s === "false")
                             return false;
+                        if (s === "inf" || s === "+inf")
+                            return Infinity;
+                        if (s === "-inf")
+                            return -Infinity;
+                        if (s === "nan" || s === "+nan" || s === "-nan")
+                            return NaN;
+                        // Multiline basic strings
+                        if (s.startsWith('"""')) {
+                            const end = s.indexOf('"""', 3);
+                            if (end !== -1)
+                                return s.slice(3, end).replace(/^\n/, "").replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\\\/g, "\\");
+                        }
+                        // Multiline literal strings
+                        if (s.startsWith("'''")) {
+                            const end = s.indexOf("'''", 3);
+                            if (end !== -1)
+                                return s.slice(3, end).replace(/^\n/, "");
+                        }
                         if (s.startsWith('"') && s.endsWith('"'))
                             return s.slice(1, -1).replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\\\/g, "\\");
                         if (s.startsWith("'") && s.endsWith("'"))
@@ -1574,8 +1787,8 @@ function makePrelude(env) {
                         }
                         return cur;
                     }
-                    for (const line of lines) {
-                        const trimmed = line.trim();
+                    for (let li = 0; li < lines.length; li++) {
+                        const trimmed = lines[li].trim();
                         if (trimmed === "" || trimmed.startsWith("#"))
                             continue;
                         const arrMatch = trimmed.match(/^\[\[([^\]]+)\]\]$/);
@@ -1600,8 +1813,44 @@ function makePrelude(env) {
                         const eq = trimmed.indexOf("=");
                         if (eq > 0) {
                             const key = trimmed.slice(0, eq).trim();
-                            const val = tomlParseValue(trimmed.slice(eq + 1));
-                            current.set(key, val);
+                            let valStr = trimmed.slice(eq + 1).trim();
+                            // Handle multiline basic strings
+                            if (valStr.startsWith('"""') && !valStr.slice(3).includes('"""')) {
+                                while (li + 1 < lines.length && !lines[li + 1].includes('"""')) {
+                                    li++;
+                                    valStr += "\n" + lines[li];
+                                }
+                                if (li + 1 < lines.length) {
+                                    li++;
+                                    valStr += "\n" + lines[li];
+                                }
+                            }
+                            // Handle multiline literal strings
+                            if (valStr.startsWith("'''") && !valStr.slice(3).includes("'''")) {
+                                while (li + 1 < lines.length && !lines[li + 1].includes("'''")) {
+                                    li++;
+                                    valStr += "\n" + lines[li];
+                                }
+                                if (li + 1 < lines.length) {
+                                    li++;
+                                    valStr += "\n" + lines[li];
+                                }
+                            }
+                            const val = tomlParseValue(valStr);
+                            // Expand dotted keys: a.b.c = 1 → nested maps
+                            if (key.includes(".")) {
+                                const parts = key.split(".").map(k => k.trim());
+                                let target = current;
+                                for (let ki = 0; ki < parts.length - 1; ki++) {
+                                    if (!target.has(parts[ki]))
+                                        target.set(parts[ki], new Map());
+                                    target = target.get(parts[ki]);
+                                }
+                                target.set(parts[parts.length - 1], val);
+                            }
+                            else {
+                                current.set(key, val);
+                            }
                         }
                     }
                     return toArcValue(root);
@@ -1661,6 +1910,10 @@ function makePrelude(env) {
                         }
                         return lines.join("\n");
                     }
+                    if (val === null || val === undefined)
+                        return "";
+                    if (!(val instanceof Map))
+                        return "";
                     return tomlStringifySection(val, "");
                 }
                 // --- log natives ---
@@ -1697,7 +1950,12 @@ function makePrelude(env) {
                     return null;
                 }
                 case "log.set_level": {
-                    globalThis.__arc_log_level = args[0];
+                    const lvl = args[0];
+                    const validLevels = ["debug", "info", "warn", "error", "fatal"];
+                    if (!validLevels.includes(lvl)) {
+                        throw new ArcRuntimeError(`Invalid log level '${lvl}'. Must be one of: ${validLevels.join(", ")}`, { code: ErrorCode.UNDEFINED_VARIABLE });
+                    }
+                    globalThis.__arc_log_level = lvl;
                     return null;
                 }
                 case "log.with": {
@@ -1726,6 +1984,8 @@ function makePrelude(env) {
         embed_dot_product: (a, b) => {
             if (!Array.isArray(a) || !Array.isArray(b))
                 return 0;
+            if (a.length !== b.length)
+                throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`);
             let sum = 0;
             for (let i = 0; i < a.length; i++)
                 sum += a[i] * b[i];
@@ -1742,6 +2002,8 @@ function makePrelude(env) {
         embed_cosine_similarity: (a, b) => {
             if (!Array.isArray(a) || !Array.isArray(b))
                 return 0;
+            if (a.length !== b.length)
+                throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`);
             let dot = 0, magA = 0, magB = 0;
             for (let i = 0; i < a.length; i++) {
                 const ai = a[i], bi = b[i];
@@ -1766,6 +2028,8 @@ function makePrelude(env) {
         embed_euclidean_distance: (a, b) => {
             if (!Array.isArray(a) || !Array.isArray(b))
                 return 0;
+            if (a.length !== b.length)
+                throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`);
             let sum = 0;
             for (let i = 0; i < a.length; i++) {
                 const d = a[i] - b[i];
@@ -1841,13 +2105,20 @@ function makePrelude(env) {
     };
     function callFn(fn, args) {
         if (fn && typeof fn === "object" && "__fn" in fn) {
+            if (++callDepth > 10000) {
+                callDepth = 0;
+                throw new ArcRuntimeError("Maximum call stack depth exceeded");
+            }
             const f = fn;
             const fnEnv = new Env(f.closure);
             bindParams(f, args, fnEnv, evalExpr);
             try {
-                return evalExpr(f.body, fnEnv);
+                const result = evalExpr(f.body, fnEnv);
+                callDepth--;
+                return result;
             }
             catch (e) {
+                callDepth--;
                 if (e instanceof ReturnSignal)
                     return e.value;
                 throw e;
@@ -1974,13 +2245,31 @@ function evalExpr(expr, env) {
             switch (expr.op) {
                 case "+": {
                     if (typeof left === "string" || typeof right === "string") {
+                        if (left === null || right === null)
+                            throw new ArcRuntimeError(`TypeError: cannot add nil`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                         return toStr(left) + toStr(right);
                     }
+                    if (left === null || right === null)
+                        throw new ArcRuntimeError(`TypeError: cannot add nil`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
+                    if (typeof left !== "number" || typeof right !== "number")
+                        throw new ArcRuntimeError(`TypeError: cannot add ${typeof left} and ${typeof right}`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     return left + right;
                 }
-                case "-": return left - right;
-                case "*": return left * right;
+                case "-": {
+                    if (typeof left !== "number" || typeof right !== "number")
+                        throw new ArcRuntimeError(`TypeError: cannot subtract non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
+                    return left - right;
+                }
+                case "*": {
+                    if (typeof left === "string" && typeof right === "number" && Number.isInteger(right) && right >= 0)
+                        return left.repeat(right);
+                    if (typeof left !== "number" || typeof right !== "number")
+                        throw new ArcRuntimeError(`TypeError: cannot multiply non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
+                    return left * right;
+                }
                 case "/": {
+                    if (typeof left !== "number" || typeof right !== "number")
+                        throw new ArcRuntimeError(`TypeError: cannot divide non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     if (right === 0)
                         throw new ArcRuntimeError(`Division by zero`, {
                             code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
@@ -1989,6 +2278,8 @@ function evalExpr(expr, env) {
                     return left / right;
                 }
                 case "%": {
+                    if (typeof left !== "number" || typeof right !== "number")
+                        throw new ArcRuntimeError(`TypeError: cannot modulo non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     if (right === 0)
                         throw new ArcRuntimeError(`Modulo by zero`, {
                             code: ErrorCode.DIVISION_BY_ZERO, loc: expr.loc,
@@ -1996,7 +2287,11 @@ function evalExpr(expr, env) {
                         });
                     return left % right;
                 }
-                case "**": return Math.pow(left, right);
+                case "**": {
+                    if (typeof left !== "number" || typeof right !== "number")
+                        throw new ArcRuntimeError(`TypeError: cannot exponentiate non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
+                    return Math.pow(left, right);
+                }
                 case "==": return left === right;
                 case "!=": return left !== right;
                 case "<": return left < right;
@@ -2017,7 +2312,7 @@ function evalExpr(expr, env) {
             const operand = evalExpr(expr.operand, env);
             if (expr.op === "-")
                 return -operand;
-            if (expr.op === "not")
+            if (expr.op === "not" || expr.op === "!")
                 return !isTruthy(operand);
             throw new Error(`Unknown unary op: ${expr.op}`);
         }
@@ -2030,10 +2325,19 @@ function evalExpr(expr, env) {
             }
             else if (callee && typeof callee === "object" && "__fn" in callee) {
                 let fn = callee;
+                if (++callDepth > 10000) {
+                    callDepth = 0;
+                    throw new ArcRuntimeError("Maximum call stack depth exceeded");
+                }
                 // Tail call optimization loop: if the function body resolves to
                 // a tail call back to itself, reuse the frame instead of recursing
+                let tcoIterations = 0;
                 try {
                     tailLoop: while (true) {
+                        if (++tcoIterations > 10000) {
+                            callDepth--;
+                            throw new ArcRuntimeError("Maximum call stack depth exceeded");
+                        }
                         const fnEnv = new Env(fn.closure);
                         bindParams(fn, args, fnEnv, evalExpr);
                         const bodyResult = evalExprTCO(fn.body, fnEnv, fn.name);
@@ -2046,8 +2350,10 @@ function evalExpr(expr, env) {
                         result = bodyResult;
                         break;
                     }
+                    callDepth--;
                 }
                 catch (e) {
+                    callDepth--;
                     if (e instanceof ReturnSignal) {
                         result = e.value;
                     }
@@ -2105,6 +2411,8 @@ function evalExpr(expr, env) {
         case "IndexExpr": {
             const obj = evalExpr(expr.object, env);
             const idx = evalExpr(expr.index, env);
+            if (typeof obj === "string" && typeof idx === "number")
+                return idx >= 0 && idx < obj.length ? obj.charAt(idx) : null;
             if (Array.isArray(obj) && typeof idx === "number")
                 return obj[idx] ?? null;
             if (obj && typeof obj === "object" && "__map" in obj) {
@@ -2464,7 +2772,14 @@ export function interpret(program, onUse) {
             onUse(stmt, env);
         }
         else {
-            evalStmt(stmt, env);
+            try {
+                evalStmt(stmt, env);
+            }
+            catch (e) {
+                if (e instanceof ReturnSignal)
+                    throw new ArcRuntimeError("ret used outside of function");
+                throw e;
+            }
         }
     }
 }
@@ -2476,7 +2791,14 @@ export function interpretWithEnv(program, env, onUse) {
             result = null;
         }
         else {
-            result = evalStmt(stmt, env);
+            try {
+                result = evalStmt(stmt, env);
+            }
+            catch (e) {
+                if (e instanceof ReturnSignal)
+                    throw new ArcRuntimeError("ret used outside of function");
+                throw e;
+            }
         }
     }
     return result;

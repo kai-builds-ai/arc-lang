@@ -1,4 +1,4 @@
-export declare const ARC_VERSION = "0.6.0";
+export declare const ARC_VERSION = "0.6.1";
 export declare const ARC_BUILD_DATE: string;
 export declare const ARC_PLATFORM: string;
 /** Print version info */

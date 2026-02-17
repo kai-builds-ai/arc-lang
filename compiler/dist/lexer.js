@@ -377,6 +377,11 @@ export function lex(source) {
             tokens.push(tok(TokenType.Neq, "!=", sl, sc));
             continue;
         }
+        if (ch === "!") {
+            advance();
+            tokens.push(tok(TokenType.Not, "!", sl, sc));
+            continue;
+        }
         if (ch === "<" && peek(1) === "=") {
             advance();
             advance();

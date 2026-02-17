@@ -34,7 +34,8 @@ pub fn count_by(list, f) {
 }
 
 pub fn chunk(list, size) {
-  if len(list) == 0 { [] }
+  if size <= 0 { [] }
+  el if len(list) == 0 { [] }
   el {
     let mut result = []
     let mut i = 0

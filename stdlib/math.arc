@@ -22,12 +22,7 @@ pub fn clamp(x, lo, hi) {
 }
 
 # === Rounding ===
-pub fn ceil(x) {
-  let i = int(x)
-  if float(i) == float(x) { i }
-  el if x > 0 { i + 1 }
-  el { i }
-}
+pub fn ceil(x) => __native("math.ceil", x)
 
 pub fn floor(x) => int(x)
 
@@ -36,6 +31,8 @@ pub fn round(x) => int(x + 0.5)
 # === Powers & Roots ===
 pub fn pow(base, exp) {
   if exp == 0 { 1 }
+  el if exp < 0 and base == 0 { nil }
+  el if type_of(exp) == "float" { __native("math.pow", base, exp) }
   el if exp < 0 { 1.0 / pow(base, 0 - exp) }
   el {
     let mut result = 1
@@ -96,12 +93,15 @@ pub fn factorial(n) {
 pub fn gcd(a, b) {
   let mut x = abs(a)
   let mut y = abs(b)
-  do {
-    let t = y
-    y = x % y
-    x = t
-  } until y == 0
-  x
+  if x == 0 and y == 0 { 0 }
+  el {
+    do {
+      let t = y
+      y = x % y
+      x = t
+    } until y == 0
+    x
+  }
 }
 
 pub fn lcm(a, b) {
@@ -113,7 +113,11 @@ pub fn lcm(a, b) {
 # === Aggregation ===
 pub fn sum(lst) {
   let mut total = 0
-  for x in lst { total = total + x }
+  for x in lst {
+    if type_of(x) == "int" or type_of(x) == "float" {
+      total = total + x
+    }
+  }
   total
 }
 

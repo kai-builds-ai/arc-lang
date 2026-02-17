@@ -50,14 +50,7 @@ pub fn capture_all(pattern, text) {
 }
 
 # Escapes all regex special characters in `text`
-pub fn escape(text) {
-  let specials = ["\\", ".", "^", "$", "*", "+", "?", "(", ")", "[", "]", "{", "}", "|"]
-  let mut result = text
-  for ch in specials {
-    result = replace_all(ch, "\\" ++ ch, result)
-  }
-  result
-}
+pub fn escape(text) => __native("regex.escape", text)
 
 # Returns true if `pattern` is a valid regex, false otherwise
 pub fn is_valid(pattern) {

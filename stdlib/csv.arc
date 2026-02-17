@@ -1,10 +1,7 @@
 # Arc Standard Library: csv module
 # CSV utilities (pure string manipulation)
 
-pub fn parse_csv(text) {
-  let lines = split(trim(text), "\n")
-  map(lines, line => _parse_csv_line(line))
-}
+pub fn parse_csv(text) => __native("csv.parse", text)
 
 pub fn to_csv(rows) {
   join(map(rows, row => join(map(row, cell => _escape_csv(str(cell))), ",")), "\n")

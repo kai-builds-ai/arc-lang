@@ -14,7 +14,11 @@ pub fn to_json(value) {
   if t == "nil" { "null" }
   el if t == "bool" { if value { "true" } el { "false" } }
   el if t == "int" { str(value) }
-  el if t == "float" { str(value) }
+  el if t == "float" {
+    let s = str(value)
+    if s == "Infinity" or s == "-Infinity" or s == "NaN" { "null" }
+    el { s }
+  }
   el if t == "string" { _quote(value) }
   el if t == "list" {
     "[" ++ join(map(value, v => to_json(v)), ",") ++ "]"
@@ -36,8 +40,11 @@ fn _quote(s) {
 
 pub fn from_json(s) {
   let trimmed = trim(s)
-  let parsed = _parse_value(trimmed)
-  parsed.value
+  if len(trimmed) == 0 { nil }
+  el {
+    let parsed = _parse_value(trimmed)
+    parsed.value
+  }
 }
 
 fn _parse_value(s) {

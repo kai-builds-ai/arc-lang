@@ -245,6 +245,7 @@ export function lex(source: string): Token[] {
     if (ch === "+" && peek(1) === "+") { advance(); advance(); tokens.push(tok(TokenType.Concat, "++", sl, sc)); continue; }
     if (ch === "=" && peek(1) === "=") { advance(); advance(); tokens.push(tok(TokenType.Eq, "==", sl, sc)); continue; }
     if (ch === "!" && peek(1) === "=") { advance(); advance(); tokens.push(tok(TokenType.Neq, "!=", sl, sc)); continue; }
+    if (ch === "!") { advance(); tokens.push(tok(TokenType.Not, "!", sl, sc)); continue; }
     if (ch === "<" && peek(1) === "=") { advance(); advance(); tokens.push(tok(TokenType.Lte, "<=", sl, sc)); continue; }
     if (ch === ">" && peek(1) === "=") { advance(); advance(); tokens.push(tok(TokenType.Gte, ">=", sl, sc)); continue; }
     if (ch === "?" && peek(1) === ".") { advance(); advance(); tokens.push(tok(TokenType.QuestionDot, "?.", sl, sc)); continue; }

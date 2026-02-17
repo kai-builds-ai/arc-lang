@@ -2,6 +2,58 @@
 
 All notable changes to Arc are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.6.1] — 2026-02-16
+
+### Fixed — 51 Bug Fixes (Stress Test Audit)
+
+**Language core (6 fixes):**
+- Infinite recursion protection — call depth limit of 10,000 with clear error message
+- `!` operator now works as boolean negation (was a silent no-op)
+- `ret` outside function now gives clean error instead of `[object Object]`
+- Arithmetic type safety — `nil * 5`, `true + 1` now throw TypeErrors
+- String repeat — `"ha" * 3` → `"hahaha"` (was returning NaN)
+- String indexing — `"hello"[0]` → `"h"` (was returning nil)
+
+**Math (7 fixes):**
+- `gcd(0, 0)` returns 0 instead of crashing
+- `pow(0, -1)` returns nil instead of division-by-zero crash
+- `pow(2, 0.5)` now delegates to native `Math.pow` for float exponents
+- `ceil()` now native — fixes all negative number cases (`ceil(-2.3)` → `-2`)
+- `sum()` skips non-numbers instead of string concatenation
+- `pad_left`/`pad_right` with empty pad string returns original (was infinite loop)
+- `chunk()` with size ≤ 0 returns empty list (was infinite loop)
+
+**Parser/security (17 fixes):**
+- **SECURITY**: `{...}` patterns in YAML/TOML/HTML no longer evaluated as Arc code
+- YAML: `yes`/`no`/`on`/`off` treated as booleans, nested lists, empty values, flow mappings
+- TOML: multiline strings, `inf`/`nan` floats, dotted keys, inline comments, nil stringify
+- HTML: comments and DOCTYPE skipped, script/style as raw text, numeric entities decoded
+- Log: invalid level names now throw error
+
+**System modules (7 fixes):**
+- **CRITICAL**: `os` module filesystem/exec ops now functional (removed broken `require()` calls)
+- `regex.escape()` reimplemented as native (was always crashing)
+- `datetime.format()` replaces all occurrences (was only first)
+- `datetime.parse()`/`from_iso()` return nil for invalid input (was NaN)
+- `time.now()` returns actual timestamp (was hardcoded to 0)
+- `time.sleep()` now functional with native busy-wait
+- `os.exec()` injection filter relaxed for legitimate shell operators
+
+**AI-native modules (10 fixes):**
+- `prompt.chunk()` validates size > 0 (was crash/infinite loop)
+- `crypto_hash`/`crypto_encode_base64` handle nil input
+- `net_url_decode` catches malformed URIs, `net_query_parse`/`net_ip_is_valid` handle nil
+- Embed functions validate vector length matches
+- `error_try()` validates callable argument
+- Store module API cleaned up (`store.open` instead of `store.store_open`)
+- `env.set(key, nil)` removes variable instead of storing `"null"`
+
+**JSON/CSV (4 fixes):**
+- `json.to_json()` outputs `null` for Infinity/NaN (was invalid JSON)
+- `json.from_json("")` returns nil (was NaN)
+- CSV parser reimplemented as native with RFC 4180 support (quoted fields, commas in fields)
+- `parse_csv("")` returns `[]` (was `[[]]`)
+
 ## [0.6.0] — 2026-02-16
 
 ### Added — 6 New Stdlib Modules (27 total)
