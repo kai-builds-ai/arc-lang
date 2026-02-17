@@ -1,11 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFileSync, unlinkSync } from "fs";
+import { readFileSync, readdirSync, existsSync, writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { tmpdir } from "os";
 
 export const runtime = "nodejs";
 export const maxDuration = 10;
+
+// Pre-load all stdlib .arc files into memory at module load time.
+// This avoids filesystem issues on Vercel serverless.
+const STDLIB: Record<string, string> = {};
+
+function loadStdlibFromDisk() {
+  // Try multiple possible locations for stdlib
+  const candidates = [
+    join(process.cwd(), "node_modules", "arc-lang", "stdlib"),
+    join(__dirname, "..", "node_modules", "arc-lang", "stdlib"),
+  ];
+  
+  for (const dir of candidates) {
+    try {
+      if (existsSync(dir)) {
+        const files = readdirSync(dir).filter(f => f.endsWith(".arc"));
+        for (const file of files) {
+          const name = file.replace(".arc", "");
+          STDLIB[name] = readFileSync(join(dir, file), "utf-8");
+        }
+        if (Object.keys(STDLIB).length > 0) return;
+      }
+    } catch {}
+  }
+}
+
+loadStdlibFromDisk();
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,30 +59,80 @@ export async function POST(req: NextRequest) {
     const start = performance.now();
 
     try {
-      // Import Arc compiler modules directly (in-process, no subprocess)
       const { lex } = await import("arc-lang/dist/lexer.js");
       const { parse } = await import("arc-lang/dist/parser.js");
       const { interpret } = await import("arc-lang/dist/interpreter.js");
-      const { clearModuleCache, loadModule, handleUse } = await import("arc-lang/dist/modules.js");
+      const { createEnv, runStmt } = await import("arc-lang/dist/interpreter.js");
 
-      // Find the stdlib directory inside the arc-lang npm package
-      // On Vercel, process.cwd() is /var/task
-      const stdlibDir = join(process.cwd(), "node_modules", "arc-lang", "stdlib");
+      // Module cache for this execution
+      const moduleCache = new Map<string, Record<string, unknown>>();
 
-      // Write code to a temp file (needed for error messages)
-      const tmpDir = tmpdir();
-      const filename = `arc-playground-${randomUUID()}.arc`;
-      const filepath = join(tmpDir, filename);
-      writeFileSync(filepath, code, "utf-8");
-
-      // Clear module cache between runs
-      clearModuleCache();
-
-      // Custom use handler that resolves stdlib from the npm package directly
+      // Custom use handler that loads stdlib from memory
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const useHandler = (stmt: any, env: any) => {
-        return handleUse(stmt, env, join(stdlibDir, "..", "__playground__.arc"));
+        const moduleName = stmt.path[stmt.path.length - 1];
+        
+        // Check cache
+        if (moduleCache.has(moduleName)) {
+          bindExports(stmt, env, moduleCache.get(moduleName)!);
+          return;
+        }
+
+        const source = STDLIB[moduleName];
+        if (!source) {
+          throw new Error(`Module not found: ${stmt.path.join("/")} (available: ${Object.keys(STDLIB).join(", ") || "none - stdlib not loaded"})`);
+        }
+
+        // Parse and execute the module
+        const tokens = lex(source);
+        const ast = parse(tokens);
+        const modEnv = createEnv();
+
+        for (const s of ast.stmts) {
+          if (s.kind === "UseStmt") {
+            // Handle nested use statements (stdlib modules importing other stdlib)
+            useHandler(s, modEnv);
+          } else {
+            runStmt(s, modEnv);
+          }
+        }
+
+        // Collect pub exports
+        const exports: Record<string, unknown> = {};
+        for (const s of ast.stmts) {
+          if (s.kind === "LetStmt" && s.pub && typeof s.name === "string") {
+            exports[s.name] = modEnv.get(s.name);
+          } else if (s.kind === "FnStmt" && s.pub) {
+            exports[s.name] = modEnv.get(s.name);
+          }
+        }
+
+        moduleCache.set(moduleName, exports);
+        bindExports(stmt, env, exports);
       };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function bindExports(stmt: any, env: any, exports: Record<string, unknown>) {
+        if (stmt.wildcard || (!stmt.imports || stmt.imports.length === 0)) {
+          for (const [name, value] of Object.entries(exports)) {
+            env.set(name, value);
+          }
+        } else if (stmt.imports) {
+          for (const name of stmt.imports) {
+            if (!(name in exports)) {
+              throw new Error(`Module ${stmt.path.join("/")} does not export '${name}'`);
+            }
+            env.set(name, exports[name]);
+          }
+        }
+        // Create namespace object
+        const nsName = stmt.path[stmt.path.length - 1];
+        const entries = new Map<string, unknown>();
+        for (const [name, value] of Object.entries(exports)) {
+          entries.set(name, value);
+        }
+        env.set(nsName, { __map: true, __module: nsName, entries });
+      }
 
       // Capture console.log output
       const outputLines: string[] = [];
@@ -73,7 +150,7 @@ export async function POST(req: NextRequest) {
       try {
         const tokens = lex(code);
         const ast = parse(tokens);
-        // Run with a timeout
+
         await Promise.race([
           new Promise<void>((resolve, reject) => {
             try {
@@ -96,7 +173,6 @@ export async function POST(req: NextRequest) {
       } finally {
         console.log = origLog;
         console.error = origError;
-        try { unlinkSync(filepath); } catch {}
       }
 
       const executionTime = Math.round(performance.now() - start);
