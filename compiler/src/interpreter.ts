@@ -3,6 +3,8 @@
 import * as AST from "./ast.js";
 import * as nodeCrypto from "crypto";
 import * as nodeOs from "os";
+import * as nodeFs from "fs";
+import { execSync } from "child_process";
 
 type Value = number | string | boolean | null | Value[] | MapValue | FnValue | AsyncValue;
 
@@ -83,6 +85,64 @@ function toStr(v: Value): string {
   }
   if (v && typeof v === "object" && "__fn" in v) return `<fn ${(v as FnValue).name}>`;
   if (v && typeof v === "object" && "__async" in v) return `<async>`;
+  return String(v);
+}
+
+function syncFetch(method: string, url: string, body: Value): MapValue {
+  // Build a small Node script that does fetch and prints JSON result
+  // Extract body string: if it's a map with a "data" field, use that; otherwise stringify
+  let bodyStr: string | null = null;
+  if (body != null) {
+    if (typeof body === "object" && "__map" in body) {
+      const m = (body as MapValue).entries;
+      const d = m.get("data");
+      bodyStr = d != null ? toStr(d) : toStr(body);
+    } else {
+      bodyStr = toStr(body);
+    }
+  }
+  const bodyJson = bodyStr != null ? JSON.stringify(bodyStr) : "null";
+  // Pass config via env to avoid shell escaping issues
+  const fetchConfig = JSON.stringify({ method, url, body: bodyStr });
+  const script = `const c=JSON.parse(process.env.ARC_FETCH);(async()=>{const o={method:c.method};if(c.body!==null){o.body=c.body;o.headers={"Content-Type":"application/json"};}try{const r=await fetch(c.url,o);const t=await r.text();let d;try{d=JSON.parse(t)}catch{d=t}console.log(JSON.stringify({ok:true,status:r.status,data:d}))}catch(e){console.log(JSON.stringify({ok:false,status:0,data:e.message}))}})()`;
+  try {
+    const raw = execSync(`node -e "${script.replace(/"/g, '\\"')}"`, {
+      timeout: 30000,
+      encoding: "utf-8",
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, ARC_FETCH: fetchConfig },
+    }).trim();
+    const parsed = JSON.parse(raw);
+    const entries = new Map<string, Value>();
+    entries.set("ok", parsed.ok);
+    entries.set("status", parsed.status);
+    // Convert nested objects/arrays to Arc values
+    entries.set("data", jsToArc(parsed.data));
+    entries.set("method", method);
+    entries.set("url", url);
+    return { __map: true, entries } as MapValue;
+  } catch (e: any) {
+    const entries = new Map<string, Value>();
+    entries.set("ok", false);
+    entries.set("status", 0);
+    entries.set("data", e.message || "fetch error");
+    entries.set("method", method);
+    entries.set("url", url);
+    return { __map: true, entries } as MapValue;
+  }
+}
+
+function jsToArc(v: any): Value {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number" || typeof v === "string" || typeof v === "boolean") return v;
+  if (Array.isArray(v)) return v.map(jsToArc);
+  if (typeof v === "object") {
+    const entries = new Map<string, Value>();
+    for (const [k, val] of Object.entries(v)) {
+      entries.set(k, jsToArc(val));
+    }
+    return { __map: true, entries } as MapValue;
+  }
   return String(v);
 }
 
@@ -586,60 +646,60 @@ function makePrelude(env: Env): void {
         case "os.list_dir": {
           try {
             const fs = require("fs");
-            return fs.readdirSync(args[0] as string) as Value[];
+            return nodeFs.readdirSync(args[0] as string) as Value[];
           } catch { return []; }
         }
         case "os.is_file": {
           try {
             const fs = require("fs");
-            return fs.statSync(args[0] as string).isFile();
+            return nodeFs.statSync(args[0] as string).isFile();
           } catch { return false; }
         }
         case "os.is_dir": {
           try {
             const fs = require("fs");
-            return fs.statSync(args[0] as string).isDirectory();
+            return nodeFs.statSync(args[0] as string).isDirectory();
           } catch { return false; }
         }
         case "os.mkdir": {
           try {
             const fs = require("fs");
-            fs.mkdirSync(args[0] as string, { recursive: true });
+            nodeFs.mkdirSync(args[0] as string, { recursive: true });
             return true;
           } catch { return false; }
         }
         case "os.rmdir": {
           try {
             const fs = require("fs");
-            fs.rmdirSync(args[0] as string);
+            nodeFs.rmdirSync(args[0] as string);
             return true;
           } catch { return false; }
         }
         case "os.remove": {
           try {
             const fs = require("fs");
-            fs.unlinkSync(args[0] as string);
+            nodeFs.unlinkSync(args[0] as string);
             return true;
           } catch { return false; }
         }
         case "os.rename": {
           try {
             const fs = require("fs");
-            fs.renameSync(args[0] as string, args[1] as string);
+            nodeFs.renameSync(args[0] as string, args[1] as string);
             return true;
           } catch { return false; }
         }
         case "os.copy": {
           try {
             const fs = require("fs");
-            fs.copyFileSync(args[0] as string, args[1] as string);
+            nodeFs.copyFileSync(args[0] as string, args[1] as string);
             return true;
           } catch { return false; }
         }
         case "os.file_size": {
           try {
             const fs = require("fs");
-            return fs.statSync(args[0] as string).size;
+            return nodeFs.statSync(args[0] as string).size;
           } catch { return null; }
         }
         case "os.exec": {
@@ -651,7 +711,7 @@ function makePrelude(env: Env): void {
               throw new Error(`Potentially unsafe command (injection risk): ${cmd}`);
             }
             const cp = require("child_process");
-            return cp.execSync(cmd, { encoding: "utf-8", timeout: 10000 }).trim();
+            return execSync(cmd, { encoding: "utf-8", timeout: 10000 }).trim();
           } catch (e: any) {
             if (e.message?.includes("injection risk")) throw e;
             return null;
@@ -659,6 +719,19 @@ function makePrelude(env: Env): void {
         }
         default: return null;
       }
+    },
+
+    // --- file I/O (used by stdlib/io.arc) ---
+    read: (path) => {
+      try {
+        return nodeFs.readFileSync(path as string, "utf-8");
+      } catch { return null; }
+    },
+    write: (path, content) => {
+      try {
+        nodeFs.writeFileSync(path as string, content as string, "utf-8");
+        return true;
+      } catch { return false; }
     },
   };
 
@@ -1023,18 +1096,17 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       const method = expr.method.toUpperCase();
       const arg = evalExpr(expr.arg, env);
       const url = toStr(arg);
-      // Mock HTTP tool calls
+      // Real HTTP tool calls via synchronous fetch
       if (["GET", "POST", "PUT", "DELETE", "PATCH"].includes(method)) {
-        console.log(`[mock ${method} ${url}]`);
+        let bodyArg: Value = null;
         if (expr.body) {
-          const body = evalExpr(expr.body, env);
-          return { __map: true, entries: new Map([["status", 200], ["method", method], ["url", url], ["body", body]]) } as MapValue;
+          bodyArg = evalExpr(expr.body, env);
         }
-        return { __map: true, entries: new Map<string, any>([["status", 200], ["method", method], ["url", url], ["data", `mock-data-from-${url}`]]) } as MapValue;
+        return syncFetch(method, url, bodyArg);
       }
       // Custom tool call
-      console.log(`[mock tool @${expr.method}(${url})]`);
-      return `mock-result-from-${expr.method}`;
+      console.log(`[tool @${expr.method}(${url})]`);
+      return `result-from-${expr.method}`;
     }
 
     case "AsyncExpr": {

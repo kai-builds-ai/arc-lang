@@ -1,6 +1,8 @@
 // Arc Language Tree-Walking Interpreter
 import * as nodeCrypto from "crypto";
 import * as nodeOs from "os";
+import * as nodeFs from "fs";
+import { execSync } from "child_process";
 class Env {
     parent;
     vars = new Map();
@@ -69,6 +71,67 @@ function toStr(v) {
         return `<fn ${v.name}>`;
     if (v && typeof v === "object" && "__async" in v)
         return `<async>`;
+    return String(v);
+}
+function syncFetch(method, url, body) {
+    // Build a small Node script that does fetch and prints JSON result
+    // Extract body string: if it's a map with a "data" field, use that; otherwise stringify
+    let bodyStr = null;
+    if (body != null) {
+        if (typeof body === "object" && "__map" in body) {
+            const m = body.entries;
+            const d = m.get("data");
+            bodyStr = d != null ? toStr(d) : toStr(body);
+        }
+        else {
+            bodyStr = toStr(body);
+        }
+    }
+    const bodyJson = bodyStr != null ? JSON.stringify(bodyStr) : "null";
+    // Pass config via env to avoid shell escaping issues
+    const fetchConfig = JSON.stringify({ method, url, body: bodyStr });
+    const script = `const c=JSON.parse(process.env.ARC_FETCH);(async()=>{const o={method:c.method};if(c.body!==null){o.body=c.body;o.headers={"Content-Type":"application/json"};}try{const r=await fetch(c.url,o);const t=await r.text();let d;try{d=JSON.parse(t)}catch{d=t}console.log(JSON.stringify({ok:true,status:r.status,data:d}))}catch(e){console.log(JSON.stringify({ok:false,status:0,data:e.message}))}})()`;
+    try {
+        const raw = execSync(`node -e "${script.replace(/"/g, '\\"')}"`, {
+            timeout: 30000,
+            encoding: "utf-8",
+            stdio: ["pipe", "pipe", "pipe"],
+            env: { ...process.env, ARC_FETCH: fetchConfig },
+        }).trim();
+        const parsed = JSON.parse(raw);
+        const entries = new Map();
+        entries.set("ok", parsed.ok);
+        entries.set("status", parsed.status);
+        // Convert nested objects/arrays to Arc values
+        entries.set("data", jsToArc(parsed.data));
+        entries.set("method", method);
+        entries.set("url", url);
+        return { __map: true, entries };
+    }
+    catch (e) {
+        const entries = new Map();
+        entries.set("ok", false);
+        entries.set("status", 0);
+        entries.set("data", e.message || "fetch error");
+        entries.set("method", method);
+        entries.set("url", url);
+        return { __map: true, entries };
+    }
+}
+function jsToArc(v) {
+    if (v === null || v === undefined)
+        return null;
+    if (typeof v === "number" || typeof v === "string" || typeof v === "boolean")
+        return v;
+    if (Array.isArray(v))
+        return v.map(jsToArc);
+    if (typeof v === "object") {
+        const entries = new Map();
+        for (const [k, val] of Object.entries(v)) {
+            entries.set(k, jsToArc(val));
+        }
+        return { __map: true, entries };
+    }
     return String(v);
 }
 function resolveAsync(v) {
@@ -644,7 +707,7 @@ function makePrelude(env) {
                 case "os.list_dir": {
                     try {
                         const fs = require("fs");
-                        return fs.readdirSync(args[0]);
+                        return nodeFs.readdirSync(args[0]);
                     }
                     catch {
                         return [];
@@ -653,7 +716,7 @@ function makePrelude(env) {
                 case "os.is_file": {
                     try {
                         const fs = require("fs");
-                        return fs.statSync(args[0]).isFile();
+                        return nodeFs.statSync(args[0]).isFile();
                     }
                     catch {
                         return false;
@@ -662,7 +725,7 @@ function makePrelude(env) {
                 case "os.is_dir": {
                     try {
                         const fs = require("fs");
-                        return fs.statSync(args[0]).isDirectory();
+                        return nodeFs.statSync(args[0]).isDirectory();
                     }
                     catch {
                         return false;
@@ -671,7 +734,7 @@ function makePrelude(env) {
                 case "os.mkdir": {
                     try {
                         const fs = require("fs");
-                        fs.mkdirSync(args[0], { recursive: true });
+                        nodeFs.mkdirSync(args[0], { recursive: true });
                         return true;
                     }
                     catch {
@@ -681,7 +744,7 @@ function makePrelude(env) {
                 case "os.rmdir": {
                     try {
                         const fs = require("fs");
-                        fs.rmdirSync(args[0]);
+                        nodeFs.rmdirSync(args[0]);
                         return true;
                     }
                     catch {
@@ -691,7 +754,7 @@ function makePrelude(env) {
                 case "os.remove": {
                     try {
                         const fs = require("fs");
-                        fs.unlinkSync(args[0]);
+                        nodeFs.unlinkSync(args[0]);
                         return true;
                     }
                     catch {
@@ -701,7 +764,7 @@ function makePrelude(env) {
                 case "os.rename": {
                     try {
                         const fs = require("fs");
-                        fs.renameSync(args[0], args[1]);
+                        nodeFs.renameSync(args[0], args[1]);
                         return true;
                     }
                     catch {
@@ -711,7 +774,7 @@ function makePrelude(env) {
                 case "os.copy": {
                     try {
                         const fs = require("fs");
-                        fs.copyFileSync(args[0], args[1]);
+                        nodeFs.copyFileSync(args[0], args[1]);
                         return true;
                     }
                     catch {
@@ -721,7 +784,7 @@ function makePrelude(env) {
                 case "os.file_size": {
                     try {
                         const fs = require("fs");
-                        return fs.statSync(args[0]).size;
+                        return nodeFs.statSync(args[0]).size;
                     }
                     catch {
                         return null;
@@ -736,7 +799,7 @@ function makePrelude(env) {
                             throw new Error(`Potentially unsafe command (injection risk): ${cmd}`);
                         }
                         const cp = require("child_process");
-                        return cp.execSync(cmd, { encoding: "utf-8", timeout: 10000 }).trim();
+                        return execSync(cmd, { encoding: "utf-8", timeout: 10000 }).trim();
                     }
                     catch (e) {
                         if (e.message?.includes("injection risk"))
@@ -745,6 +808,24 @@ function makePrelude(env) {
                     }
                 }
                 default: return null;
+            }
+        },
+        // --- file I/O (used by stdlib/io.arc) ---
+        read: (path) => {
+            try {
+                return nodeFs.readFileSync(path, "utf-8");
+            }
+            catch {
+                return null;
+            }
+        },
+        write: (path, content) => {
+            try {
+                nodeFs.writeFileSync(path, content, "utf-8");
+                return true;
+            }
+            catch {
+                return false;
             }
         },
     };
@@ -1127,18 +1208,17 @@ function evalExpr(expr, env) {
             const method = expr.method.toUpperCase();
             const arg = evalExpr(expr.arg, env);
             const url = toStr(arg);
-            // Mock HTTP tool calls
+            // Real HTTP tool calls via synchronous fetch
             if (["GET", "POST", "PUT", "DELETE", "PATCH"].includes(method)) {
-                console.log(`[mock ${method} ${url}]`);
+                let bodyArg = null;
                 if (expr.body) {
-                    const body = evalExpr(expr.body, env);
-                    return { __map: true, entries: new Map([["status", 200], ["method", method], ["url", url], ["body", body]]) };
+                    bodyArg = evalExpr(expr.body, env);
                 }
-                return { __map: true, entries: new Map([["status", 200], ["method", method], ["url", url], ["data", `mock-data-from-${url}`]]) };
+                return syncFetch(method, url, bodyArg);
             }
             // Custom tool call
-            console.log(`[mock tool @${expr.method}(${url})]`);
-            return `mock-result-from-${expr.method}`;
+            console.log(`[tool @${expr.method}(${url})]`);
+            return `result-from-${expr.method}`;
         }
         case "AsyncExpr": {
             const capturedEnv = env;
