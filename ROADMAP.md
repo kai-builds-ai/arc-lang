@@ -32,7 +32,7 @@ All tasks done: semantic analyzer (name resolution, scope validation, mutability
 
 **Completed:** 2026-02-16
 
-All tasks done: 21 stdlib modules (math, strings, collections, map, io, http, json, csv, test, result, time, regex, datetime, os, error, net, crypto), full API reference docs, 8-section tutorial, auto-documentation generator, 272 tests all passing. All 8 modules requiring native runtime (regex, datetime, os, io, http, crypto, error, net) have full native implementations.
+All tasks done: 27 stdlib modules (math, strings, collections, map, io, http, json, csv, test, result, time, regex, datetime, os, error, net, crypto, prompt, embed, llm, store, yaml, toml, html, path, env, log), full API reference docs, 8-section tutorial, auto-documentation generator, 272 tests all passing. All 8 modules requiring native runtime (regex, datetime, os, io, http, crypto, error, net) have full native implementations.
 
 ---
 
@@ -58,7 +58,7 @@ All tasks done: security module with SafeInterpreter sandbox and resource limits
 
 ### Tasks
 - [x] Project website — [arclang.dev](https://arclang.dev) (live, mobile responsive, interactive token counter)
-- [x] npm publish — [`arc-lang`](https://www.npmjs.com/package/arc-lang) v0.5.6 on npm
+- [x] npm publish — [`arc-lang`](https://www.npmjs.com/package/arc-lang) v0.6.2 on npm
 - [x] Build showcase projects — 6 projects: weather-agent, data-pipeline, api-server, chat-bot, task-scheduler, news-digest
 - [x] Create educational content — Learning examples in `examples/learn/` (basics, functions, patterns, async, modules)
 - [x] Package ecosystem — 6 official packages: arc-fetch, arc-cli, arc-validate, arc-template, arc-logger, arc-router

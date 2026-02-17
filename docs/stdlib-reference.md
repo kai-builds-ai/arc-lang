@@ -2,7 +2,7 @@
 
 Complete API reference for all Arc standard library modules.
 
-> All 21 stdlib modules are implemented and tested. The 8 modules requiring native runtime access (regex, datetime, os, io, http, crypto, error, net) all have full native implementations backed by real system calls. 4 AI-native modules (prompt, embed, llm, store) provide first-class support for agent workflows.
+> All 27 stdlib modules are implemented and tested. The 8 modules requiring native runtime access (regex, datetime, os, io, http, crypto, error, net) all have full native implementations backed by real system calls. 4 AI-native modules (prompt, embed, llm, store) provide first-class support for agent workflows. 6 utility modules (yaml, toml, html, path, env, log) round out the standard library.
 
 ---
 
@@ -29,6 +29,12 @@ Complete API reference for all Arc standard library modules.
 - [embed](#embed) ✅ AI-Native
 - [llm](#llm) ✅ AI-Native
 - [store](#store) ✅ AI-Native
+- [yaml](#yaml) ✅
+- [toml](#toml) ✅
+- [html](#html) ✅
+- [path](#path) ✅
+- [env](#env) ✅
+- [log](#log) ✅
 
 ---
 
@@ -674,29 +680,228 @@ use store
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `store_open` | `(path) -> Store` | Open or create a JSON store file |
-| `store_get` | `(store, key) -> Any \| nil` | Get value by key |
-| `store_set` | `(store, key, value) -> nil` | Set key-value pair |
-| `store_delete` | `(store, key) -> nil` | Delete a key |
-| `store_has` | `(store, key) -> Bool` | Check if key exists |
-| `store_keys` | `(store) -> [String]` | Get all keys |
-| `store_values` | `(store) -> [Any]` | Get all values |
-| `store_entries` | `(store) -> [(String, Any)]` | Get all key-value pairs |
-| `store_clear` | `(store) -> nil` | Remove all entries |
-| `store_size` | `(store) -> Int` | Number of entries |
-| `store_merge` | `(store, map) -> nil` | Merge a map into the store |
-| `store_get_or_set` | `(store, key, default_fn) -> Any` | Get existing or set default |
+| `open` | `(path) -> Store` | Open or create a JSON store file |
+| `get` | `(store, key) -> Any \| nil` | Get value by key |
+| `set` | `(store, key, value) -> nil` | Set key-value pair |
+| `delete` | `(store, key) -> nil` | Delete a key |
+| `has` | `(store, key) -> Bool` | Check if key exists |
+| `keys` | `(store) -> [String]` | Get all keys |
+| `values` | `(store) -> [Any]` | Get all values |
+| `entries` | `(store) -> [(String, Any)]` | Get all key-value pairs |
+| `clear` | `(store) -> nil` | Remove all entries |
+| `size` | `(store) -> Int` | Number of entries |
+| `merge` | `(store, map) -> nil` | Merge a map into the store |
+| `get_or_set` | `(store, key, default_fn) -> Any` | Get existing or set default |
 
 ### Example
 
 ```arc
 use store
 
-let db = store.store_open("settings.json")
-store.store_set(db, "theme", "dark")
-store.store_set(db, "lang", "en")
+let db = store.open("settings.json")
+store.set(db, "theme", "dark")
+store.set(db, "lang", "en")
 
-let theme = store.store_get(db, "theme")  # => "dark"
-store.store_has(db, "lang")               # => true
-store.store_keys(db)                      # => ["theme", "lang"]
+let theme = store.get(db, "theme")  # => "dark"
+store.has(db, "lang")               # => true
+store.keys(db)                      # => ["theme", "lang"]
+```
+
+---
+
+## yaml
+
+YAML parsing and stringifying.
+
+```arc
+use yaml
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `parse` | `(text: String) -> Any` | Parse YAML string to Arc value |
+| `stringify` | `(value) -> String` | Convert Arc value to YAML string |
+
+### Example
+
+```arc
+use yaml
+
+let data = yaml.parse("name: Alice\nage: 30")
+# => {name: "Alice", age: 30}
+
+let text = yaml.stringify({host: "localhost", port: 8080})
+# => "host: localhost\nport: 8080\n"
+```
+
+---
+
+## toml
+
+TOML parsing and stringifying.
+
+```arc
+use toml
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `parse` | `(text: String) -> Any` | Parse TOML string to Arc value |
+| `stringify` | `(value) -> String` | Convert Arc value to TOML string |
+
+### Example
+
+```arc
+use toml
+
+let config = toml.parse("[server]\nhost = \"localhost\"\nport = 8080")
+# => {server: {host: "localhost", port: 8080}}
+
+let text = toml.stringify({title: "My App", version: "1.0"})
+```
+
+---
+
+## html
+
+HTML parsing and generation utilities.
+
+```arc
+use html
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `parse` | `(s: String) -> Node` | Parse HTML string into a node tree |
+| `select` | `(node, selector: String) -> [Node]` | Query nodes by CSS selector |
+| `text` | `(node) -> String` | Extract text content from a node |
+| `attr` | `(node, name: String) -> String \| nil` | Get attribute value |
+| `create` | `(tag, attrs, children) -> Node` | Create an HTML node |
+| `render` | `(node) -> String` | Render node tree to HTML string |
+
+### Example
+
+```arc
+use html
+
+let doc = html.parse("<div class='main'><p>Hello</p></div>")
+let paragraphs = html.select(doc, "p")
+let content = html.text(paragraphs[0])  # => "Hello"
+
+let node = html.create("a", {href: "/about"}, ["About Us"])
+html.render(node)  # => "<a href=\"/about\">About Us</a>"
+```
+
+---
+
+## path
+
+Path manipulation utilities.
+
+```arc
+use path
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `join` | `(...parts) -> String` | Join path segments |
+| `dirname` | `(p: String) -> String` | Directory name |
+| `basename` | `(p: String) -> String` | File name |
+| `extname` | `(p: String) -> String` | File extension |
+| `resolve` | `(p: String) -> String` | Resolve to absolute path |
+| `normalize` | `(p: String) -> String` | Normalize path separators and dots |
+| `is_absolute` | `(p: String) -> Bool` | Check if path is absolute |
+| `sep` | `() -> String` | Platform path separator |
+
+### Example
+
+```arc
+use path
+
+path.join("src", "lib", "utils.arc")  # => "src/lib/utils.arc"
+path.dirname("/home/user/file.arc")    # => "/home/user"
+path.basename("/home/user/file.arc")   # => "file.arc"
+path.extname("main.arc")              # => ".arc"
+path.is_absolute("/usr/bin")          # => true
+```
+
+---
+
+## env
+
+Environment variable utilities.
+
+```arc
+use env
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `get` | `(key: String) -> String \| nil` | Get environment variable |
+| `get_or` | `(key: String, default: String) -> String` | Get with default fallback |
+| `set` | `(key: String, val: String) -> nil` | Set environment variable |
+| `remove` | `(key: String) -> nil` | Remove environment variable |
+| `has` | `(key: String) -> Bool` | Check if variable exists |
+| `list` | `() -> Map` | Get all environment variables |
+| `require` | `(key: String) -> String` | Get or panic if missing |
+
+### Example
+
+```arc
+use env
+
+env.set("APP_ENV", "production")
+let mode = env.get_or("APP_ENV", "development")  # => "production"
+env.has("APP_ENV")                                 # => true
+
+let db_url = env.require("DATABASE_URL")  # panics if not set
+```
+
+---
+
+## log
+
+Structured logging with levels and colors.
+
+```arc
+use log
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `debug` | `(msg: String) -> nil` | Log at debug level |
+| `info` | `(msg: String) -> nil` | Log at info level |
+| `warn` | `(msg: String) -> nil` | Log at warn level |
+| `error` | `(msg: String) -> nil` | Log at error level |
+| `fatal` | `(msg: String) -> never` | Log and exit |
+| `set_level` | `(level: String) -> nil` | Set minimum log level |
+| `with` | `(fields: Map) -> Logger` | Create child logger with extra fields |
+| `json` | `(level, msg, fields) -> nil` | Emit structured JSON log entry |
+
+### Example
+
+```arc
+use log
+
+log.set_level("info")
+log.info("Server started")
+log.warn("Disk usage high")
+log.error("Connection failed")
+
+let logger = log.with({service: "api", version: "1.0"})
+log.child_info(logger, "Request received")
+
+log.json("info", "request", {method: "GET", path: "/api/users", status: 200})
 ```

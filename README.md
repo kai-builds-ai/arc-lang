@@ -94,6 +94,12 @@ Arc ships with a comprehensive standard library. All modules with native runtime
 | [`embed`](stdlib/embed.arc) | Vector math, similarity search, cosine similarity |
 | [`llm`](stdlib/llm.arc) | Multi-provider LLM API (OpenAI, Anthropic) |
 | [`store`](stdlib/store.arc) | Persistent JSON-backed key-value storage |
+| [`yaml`](stdlib/yaml.arc) | YAML parsing and stringifying |
+| [`toml`](stdlib/toml.arc) | TOML parsing and stringifying |
+| [`html`](stdlib/html.arc) | HTML parsing and generation |
+| [`path`](stdlib/path.arc) | Path manipulation utilities |
+| [`env`](stdlib/env.arc) | Environment variable utilities |
+| [`log`](stdlib/log.arc) | Structured logging with levels |
 
 Plus many built-in functions available without imports: `map`, `filter`, `reduce`, `print`, `len`, `split`, `join`, `trim`, and more.
 
@@ -113,7 +119,7 @@ Plus many built-in functions available without imports: `map`, `filter`, `reduce
 
 ## Status
 
-🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 21 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 1,291+ tests passing.
+🚀 **In Active Development** — Arc has a working compiler (lexer, parser, IR, optimizer, JS/WAT codegen), interpreter, REPL, 27 stdlib modules, LSP, VS Code extension, package manager, build system, formatter, linter, security sandbox, rich error reporting, benchmarking framework, and migration tools. 1,291+ tests passing.
 
 Current phase: **Phase 6 — Community & Adoption**
 
