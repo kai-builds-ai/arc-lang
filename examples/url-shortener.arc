@@ -5,15 +5,15 @@ let mut url_store = {}
 let mut counter = 1000
 
 fn base62_encode(num) {
-  let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-  let char_list = chars(chars)
+  let charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let char_list = chars(charset)
   if num == 0 { ret "a" }
   let mut result = ""
   let mut n = num
   for _ in 0..10 {
     if n <= 0 { ret result }
     let remainder = n % 62
-    result = char_at(chars, remainder) ++ result
+    result = char_at(charset, remainder) ++ result
     n = n / 62
   }
   result

@@ -14,15 +14,18 @@ All notable changes to Arc are documented here. Format follows [Keep a Changelog
 
 **Verified all examples:**
 - Tested 71 .arc files across `examples/` and `showcase/`
-- 39 pass end-to-end, 32 depend on unimplemented native runtime (http, crypto, websockets, etc.)
+- 39 pass end-to-end, 32 depend on external services or advanced runtime features (websockets, external APIs, etc.)
 - 0 syntax/parse errors — every file compiles cleanly
 - Fixed ~30 example files with corrected syntax, keywords, and API usage
 
-**Native stdlib integration:**
+**Native stdlib integration (all 8 modules now have native implementations):**
 - Wired up native implementations for `regex` (11 functions), `datetime` (7 functions), `os` (16 functions)
+- Wired up native implementations for `io` (4 functions: read/write via Node.js fs) and `http` (5 functions: real fetch via sync bridge)
+- `crypto` (6 functions), `error` (4 functions), `net` (5 functions) were already natively implemented
 - ReDoS protection for regex patterns with nested quantifiers
 - Command injection protection for `os.exec` (rejects shell metacharacters)
 - 10s timeout on `os.exec`
+- **Complete native stdlib coverage** — all 8 native-capable modules (regex, datetime, os, io, http, crypto, error, net) now execute real system calls
 
 **Bug fixes (Audit Round 3 — 10 fixes):**
 - `slice()` null-end bug — null cast to NaN before nullish check

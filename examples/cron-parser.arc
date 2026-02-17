@@ -2,13 +2,13 @@
 # Demonstrates: string parsing, pattern matching, pipelines
 
 fn parse_field(field, min_val, max_val) {
-  if field == "*" { ret 0..max_val+1 }
+  if field == "*" { ret 0..(max_val+1) }
   if contains(field, "/") {
     let parts = split(field, "/")
     let step = int(parts[1])
     let mut result = []
     let mut i = min_val
-    for _ in min_val..max_val+1 {
+    for _ in min_val..(max_val+1) {
       if i > max_val { ret result }
       result = push(result, i)
       i = i + step
@@ -20,7 +20,7 @@ fn parse_field(field, min_val, max_val) {
   }
   if contains(field, "-") {
     let parts = split(field, "-")
-    ret int(parts[0])..int(parts[1])+1
+    ret int(parts[0])..(int(parts[1])+1)
   }
   [int(field)]
 }

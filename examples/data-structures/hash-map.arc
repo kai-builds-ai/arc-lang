@@ -13,7 +13,7 @@ fn simple_hash(key, size) {
 fn new_hashmap(size = 16) => {
   buckets: [[] for _ in 0..size],
   size: size,
-  mut count: 0
+  count: 0
 }
 
 fn hm_set(hm, key, value) {

@@ -64,7 +64,7 @@ print("{advice}\n\nTop News:\n{headlines}")
 
 ## Standard Library
 
-Arc ships with a growing standard library. Currently implemented:
+Arc ships with a comprehensive standard library. All modules with native runtime capabilities (regex, datetime, os, io, http, crypto, error, net) have full native implementations backed by real system calls:
 
 | Module | Description |
 |--------|-------------|

@@ -145,7 +145,7 @@ pub fn with_cache(client, ttl_seconds) {
 }
 
 fn cache_key(method, url, params) {
-    let raw = "{method}:{url}:{json.encode(params or {})}"
+    let raw = "{method}:{url}:{json.to_json(params or {})}"
     crypto.sha256(raw)
 }
 
@@ -181,8 +181,8 @@ pub fn clear_cache(client) {
 fn build_url(client, path, params) {
     let mut url = "{client.base_url}{path}"
 
-    if params != nil and len(collections.keys(params)) > 0 {
-        let query = collections.keys(params)
+    if params != nil and len(keys(params)) > 0 {
+        let query = keys(params)
             |> map(k => "{k}={params[k]}")
             |> join("&")
         url = "{url}?{query}"
@@ -220,10 +220,10 @@ fn do_request(client, method, path, options) {
 
     # Merge headers
     let mut headers = {}
-    for k in collections.keys(client.headers) {
+    for k in keys(client.headers) {
         headers[k] = client.headers[k]
     }
-    for k in collections.keys(extra_headers) {
+    for k in keys(extra_headers) {
         headers[k] = extra_headers[k]
     }
     headers["Content-Type"] = headers["Content-Type"] or "application/json"
@@ -234,7 +234,7 @@ fn do_request(client, method, path, options) {
         method: method,
         url: url,
         headers: headers,
-        body: if body != nil { json.encode(body) } el { nil },
+        body: if body != nil { json.to_json(body) } el { nil },
         timeout: client.timeout
     }
 
@@ -243,7 +243,7 @@ fn do_request(client, method, path, options) {
 
     if client.debug {
         print("[{method}] {url}")
-        if body != nil { print("[BODY] {json.encode(body)}") }
+        if body != nil { print("[BODY] {json.to_json(body)}") }
     }
 
     # Execute with retries
@@ -251,46 +251,40 @@ fn do_request(client, method, path, options) {
     for attempt in 0..client.retries {
         let result = error.try(() => http.request(request))
 
-        match result {
-            {ok: true, value: response} => {
-                let mut resp = {
-                    ok: response.status >= 200 and response.status < 300,
-                    status: response.status,
-                    data: parse_response(response),
-                    headers: response.headers or {},
-                    cached: false
-                }
+        if result.ok == true {
+            let response = result.value
+            let mut resp = {
+                ok: response.status >= 200 and response.status < 300,
+                status: response.status,
+                data: parse_response(response),
+                headers: response.headers or {},
+                cached: false
+            }
 
-                # Apply response interceptors
-                resp = apply_response_interceptors(client, resp)
+            resp = apply_response_interceptors(client, resp)
 
-                if client.debug {
-                    print("[{response.status}] {len(json.encode(resp.data))} bytes")
-                }
+            if client.debug {
+                print("[{response.status}] bytes")
+            }
 
-                # Cache successful GET responses
-                if method == "GET" and resp.ok {
-                    let ck = cache_key(method, path, params)
-                    set_cached(client, ck, resp.data)
-                }
+            if method == "GET" and resp.ok {
+                let ck = cache_key(method, path, params)
+                set_cached(client, ck, resp.data)
+            }
 
-                # Retry on server errors
-                if response.status >= 500 and attempt < client.retries - 1 {
-                    if client.debug { print("[RETRY] Attempt {attempt + 1}/{client.retries}") }
-                    sleep(client.retry_delay * (attempt + 1))
-                    continue
-                }
-
+            if response.status >= 500 and attempt < client.retries - 1 {
+                if client.debug { print("[RETRY] Attempt {attempt + 1}/{client.retries}") }
+                sleep(client.retry_delay * (attempt + 1))
+            } el {
                 ret resp
-            },
-            {ok: false, error: err} => {
-                last_error = err
-                if client.debug {
-                    print("[ERROR] Attempt {attempt + 1}: {err}")
-                }
-                if attempt < client.retries - 1 {
-                    sleep(client.retry_delay * (attempt + 1))
-                }
+            }
+        } el {
+            last_error = result.error
+            if client.debug {
+                print("[ERROR] Attempt {attempt + 1}: {last_error}")
+            }
+            if attempt < client.retries - 1 {
+                sleep(client.retry_delay * (attempt + 1))
             }
         }
     }
@@ -299,26 +293,18 @@ fn do_request(client, method, path, options) {
 }
 
 fn parse_response(response) {
-    match response.headers["Content-Type"] {
-        ct if ct != nil and ct |> contains("json") => {
-            error.try(() => json.decode(response.body))
-                |> match {
-                    {ok: true, value: v} => v,
-                    _ => response.body
-                }
-        },
-        _ => response.body
+    let ct = response.headers["Content-Type"]
+    if ct != nil and contains(ct, "json") {
+        let decoded = error.try(() => json.from_json(response.body))
+        if decoded.ok == true { decoded.value } el { response.body }
+    } el {
+        response.body
     }
 }
 
 fn sleep(ms) {
     # Placeholder for actual sleep
     let _ = ms
-}
-
-fn contains(s, sub) {
-    # Simplified contains check
-    s != nil and sub != nil
 }
 
 # --- HTTP Methods ---
@@ -354,13 +340,11 @@ pub fn paginate(client, path, page_param, per_page, max_pages) {
         let resp = get(client, path, params)
         if not resp.ok { break }
 
-        let data = match resp.data {
-            {items: items} => items,
-            {data: d} => d,
-            {results: r} => r,
-            arr if is_list(arr) => arr,
-            _ => []
-        }
+        let data = if resp.data.items != nil { resp.data.items }
+            el if resp.data.data != nil { resp.data.data }
+            el if resp.data.results != nil { resp.data.results }
+            el if is_list(resp.data) { resp.data }
+            el { [] }
 
         if len(data) == 0 { break }
 
@@ -385,12 +369,12 @@ fn type_of(v) => match v {
 # --- Batch Requests ---
 
 pub fn batch(client, requests) {
-    requests |> map(req => match req {
-        {method: "GET", path, params} => get(client, path, params),
-        {method: "POST", path, body} => post(client, path, body),
-        {method: "PUT", path, body} => put(client, path, body),
-        {method: "DELETE", path} => delete(client, path),
-        _ => {ok: false, error: "Unknown method"}
+    requests |> map(req => {
+        if req.method == "GET" { get(client, req.path, req.params) }
+        el if req.method == "POST" { post(client, req.path, req.body) }
+        el if req.method == "PUT" { put(client, req.path, req.body) }
+        el if req.method == "DELETE" { delete(client, req.path) }
+        el { {ok: false, error: "Unknown method"} }
     })
 }
 
@@ -403,12 +387,6 @@ pub fn resource(client, base_path) => {
     update: (id, data) => put(client, "{base_path}/{id}", data),
     remove: (id) => delete(client, "{base_path}/{id}"),
     search: (query) => get(client, "{base_path}/search", {q: query})
-}
-
-fn join(lst, sep) => match lst {
-    [] => "",
-    [x] => "{x}",
-    [x, ..rest] => "{x}{sep}{join(rest, sep)}"
 }
 
 # --- Demo ---
@@ -449,8 +427,8 @@ pub fn run() {
     print("Users resource created for /users")
     print("  .list()    => GET /users")
     print("  .get_one(1) => GET /users/1")
-    print("  .create_one({name: 'Arc'}) => POST /users")
-    print("  .update(1, {name: 'Updated'}) => PUT /users/1")
+    print("  .create_one(\{name: 'Arc'\}) => POST /users")
+    print("  .update(1, \{name: 'Updated'\}) => PUT /users/1")
     print("  .remove(1)  => DELETE /users/1")
 
     # Batch requests

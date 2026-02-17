@@ -2,7 +2,7 @@
 
 Complete API reference for all Arc standard library modules.
 
-> All 11 stdlib modules are implemented and tested.
+> All 17 stdlib modules are implemented and tested. The 8 modules requiring native runtime access (regex, datetime, os, io, http, crypto, error, net) all have full native implementations backed by real system calls.
 
 ---
 
@@ -12,13 +12,19 @@ Complete API reference for all Arc standard library modules.
 - [strings](#strings) ✅
 - [collections](#collections) ✅
 - [map](#map) ✅
-- [io](#io) ✅
-- [http](#http) ✅
+- [io](#io) ✅ Native
+- [http](#http) ✅ Native
 - [json](#json) ✅
 - [csv](#csv) ✅
 - [test](#test) ✅
 - [result](#result) ✅
 - [time](#time) ✅
+- [regex](#regex) ✅ Native
+- [datetime](#datetime) ✅ Native
+- [os](#os) ✅ Native
+- [error](#error) ✅ Native
+- [net](#net) ✅ Native
+- [crypto](#crypto) ✅ Native
 
 ---
 
@@ -145,13 +151,13 @@ strings.words("  hello   world  ")  # => ["hello", "world"]
 
 ## collections
 
-🚧 **Planned** — List, set, and queue utilities.
+List, set, and queue utilities.
 
 ```arc
 use collections
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -169,13 +175,13 @@ use collections
 
 ## map
 
-🚧 **Planned** — Map/dictionary utilities.
+Map/dictionary utilities.
 
 ```arc
 use map
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -190,22 +196,20 @@ use map
 
 ## io
 
-🚧 **Planned** — File and console I/O.
+File and console I/O with native Node.js fs implementation.
 
 ```arc
 use io
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
 | `read_file` | `(path) -> Result<String>` | Read file contents |
 | `write_file` | `(path, content) -> Result<nil>` | Write string to file |
-| `append_file` | `(path, content) -> Result<nil>` | Append to file |
 | `read_lines` | `(path) -> Result<[String]>` | Read file as lines |
 | `exists` | `(path) -> Bool` | Check if path exists |
-| `stdin` | `() -> String` | Read line from stdin |
 
 > `print(...)` is a built-in and does not require import.
 
@@ -213,13 +217,13 @@ use io
 
 ## http
 
-🚧 **Planned** — HTTP client using Arc's native `@` tool-call syntax.
+HTTP client with native fetch implementation via sync bridge.
 
 ```arc
 use http
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -227,6 +231,7 @@ use http
 | `post` | `(url, body, headers?) -> Result<Response>` | HTTP POST |
 | `put` | `(url, body, headers?) -> Result<Response>` | HTTP PUT |
 | `delete` | `(url, headers?) -> Result<Response>` | HTTP DELETE |
+| `fetch` | `(url, options?) -> Result<Response>` | Generic HTTP request |
 
 > Arc also supports the `@GET`, `@POST` syntax for inline HTTP calls — see the [Language Tour](language-tour.md).
 
@@ -234,13 +239,13 @@ use http
 
 ## json
 
-🚧 **Planned** — JSON serialization and deserialization.
+JSON serialization and deserialization.
 
 ```arc
 use json
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -252,13 +257,13 @@ use json
 
 ## csv
 
-🚧 **Planned** — CSV parsing and generation.
+CSV parsing and generation.
 
 ```arc
 use csv
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -270,13 +275,13 @@ use csv
 
 ## test
 
-🚧 **Planned** — Testing framework.
+Testing framework.
 
 ```arc
 use test
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -307,7 +312,7 @@ test.run([test_addition, test_string])
 
 ## result
 
-🚧 **Planned** — Error handling with Result types.
+Error handling with Result types.
 
 ```arc
 use result
@@ -315,7 +320,7 @@ use result
 
 Arc uses `Result<T>` as the standard error-handling pattern — either `Ok(value)` or `Err(message)`.
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -344,13 +349,13 @@ result.unwrap_or(e, 0)  # => 0
 
 ## time
 
-🚧 **Planned** — Date, time, and duration utilities.
+Date, time, and duration utilities.
 
 ```arc
 use time
 ```
 
-### Expected Functions
+### Functions
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
@@ -393,3 +398,142 @@ These are available globally in every Arc program:
 | `reverse(list)` | Reverse list |
 | `keys(map)` | Map keys |
 | `values(map)` | Map values |
+
+---
+
+## regex
+
+Regular expression operations with native implementation and ReDoS protection.
+
+```arc
+use regex
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `match` | `(pattern, str) -> Match \| nil` | First match |
+| `match_all` | `(pattern, str) -> [Match]` | All matches |
+| `test` | `(pattern, str) -> Bool` | Test if pattern matches |
+| `replace` | `(pattern, str, replacement) -> String` | Replace first match |
+| `replace_all` | `(pattern, str, replacement) -> String` | Replace all matches |
+| `split` | `(pattern, str) -> [String]` | Split by pattern |
+| `capture` | `(pattern, str) -> [String] \| nil` | Capture groups |
+| `captures_all` | `(pattern, str) -> [[String]]` | All capture groups |
+| `escape` | `(str) -> String` | Escape regex metacharacters |
+| `find` | `(pattern, str) -> Match \| nil` | Find first match (alias) |
+| `find_all` | `(pattern, str) -> [Match]` | Find all matches (alias) |
+
+---
+
+## datetime
+
+Date and time operations with native implementation.
+
+```arc
+use datetime
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `now` | `() -> String` | Current ISO 8601 timestamp |
+| `today` | `() -> String` | Current date (YYYY-MM-DD) |
+| `parse` | `(str) -> Timestamp` | Parse date string |
+| `format` | `(ts, fmt) -> String` | Format timestamp |
+| `add_days` | `(ts, days) -> Timestamp` | Add days to timestamp |
+| `diff_days` | `(a, b) -> Number` | Days between two timestamps |
+| `day_of_week` | `(ts) -> String` | Day of week name |
+
+---
+
+## os
+
+Operating system interaction with native implementation. Includes command injection protection.
+
+```arc
+use os
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `cwd` | `() -> String` | Current working directory |
+| `chdir` | `(path) -> nil` | Change directory |
+| `list_dir` | `(path) -> [String]` | List directory contents |
+| `mkdir` | `(path) -> nil` | Create directory |
+| `remove` | `(path) -> nil` | Remove file or directory |
+| `rename` | `(from, to) -> nil` | Rename/move file |
+| `copy` | `(src, dst) -> nil` | Copy file |
+| `exists` | `(path) -> Bool` | Check if path exists |
+| `stat` | `(path) -> Map` | File metadata |
+| `exec` | `(cmd) -> Map` | Execute shell command (10s timeout, injection-protected) |
+| `platform` | `() -> String` | OS platform name |
+| `arch` | `() -> String` | CPU architecture |
+| `env` | `(name) -> String \| nil` | Get environment variable |
+| `set_env` | `(name, value) -> nil` | Set environment variable |
+| `homedir` | `() -> String` | User home directory |
+| `tmpdir` | `() -> String` | Temp directory path |
+
+---
+
+## error
+
+Error handling utilities with native implementation.
+
+```arc
+use error
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `try_catch` | `(fn, handler) -> Any` | Try/catch wrapper |
+| `try_finally` | `(fn, cleanup) -> Any` | Try/finally wrapper |
+| `throw` | `(msg) -> never` | Throw an error |
+| `panic` | `(msg) -> never` | Unrecoverable error |
+
+---
+
+## net
+
+Networking utilities with native implementation.
+
+```arc
+use net
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `dns_lookup` | `(hostname) -> String` | DNS resolution |
+| `base64_encode` | `(str) -> String` | Base64 encode |
+| `base64_decode` | `(str) -> String` | Base64 decode |
+| `url_encode` | `(str) -> String` | URL encode |
+| `parse_query` | `(str) -> Map` | Parse query string |
+
+---
+
+## crypto
+
+Cryptographic operations with native implementation.
+
+```arc
+use crypto
+```
+
+### Functions
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `sha256` | `(str) -> String` | SHA-256 hash |
+| `sha512` | `(str) -> String` | SHA-512 hash |
+| `hmac_sha256` | `(key, data) -> String` | HMAC-SHA256 |
+| `uuid` | `() -> String` | Generate UUID v4 |
+| `random_bytes` | `(n) -> String` | Random bytes (hex) |
+| `md5` | `(str) -> String` | MD5 hash |

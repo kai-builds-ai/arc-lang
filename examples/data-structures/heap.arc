@@ -1,7 +1,7 @@
 # Min Heap / Priority Queue
 # Demonstrates: array-based tree, mutation, pipelines
 
-fn new_heap() => {mut data: []}
+fn new_heap() => {data: []}
 
 fn heap_parent(i) => (i - 1) / 2
 fn heap_left(i) => 2 * i + 1

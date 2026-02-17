@@ -20,16 +20,16 @@ fn lcs(a, b) {
   let n = len(b)
   # Build DP table
   let mut dp = []
-  for i in 0..m+1 {
+  for i in 0..(m+1) {
     let mut row = []
-    for j in 0..n+1 {
+    for j in 0..(n+1) {
       row = push(row, 0)
     }
     dp = push(dp, row)
   }
 
-  for i in 1..m+1 {
-    for j in 1..n+1 {
+  for i in 1..(m+1) {
+    for j in 1..(n+1) {
       if a[i-1] == b[j-1] {
         dp[i][j] = dp[i-1][j-1] + 1
       } el {
@@ -46,10 +46,10 @@ print("LCS of ABCBDAB and BDCAB: {lcs(a, b)}")
 
 # Coin Change (minimum coins)
 fn min_coins(coins, amount) {
-  let mut dp = [amount + 1 for _ in 0..amount+1]
+  let mut dp = [amount + 1 for _ in 0..(amount+1)]
   dp[0] = 0
 
-  for i in 1..amount+1 {
+  for i in 1..(amount+1) {
     for coin in coins {
       if coin <= i {
         let candidate = dp[i - coin] + 1
@@ -70,13 +70,13 @@ print("Min coins for 15 (coins=[1,5,10]): {min_coins([1, 5, 10], 15)}")
 fn knapsack(weights, values, capacity) {
   let n = len(weights)
   let mut dp = []
-  for i in 0..n+1 {
-    let mut row = [0 for _ in 0..capacity+1]
+  for i in 0..(n+1) {
+    let mut row = [0 for _ in 0..(capacity+1)]
     dp = push(dp, row)
   }
 
-  for i in 1..n+1 {
-    for w in 0..capacity+1 {
+  for i in 1..(n+1) {
+    for w in 0..(capacity+1) {
       if weights[i-1] <= w {
         let with_item = values[i-1] + dp[i-1][w - weights[i-1]]
         let without_item = dp[i-1][w]
@@ -92,3 +92,4 @@ fn knapsack(weights, values, capacity) {
 let w = [2, 3, 4, 5]
 let v = [3, 4, 5, 6]
 print("Knapsack (cap=8): {knapsack(w, v, 8)}")
+

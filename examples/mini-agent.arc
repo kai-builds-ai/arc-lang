@@ -9,24 +9,30 @@ let [weather, news, calendar] = fetch [
 ]
 
 # Step 2: Process and analyze
-let urgent_meetings = calendar.events
+let events = calendar.events or []
+let urgent_meetings = events
   |> filter(e => e.priority == "high")
-  |> map(e => {title: e.title, time: e.start_time})
+  |> map(e => {title: e.title, time_slot: e.start_time})
 
-let weather_summary = match weather.condition {
-  "rain" | "storm" => "Bring an umbrella! {weather.condition} expected.",
-  "snow" => "Bundle up! Snow with {weather.temp}F.",
-  _ => "Looking good: {weather.condition}, {weather.temp}F."
+let condition = weather.condition or "clear"
+let temp = weather.temp or 70
+
+let weather_summary = match condition {
+  "rain" => "Bring an umbrella! Rain expected.",
+  "storm" => "Bring an umbrella! Storm expected.",
+  "snow" => "Bundle up! Snow with {temp}F.",
+  _ => "Looking good: {condition}, {temp}F."
 }
 
-let top_headlines = news.articles
+let articles = news.articles or []
+let top_headlines = articles
   |> take(3)
   |> map(a => a.title)
   |> join("\n")
 
 # Step 3: Decisions
 let should_commute = if len(urgent_meetings) > 0 {
-  match weather.condition {
+  match condition {
     "storm" => false,
     _ => true
   }
@@ -50,7 +56,7 @@ print(top_headlines)
 if len(urgent_meetings) > 0 {
   print("Urgent Meetings:")
   for m in urgent_meetings {
-    print("  {m.time}: {m.title}")
+    print("  {m.time_slot}: {m.title}")
   }
 }
 

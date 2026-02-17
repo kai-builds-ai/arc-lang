@@ -1,6 +1,6 @@
 # Render the digest as readable text
 
-use std/strings
+use strings
 
 pub fn format_digest(digest) {
   let header = format_header(digest)

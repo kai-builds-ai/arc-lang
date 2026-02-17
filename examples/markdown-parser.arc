@@ -2,14 +2,14 @@
 # Demonstrates: string parsing, pattern matching, recursion, pipelines
 
 fn parse_line(line) {
-  if starts(line, "### ") { ret {kind: "h3", text: slice(line, 4, len(line))} }
-  if starts(line, "## ") { ret {kind: "h2", text: slice(line, 3, len(line))} }
-  if starts(line, "# ") { ret {kind: "h1", text: slice(line, 2, len(line))} }
-  if starts(line, "- ") { ret {kind: "li", text: slice(line, 2, len(line))} }
-  if starts(line, "> ") { ret {kind: "quote", text: slice(line, 2, len(line))} }
-  if starts(line, "---") { ret {kind: "hr", text: ""} }
-  if line == "" { ret {kind: "blank", text: ""} }
-  {kind: "p", text: line}
+  if starts(line, "### ") { {kind: "h3", text: slice(line, 4, len(line))} }
+  el if starts(line, "## ") { {kind: "h2", text: slice(line, 3, len(line))} }
+  el if starts(line, "# ") { {kind: "h1", text: slice(line, 2, len(line))} }
+  el if starts(line, "- ") { {kind: "li", text: slice(line, 2, len(line))} }
+  el if starts(line, "> ") { {kind: "quote", text: slice(line, 2, len(line))} }
+  el if starts(line, "---") { {kind: "hr", text: ""} }
+  el if line == "" { {kind: "blank", text: ""} }
+  el { {kind: "p", text: line} }
 }
 
 fn to_html(node) => match node.kind {
@@ -26,7 +26,8 @@ fn to_html(node) => match node.kind {
 
 fn parse_markdown(text) {
   let lines = split(text, "\n")
-  lines |> map(parse_line)
+  let result = map(lines, parse_line)
+  result
 }
 
 fn render_html(nodes) {
@@ -39,20 +40,7 @@ fn render_html(nodes) {
 # Demo
 print("=== Markdown Parser ===")
 
-let markdown = "# Hello World
-This is a paragraph.
-
-## Features
-- Fast parsing
-- Clean output
-- Pipeline-based
-
-> This is a quote
-
----
-
-### Details
-Another paragraph here."
+let markdown = "# Hello World\nThis is a paragraph.\n\n## Features\n- Fast parsing\n- Clean output\n- Pipeline-based\n\n> This is a quote\n\n---\n\n### Details\nAnother paragraph here."
 
 let nodes = parse_markdown(markdown)
 print("Parsed {len(nodes)} nodes:")

@@ -834,7 +834,14 @@ function makePrelude(env) {
             const f = fn;
             const fnEnv = new Env(f.closure);
             bindParams(f, args, fnEnv, evalExpr);
-            return evalExpr(f.body, fnEnv);
+            try {
+                return evalExpr(f.body, fnEnv);
+            }
+            catch (e) {
+                if (e instanceof ReturnSignal)
+                    return e.value;
+                throw e;
+            }
         }
         // It might be a native function stored as a special wrapper
         if (typeof fn === "function")

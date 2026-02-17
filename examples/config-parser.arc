@@ -49,26 +49,7 @@ fn config_sections(config) => keys(config)
 # Demo
 print("=== Config Parser ===")
 
-let config_text = "[database]
-host = localhost
-port = 5432
-name = myapp
-user = admin
-
-[server]
-host = 0.0.0.0
-port = 8080
-debug = true
-workers = 4
-
-[logging]
-level = info
-file = /var/log/app.log
-
-# This is a comment
-[cache]
-enabled = true
-ttl = 3600"
+let config_text = "[database]\nhost = localhost\nport = 5432\nname = myapp\nuser = admin\n\n[server]\nhost = 0.0.0.0\nport = 8080\ndebug = true\nworkers = 4\n\n[logging]\nlevel = info\nfile = /var/log/app.log\n\n# This is a comment\n[cache]\nenabled = true\nttl = 3600"
 
 let config = parse_config(config_text)
 

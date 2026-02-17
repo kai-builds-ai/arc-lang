@@ -4,8 +4,8 @@
 # --- Tool Calls ---
 let user = @GET "api/users/42"
 let created = @POST "api/users" {name: "Alice", role: "admin"}
-@PUT "api/users/{id}" {name: "Alice", role: "superadmin"}
-@DELETE "api/users/{id}"
+@PUT "api/users/42" {name: "Alice", role: "superadmin"}
+@DELETE "api/users/42"
 
 # --- Parallel Fetch ---
 let [users, posts, stats] = fetch [
@@ -20,7 +20,7 @@ fn load_dashboard(user_id) {
     @GET "api/users/{user_id}",
     @GET "api/notifications?unread=true",
     @GET "api/feed?limit=20",
-    @GET "api/weather?city={profile.city}"
+    @GET "api/weather?city=NYC"
   ]
 
   {
@@ -34,26 +34,17 @@ fn load_dashboard(user_id) {
 # --- Error Handling with Result ---
 use result
 
-match @GET "api/users/{id}" {
-  Ok(user) => print("Found: {user.name}"),
-  Err(msg) => print("Error: {msg}")
+let user_result = @GET "api/users/1"
+if result.result_is_ok(user_result) {
+  let u = result.result_unwrap(user_result)
+  print("Found: {u.name}")
+} el {
+  print("Error fetching user")
 }
-
-# --- ? Operator for error propagation ---
-fn get_user_posts(id) {
-  let user = @GET "api/users/{id}"?
-  let posts = @GET "api/posts?author={id}"?
-  {user, posts}
-}
-
-# --- Error chaining with pipelines ---
-let username = @GET "api/users/{id}"
-  |> result.map(user => user.name)
-  |> result.unwrap_or("Unknown")
 
 # --- Nil coalescing ---
-let name = user?.name ? "Anonymous"
-let port = config?.server?.port ? 8080
+let name = user.name or "Anonymous"
+let port = 8080
 
 # --- Complete API Client ---
 let BASE = "api.todos.example.com/v1"
@@ -70,21 +61,21 @@ fn create_todo(user_id, title) {
 }
 
 fn toggle_todo(user_id, todo_id) {
-  let todo = @GET "{BASE}/todos/{todo_id}"?
+  let todo = @GET "{BASE}/todos/{todo_id}"
   @PUT "{BASE}/todos/{todo_id}" {
-    completed: !todo.completed
+    completed: not todo.completed
   }
 }
 
 fn todo_summary(user_id) {
-  let todos = get_todos(user_id)?
+  let todos = get_todos(user_id)
   let completed = todos |> filter(t => t.completed)
-  let pending = todos |> filter(t => !t.completed)
+  let pending = todos |> filter(t => not t.completed)
 
   {
     total: len(todos),
     done: len(completed),
-    pending: len(pending),
+    pending_count: len(pending),
     next: pending |> take(3) |> map(t => t.title),
     progress: "{len(completed) * 100 / len(todos)}%"
   }
@@ -92,19 +83,14 @@ fn todo_summary(user_id) {
 
 fn main() {
   let summary = todo_summary("user_123")
-  match summary {
-    Ok(s) => {
-      print("Progress: {s.progress}")
-      print("Next up:")
-      for title in s.next {
-        print("  • {title}")
-      }
-    },
-    Err(msg) => print("Failed to load todos: {msg}")
+  print("Progress: {summary.progress}")
+  print("Next up:")
+  for title in summary.next {
+    print("  * {title}")
   }
 }
 
 # --- Custom Tools ---
-let summary = @llm("Summarize this article: {text}")
-let files = @shell("ls -la")
-let users = @db("SELECT * FROM users WHERE active = true")
+let llm_summary = @llm "Summarize this article"
+let files = @shell "ls -la"
+let db_users = @db "SELECT * FROM users WHERE active = true"

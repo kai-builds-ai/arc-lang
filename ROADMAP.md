@@ -32,7 +32,7 @@ All tasks done: semantic analyzer (name resolution, scope validation, mutability
 
 **Completed:** 2026-02-16
 
-All tasks done: 11 stdlib modules (math, strings, collections, map, io, http, json, csv, test, result, time), full API reference docs, 8-section tutorial, auto-documentation generator, 272 tests all passing.
+All tasks done: 17 stdlib modules (math, strings, collections, map, io, http, json, csv, test, result, time, regex, datetime, os, error, net, crypto), full API reference docs, 8-section tutorial, auto-documentation generator, 272 tests all passing. All 8 modules requiring native runtime (regex, datetime, os, io, http, crypto, error, net) have full native implementations.
 
 ---
 

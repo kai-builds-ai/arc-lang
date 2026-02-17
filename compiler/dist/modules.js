@@ -109,11 +109,18 @@ export function handleUse(stmt, env, currentFile) {
         }
     }
     else {
-        // No selective imports: bind all exports
+        // No selective imports: bind all exports flat
         for (const [name, value] of Object.entries(exports)) {
             env.set(name, value);
         }
     }
+    // Also create a namespace object so `module.fn()` style access works
+    const nsName = stmt.path[stmt.path.length - 1];
+    const entries = new Map();
+    for (const [name, value] of Object.entries(exports)) {
+        entries.set(name, value);
+    }
+    env.set(nsName, { __map: true, entries });
 }
 /**
  * Create a UseHandler bound to a specific file path.

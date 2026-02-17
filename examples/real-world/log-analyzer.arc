@@ -14,10 +14,10 @@ use io
 
 # --- Log Entry Parsing ---
 
-let LOG_PATTERN = regex.compile("^\\[(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})\\]\\s+\\[(\\w+)\\]\\s+\\[([^\\]]+)\\]\\s+(.*)")
+let LOG_PATTERN = "^\\[(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})\\]\\s+\\[(\\w+)\\]\\s+\\[([^\\]]+)\\]\\s+(.*)"
 
 pub fn parse_log_line(line) {
-    let m = regex.match(LOG_PATTERN, line)
+    let m = regex.capture(LOG_PATTERN, line)
     match m {
         nil => nil,
         _ => {
@@ -178,7 +178,7 @@ pub fn find_repeated_errors(entries) {
     let errors = entries |> filter_by_level("ERROR")
     let by_msg = group_by(errors, e => e.message)
     let mut repeated = []
-    for msg in collections.keys(by_msg) {
+    for msg in keys(by_msg) {
         if len(by_msg[msg]) > 1 {
             repeated = repeated ++ [{
                 message: msg,
@@ -193,7 +193,7 @@ pub fn find_repeated_errors(entries) {
 
 fn sort_by_count(lst) {
     # Simple sort descending by count
-    let mut result = lst |> collections.to_list()
+    let mut result = map(lst, x => x)
     for i in 0..len(result) {
         for j in (i + 1)..len(result) {
             if result[j].count > result[i].count {
@@ -232,7 +232,7 @@ pub fn generate_report(entries) {
 
     print("║")
     print("║ By Source:")
-    for source in collections.keys(by_source) {
+    for source in keys(by_source) {
         print("║   [{source}]: {by_source[source]} entries")
     }
 
@@ -334,7 +334,7 @@ pub fn run() {
     # Hourly distribution
     print("\n--- Hourly Distribution ---")
     let by_hour = count_by_hour(entries)
-    for hour in collections.keys(by_hour) {
+    for hour in keys(by_hour) {
         let bar = "█".repeat(by_hour[hour])
         print("  {hour}: {bar} ({by_hour[hour]})")
     }

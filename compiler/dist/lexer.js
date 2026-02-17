@@ -138,8 +138,9 @@ export function lex(source) {
             let hasInterp = false;
             while (i < source.length && peek() !== '"') {
                 if (peek() === "\n") {
-                    // Unterminated string - newline before closing quote
-                    throw new Error(`Unterminated string literal at line ${sl}, col ${sc}`);
+                    // Allow multiline strings
+                    str += advance();
+                    continue;
                 }
                 if (peek() === "{") {
                     hasInterp = true;

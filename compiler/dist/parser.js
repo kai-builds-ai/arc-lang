@@ -518,7 +518,7 @@ export class Parser {
             case TokenType.Slash:
             case TokenType.Percent: return 6;
             case TokenType.Power: return 7;
-            case TokenType.Range: return 8;
+            case TokenType.Range: return 4;
             case TokenType.Dot:
             case TokenType.LBracket:
             case TokenType.LParen:

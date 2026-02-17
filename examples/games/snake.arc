@@ -4,11 +4,11 @@
 fn new_game(width, height) => {
   width: width,
   height: height,
-  mut snake: [[5, 5], [5, 4], [5, 3]],
-  mut food: [3, 7],
-  mut direction: [0, 1],
-  mut score: 0,
-  mut alive: true
+  snake: [[5, 5], [5, 4], [5, 3]],
+  food: [3, 7],
+  direction: [0, 1],
+  score: 0,
+  alive: true
 }
 
 fn move_snake(game) {
@@ -87,3 +87,4 @@ if game.alive {
 } el {
   print("Game Over!")
 }
+

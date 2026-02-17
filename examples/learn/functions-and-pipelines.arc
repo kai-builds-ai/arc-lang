@@ -46,10 +46,10 @@ add5(10)    # 15
 #   |> print
 
 # --- Higher-Order Functions ---
-[1, 2, 3] |> map(x => x * 2)         # [2, 4, 6]
-["hello", "world"] |> map(upper)       # ["HELLO", "WORLD"]
-[1, 2, 3, 4, 5] |> filter(x => x > 3) # [4, 5]
-[1, 2, 3, 4] |> reduce(0, (sum, x) => sum + x)  # 10
+let r1 = [1, 2, 3] |> map(x => x * 2)         # [2, 4, 6]
+let r2 = ["hello", "world"] |> map(upper)       # ["HELLO", "WORLD"]
+let r3 = [1, 2, 3, 4, 5] |> filter(x => x > 3) # [4, 5]
+let r4 = [1, 2, 3, 4] |> reduce((sum, x) => sum + x, 0)  # 10
 
 # --- Chaining ---
 let users = [

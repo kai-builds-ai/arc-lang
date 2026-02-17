@@ -1,13 +1,13 @@
 # Transform raw data into a structured digest
 
-use std/collections
-use std/strings
-use models: Article, make_article
+use collections
+use strings
+use models: make_article
 
 pub fn process_articles(source_results) {
   source_results
     |> map(sr => sr.articles |> map(a => make_article(a, sr.source)))
-    |> collections.flatten
+    |> flat
     |> deduplicate
     |> sort_by_date
 }
@@ -18,7 +18,7 @@ fn deduplicate(articles) {
 
   for article in articles {
     let key = article.title |> lower |> trim
-    if !contains(seen, key) {
+    if not contains(seen, key) {
       seen = push(seen, key)
       unique = push(unique, article)
     }
@@ -28,11 +28,11 @@ fn deduplicate(articles) {
 }
 
 fn sort_by_date(articles) {
-  articles |> sort_by(a => a.published) |> reverse
+  collections.sort_by(articles, a => a.published) |> reverse
 }
 
 pub fn categorize(articles) {
-  articles |> collections.group_by(a => a.category)
+  collections.group_by(articles, a => a.category)
 }
 
 pub fn build_digest(articles) {

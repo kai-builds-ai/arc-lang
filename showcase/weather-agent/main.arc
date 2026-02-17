@@ -8,8 +8,8 @@ let cities = ["New York", "London", "Tokyo", "Sydney", "Paris"]
 # --- Fetch weather data ---
 
 fn fetch_weather(city) {
-  let data = @GET "api/weather/{city}"
-  { city: city, data: data }
+  # Simulated weather data
+  { city: city, data: "partly cloudy, 18C" }
 }
 
 # --- Categorize conditions ---

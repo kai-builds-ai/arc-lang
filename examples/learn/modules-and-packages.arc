@@ -1,63 +1,37 @@
 # Learn Arc: Modules & Packages
-# Extracted from Tutorial 5 — use/pub, stdlib, module patterns
+# Demonstrates: use/pub, stdlib modules, module patterns
 
-# --- Importing ---
-use std/math
-use std/strings
-use std/http: get, post       # selective import
-use std/math: PI, sqrt, pow   # use without prefix
-use std/collections: *         # wildcard (use sparingly)
+# --- Importing stdlib ---
+use io
+use crypto
 
 # --- Exporting ---
 pub fn greet(name) => "Hello, {name}!"
 pub let VERSION = "1.0.0"
-pub type Config = {host: String, port: Int}
 fn internal_helper(x) => x * 2    # private
 
-# --- Stdlib Examples ---
+# --- Using built-in functions ---
 
-# math
-math.abs(-42)          # 42
-math.pow(2, 10)        # 1024
-math.sqrt(144)         # 12
-math.clamp(15, 0, 10)  # 10
+# String operations
+print("=== Module Demo ===")
+print(upper("hello"))          # HELLO
+print(lower("WORLD"))          # world
+print(trim("  hi  "))          # hi
+print(replace("hello world", "world", "arc"))  # hello arc
 
-# strings
-strings.pad_left("42", 5, "0")        # "00042"
-strings.capitalize("hello world")      # "Hello world"
-strings.words("  hello   world  ")     # ["hello", "world"]
+# List operations
+let nums = [3, 1, 4, 1, 5, 9]
+print(sort(nums))              # [1, 1, 3, 4, 5, 9]
+print(reverse(nums))           # [9, 5, 1, 4, 1, 3]
+print(len(nums))               # 6
 
-# collections
-collections.unique([1, 2, 2, 3, 3])     # [1, 2, 3]
-collections.chunk([1, 2, 3, 4, 5], 2)   # [[1, 2], [3, 4], [5]]
-collections.flatten([[1, 2], [3], [4]])  # [1, 2, 3, 4]
-
-# json
-use std/json
-let obj = {name: "Arc", version: 1}
-let s = json.to_json(obj)
-let parsed = json.from_json(s)
-
-# io
-use std/io
-let content = io.read_lines("data.txt")
-io.write_lines("output.txt", lines)
-io.exists("config.json")
-
-# csv
-use std/csv
-let records = csv.parse_csv_headers("name,age\nAlice,30\nBob,25")
-# [{name: "Alice", age: "30"}, {name: "Bob", age: "25"}]
-
-# test
-use std/test
-test.describe("Math tests", () => {
-  test.it("adds numbers", () => test.expect_eq(1 + 1, 2, "addition"))
-})
+# Crypto module
+let hash = sha256("hello")
+print("SHA256: {hash}")
 
 # --- Module Design Patterns ---
 
-# Utility module
+# Utility functions
 pub fn slugify(text) {
   text |> lower |> split(" ") |> join("-")
 }
@@ -79,3 +53,10 @@ pub fn pluralize(count, word) {
 pub fn is_email(s) => contains(s, "@") and contains(s, ".")
 pub fn is_positive(n) => n > 0
 pub fn is_non_empty(s) => len(trim(s)) > 0
+
+# Demo
+print("Slug: {slugify("Hello World Example")}")
+print("Truncate: {truncate("This is a very long string", 15)}")
+print("Currency: {currency(42.99)}")
+print("Plural: {pluralize(1, "cat")} / {pluralize(3, "cat")}")
+print("Email valid: {is_email("user@example.com")}")

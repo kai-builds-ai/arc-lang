@@ -14,16 +14,16 @@ use collections
 
 # --- Patterns ---
 
-let SECTION_RE = regex.compile("^\\[([^\\]]+)\\]\\s*$")
-let KV_RE = regex.compile("^([\\w.]+)\\s*=\\s*(.+)\\s*$")
-let COMMENT_RE = regex.compile("^\\s*[#;]")
-let EMPTY_RE = regex.compile("^\\s*$")
-let ARRAY_RE = regex.compile("^\\[(.*)\\]$")
-let QUOTED_RE = regex.compile("^\"(.*)\"$")
-let INT_RE = regex.compile("^-?\\d+$")
-let FLOAT_RE = regex.compile("^-?\\d+\\.\\d+$")
-let BOOL_TRUE_RE = regex.compile("^(true|yes|on|1)$")
-let BOOL_FALSE_RE = regex.compile("^(false|no|off|0)$")
+let SECTION_RE = "^\\[([^\\]]+)\\]\\s*$"
+let KV_RE = "^([\\w.]+)\\s*=\\s*(.+)\\s*$"
+let COMMENT_RE = "^\\s*[#;]"
+let EMPTY_RE = "^\\s*$"
+let ARRAY_RE = "^\\[(.*)\\]$"
+let QUOTED_RE = "^\"(.*)\"$"
+let INT_RE = "^-?\\d+$"
+let FLOAT_RE = "^-?\\d+\\.\\d+$"
+let BOOL_TRUE_RE = "^(true|yes|on|1)$"
+let BOOL_FALSE_RE = "^(false|no|off|0)$"
 
 # --- Type Coercion ---
 
@@ -31,28 +31,28 @@ pub fn coerce_value(raw) {
     let trimmed = raw |> trim()
 
     # Quoted string
-    let quoted = regex.match(QUOTED_RE, trimmed)
-    if quoted != nil { ret {type: "string", value: quoted[1]} }
+    let quoted = regex.capture(QUOTED_RE, trimmed)
+    if quoted != nil { ret {kind: "string", value: quoted[1]} }
 
     # Boolean
-    if regex.test(BOOL_TRUE_RE, trimmed) { ret {type: "bool", value: true} }
-    if regex.test(BOOL_FALSE_RE, trimmed) { ret {type: "bool", value: false} }
+    if regex.test(BOOL_TRUE_RE, trimmed) { ret {kind: "bool", value: true} }
+    if regex.test(BOOL_FALSE_RE, trimmed) { ret {kind: "bool", value: false} }
 
     # Integer
-    if regex.test(INT_RE, trimmed) { ret {type: "int", value: parse_int(trimmed)} }
+    if regex.test(INT_RE, trimmed) { ret {kind: "int", value: parse_int(trimmed)} }
 
     # Float
-    if regex.test(FLOAT_RE, trimmed) { ret {type: "float", value: parse_float(trimmed)} }
+    if regex.test(FLOAT_RE, trimmed) { ret {kind: "float", value: parse_float(trimmed)} }
 
     # Array
-    let arr = regex.match(ARRAY_RE, trimmed)
+    let arr = regex.capture(ARRAY_RE, trimmed)
     if arr != nil {
         let items = arr[1] |> split(",") |> map(s => coerce_value(s).value)
-        ret {type: "array", value: items}
+        ret {kind: "array", value: items}
     }
 
     # Default: string
-    {type: "string", value: trimmed}
+    {kind: "string", value: trimmed}
 }
 
 fn trim(s) => s # simplified — assume trimmed input
@@ -60,7 +60,7 @@ fn split(s, sep) {
     # Simple split implementation
     let mut parts = []
     let mut current = ""
-    for ch in s {
+    for ch in chars(s) {
         if ch == sep {
             parts = parts ++ [current]
             current = ""
@@ -75,19 +75,19 @@ fn parse_int(s) {
     let mut result = 0
     let mut negative = false
     let mut i = 0
-    for ch in s {
+    for ch in chars(s) {
         match ch {
             "-" => { if i == 0 { negative = true } },
-            "0" => result = result * 10,
-            "1" => result = result * 10 + 1,
-            "2" => result = result * 10 + 2,
-            "3" => result = result * 10 + 3,
-            "4" => result = result * 10 + 4,
-            "5" => result = result * 10 + 5,
-            "6" => result = result * 10 + 6,
-            "7" => result = result * 10 + 7,
-            "8" => result = result * 10 + 8,
-            "9" => result = result * 10 + 9,
+            "0" => { result = result * 10 },
+            "1" => { result = result * 10 + 1 },
+            "2" => { result = result * 10 + 2 },
+            "3" => { result = result * 10 + 3 },
+            "4" => { result = result * 10 + 4 },
+            "5" => { result = result * 10 + 5 },
+            "6" => { result = result * 10 + 6 },
+            "7" => { result = result * 10 + 7 },
+            "8" => { result = result * 10 + 8 },
+            "9" => { result = result * 10 + 9 },
             _ => {}
         }
         i = i + 1
@@ -109,42 +109,35 @@ pub fn parse(text) {
     for line in lines {
         line_num = line_num + 1
 
-        # Skip empty lines and comments
         if regex.test(EMPTY_RE, line) or regex.test(COMMENT_RE, line) {
-            continue
-        }
-
-        # Section header
-        let section = regex.match(SECTION_RE, line)
-        if section != nil {
-            current_section = section[1]
-            if config[current_section] == nil {
-                config[current_section] = {}
-            }
-            continue
-        }
-
-        # Key-value pair
-        let kv = regex.match(KV_RE, line)
-        if kv != nil {
-            let key = kv[1]
-            let raw_value = kv[2]
-            let coerced = coerce_value(raw_value)
-
-            # Handle nested keys (e.g., "server.host")
-            if key |> contains(".") {
-                let parts = key |> split(".")
-                set_nested(config, current_section, parts, coerced.value)
-            } el {
+            # Skip empty lines and comments
+        } el {
+            let section = regex.capture(SECTION_RE, line)
+            if section != nil {
+                current_section = section[1]
                 if config[current_section] == nil {
                     config[current_section] = {}
                 }
-                config[current_section][key] = coerced.value
+            } el {
+                let kv = regex.capture(KV_RE, line)
+                if kv != nil {
+                    let key = kv[1]
+                    let raw_value = kv[2]
+                    let coerced = coerce_value(raw_value)
+                    if key |> contains(".") {
+                        let parts = key |> split(".")
+                        set_nested(config, current_section, parts, coerced.value)
+                    } el {
+                        if config[current_section] == nil {
+                            config[current_section] = {}
+                        }
+                        config[current_section][key] = coerced.value
+                    }
+                } el {
+                    errors = errors ++ [{line: line_num, text: line, error: "Unrecognized syntax"}]
+                }
             }
-            continue
         }
-
-        errors = errors ++ [{line: line_num, text: line, error: "Unrecognized syntax"}]
     }
 
     {config: config, errors: errors}
@@ -153,7 +146,7 @@ pub fn parse(text) {
 fn split_lines(text) => text |> split("\n")
 
 fn contains(s, ch) {
-    for c in s {
+    for c in chars(s) {
         if c == ch { ret true }
     }
     false
@@ -189,18 +182,18 @@ pub fn get_nested(config, path) {
     let mut current = config
     for part in parts {
         match current {
-            nil => ret nil,
-            _ => current = current[part]
+            nil => { ret nil },
+            _ => { current = current[part] }
         }
     }
     current
 }
 
-pub fn sections(config) => config |> collections.keys()
+pub fn sections(config) => keys(config)
 
 pub fn keys_in(config, section) => match config[section] {
     nil => [],
-    s => s |> collections.keys()
+    s => keys(s)
 }
 
 # --- Validation ---
@@ -211,50 +204,48 @@ pub fn validate(config, schema) {
     for rule in schema {
         let value = get(config, rule.section, rule.key)
 
-        # Required check
         if rule.required and value == nil {
             errors = errors ++ [{
                 path: "{rule.section}.{rule.key}",
                 error: "Required field missing"
             }]
-            continue
-        }
-
-        if value == nil { continue }
-
-        # Type check
-        match rule.type {
-            "string" => {
-                if type_of(value) != "string" {
-                    errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Expected string"}]
+        } el {
+            if value != nil {
+                # Type check
+                match rule.kind {
+                    "string" => {
+                        if type_of(value) != "string" {
+                            errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Expected string"}]
+                        }
+                    },
+                    "int" => {
+                        if type_of(value) != "number" {
+                            errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Expected integer"}]
+                        }
+                    },
+                    "bool" => {
+                        if type_of(value) != "boolean" {
+                            errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Expected boolean"}]
+                        }
+                    },
+                    _ => {}
                 }
-            },
-            "int" => {
-                if type_of(value) != "number" {
-                    errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Expected integer"}]
-                }
-            },
-            "bool" => {
-                if type_of(value) != "boolean" {
-                    errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Expected boolean"}]
-                }
-            },
-            _ => {}
-        }
 
-        # Range check
-        if rule.min != nil and value < rule.min {
-            errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Below minimum {rule.min}"}]
-        }
-        if rule.max != nil and value > rule.max {
-            errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Above maximum {rule.max}"}]
-        }
+                # Range check
+                if rule.min != nil and value < rule.min {
+                    errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Below minimum {rule.min}"}]
+                }
+                if rule.max != nil and value > rule.max {
+                    errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Above maximum {rule.max}"}]
+                }
 
-        # Allowed values
-        if rule.allowed != nil {
-            let valid = rule.allowed |> filter(a => a == value) |> len() > 0
-            if not valid {
-                errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Not in allowed values: {rule.allowed}"}]
+                # Allowed values
+                if rule.allowed != nil {
+                    let valid = len(rule.allowed |> filter(a => a == value)) > 0
+                    if not valid {
+                        errors = errors ++ [{path: "{rule.section}.{rule.key}", error: "Not in allowed values: {rule.allowed}"}]
+                    }
+                }
             }
         }
     }
@@ -264,7 +255,7 @@ pub fn validate(config, schema) {
 fn type_of(v) => match v {
     true => "boolean",
     false => "boolean",
-    _ if v == nil => "nil",
+    nil => "nil",
     _ => "string" # simplified
 }
 
@@ -273,16 +264,16 @@ fn type_of(v) => match v {
 pub fn with_defaults(config, defaults) {
     let mut result = {}
     # Copy defaults
-    for section in collections.keys(defaults) {
+    for section in keys(defaults) {
         result[section] = {}
-        for key in collections.keys(defaults[section]) {
+        for key in keys(defaults[section]) {
             result[section][key] = defaults[section][key]
         }
     }
     # Override with config values
-    for section in collections.keys(config) {
+    for section in keys(config) {
         if result[section] == nil { result[section] = {} }
-        for key in collections.keys(config[section]) {
+        for key in keys(config[section]) {
             result[section][key] = config[section][key]
         }
     }
@@ -293,15 +284,15 @@ pub fn with_defaults(config, defaults) {
 
 pub fn merge(base, override_cfg) {
     let mut result = {}
-    for section in collections.keys(base) {
+    for section in keys(base) {
         result[section] = {}
-        for key in collections.keys(base[section]) {
+        for key in keys(base[section]) {
             result[section][key] = base[section][key]
         }
     }
-    for section in collections.keys(override_cfg) {
+    for section in keys(override_cfg) {
         if result[section] == nil { result[section] = {} }
-        for key in collections.keys(override_cfg[section]) {
+        for key in keys(override_cfg[section]) {
             result[section][key] = override_cfg[section][key]
         }
     }
@@ -312,11 +303,11 @@ pub fn merge(base, override_cfg) {
 
 pub fn to_string(config) {
     let mut lines = []
-    for section in collections.keys(config) {
+    for section in keys(config) {
         if section != "__root__" {
             lines = lines ++ ["[{section}]"]
         }
-        for key in collections.keys(config[section]) {
+        for key in keys(config[section]) {
             let val = config[section][key]
             let str_val = format_value(val)
             lines = lines ++ ["{key} = {str_val}"]
@@ -329,14 +320,16 @@ pub fn to_string(config) {
 fn format_value(v) => match v {
     true => "true",
     false => "false",
-    _ if v == nil => "nil",
+    nil => "nil",
     _ => "\"{v}\""
 }
 
-fn join_lines(lst, sep) => match lst {
-    [] => "",
-    [x] => "{x}",
-    [x, ..rest] => "{x}{sep}{join_lines(rest, sep)}"
+fn join_lines(lst, sep) {
+    if len(lst) == 0 { ret "" }
+    if len(lst) == 1 { ret "{lst[0]}" }
+    let first = lst[0]
+    let rest = drop(lst, 1)
+    "{first}{sep}{join_lines(rest, sep)}"
 }
 
 # --- Test ---
@@ -399,11 +392,11 @@ max_entries = 10000"
     # Validation
     print("\n--- Validation ---")
     let schema = [
-        {section: "server", key: "host", required: true, type: "string"},
-        {section: "server", key: "port", required: true, type: "int", min: 1, max: 65535},
-        {section: "database", key: "host", required: true, type: "string"},
-        {section: "database", key: "name", required: true, type: "string"},
-        {section: "logging", key: "level", required: true, type: "string",
+        {section: "server", key: "host", required: true, kind: "string"},
+        {section: "server", key: "port", required: true, kind: "int", min: 1, max: 65535},
+        {section: "database", key: "host", required: true, kind: "string"},
+        {section: "database", key: "name", required: true, kind: "string"},
+        {section: "logging", key: "level", required: true, kind: "string",
          allowed: ["trace", "debug", "info", "warn", "error"]}
     ]
     let validation = validate(config, schema)

@@ -5,11 +5,11 @@ fn lcs_table(a, b) {
   let m = len(a)
   let n = len(b)
   let mut dp = []
-  for i in 0..m+1 {
-    dp = push(dp, [0 for _ in 0..n+1])
+  for i in 0..(m+1) {
+    dp = push(dp, [0 for _ in 0..(n+1)])
   }
-  for i in 1..m+1 {
-    for j in 1..n+1 {
+  for i in 1..(m+1) {
+    for j in 1..(n+1) {
       if a[i-1] == b[j-1] {
         dp[i][j] = dp[i-1][j-1] + 1
       } el {
@@ -64,18 +64,12 @@ fn diff_stats(diff) {
 # Demo
 print("=== Diff Algorithm ===")
 
-let old_text = split("fn hello() {
-  print(\"Hello\")
-  print(\"World\")
-  ret 0
-}", "\n")
+let old_lines = ["fn hello() \{", "  print(\"Hello\")", "  print(\"World\")", "  ret 0", "\}"]
 
-let new_text = split("fn hello() {
-  print(\"Hello, Arc!\")
-  print(\"World\")
-  let x = 42
-  ret x
-}", "\n")
+let new_lines = ["fn hello() \{", "  print(\"Hello, Arc!\")", "  print(\"World\")", "  let x = 42", "  ret x", "\}"]
+
+let old_text = old_lines
+let new_text = new_lines
 
 let diff = compute_diff(old_text, new_text)
 display_diff(diff)
@@ -83,3 +77,4 @@ display_diff(diff)
 let stats = diff_stats(diff)
 print("")
 print("Stats: +{stats.added} -{stats.deleted} ~{stats.unchanged}")
+

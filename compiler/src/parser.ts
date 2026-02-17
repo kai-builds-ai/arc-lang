@@ -522,7 +522,7 @@ export class Parser {
       case TokenType.Plus: case TokenType.Minus: return 5;
       case TokenType.Star: case TokenType.Slash: case TokenType.Percent: return 6;
       case TokenType.Power: return 7;
-      case TokenType.Range: return 8;
+      case TokenType.Range: return 4;
       case TokenType.Dot: case TokenType.LBracket: case TokenType.LParen: case TokenType.QuestionDot: case TokenType.Question: return 10;
       case TokenType.Pipe: return 0; // lowest
       default: return -1;

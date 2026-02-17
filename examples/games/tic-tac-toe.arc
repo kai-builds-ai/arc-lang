@@ -51,31 +51,35 @@ fn find_best_move(b, player) {
 }
 
 # Play a sample game
-print("=== Tic-Tac-Toe ===")
-let mut board = new_board()
-let players = ["X", "O"]
+fn play_game() {
+  print("=== Tic-Tac-Toe ===")
+  let mut board = new_board()
+  let players = ["X", "O"]
 
-for turn in 0..9 {
-  let player = players[turn % 2]
-  let pos = find_best_move(board, player)
-  if pos < 0 { ret nil }
-  let result = make_move(board, pos, player)
-  if is_err(result) {
-    print("Error: {unwrap_err(result)}")
+  for turn in 0..9 {
+    let player = players[turn % 2]
+    let pos = find_best_move(board, player)
+    if pos < 0 { ret nil }
+    let result = make_move(board, pos, player)
+    if is_err(result) {
+      print("Error: {unwrap_err(result)}")
+    }
+
+    let winner = check_winner(board)
+    if winner != nil {
+      display_board(board)
+      print("{winner} wins!")
+      ret nil
+    }
+    if is_full(board) {
+      display_board(board)
+      print("Draw!")
+      ret nil
+    }
   }
 
-  let winner = check_winner(board)
-  if winner != nil {
-    display_board(board)
-    print("{winner} wins!")
-    ret nil
-  }
-  if is_full(board) {
-    display_board(board)
-    print("Draw!")
-    ret nil
-  }
+  display_board(board)
+  print("Game over!")
 }
 
-display_board(board)
-print("Game over!")
+play_game()

@@ -2,9 +2,8 @@
 # Demonstrates: health checks, thresholds, alerting patterns
 
 fn check_health(service) {
-  # Simulate health check via tool call
-  let result = @GET "api/health/{service}"
-  { service: service, status: "healthy", response: result }
+  # Simulate health check
+  { service: service, status: "healthy", response: "ok" }
 }
 
 fn check_metric(name, value, threshold) {

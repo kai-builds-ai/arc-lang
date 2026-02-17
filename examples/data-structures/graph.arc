@@ -22,7 +22,7 @@ fn neighbors(g, node) {
 fn bfs(g, start) {
   let mut visited = []
   let mut queue = [start]
-  for _ in 0..len(g.nodes) * 2 {
+  for _ in 0..(len(g.nodes) * 2) {
     if len(queue) == 0 { ret visited }
     let current = head(queue)
     queue = tail(queue)
@@ -45,7 +45,7 @@ fn bfs(g, start) {
 fn dfs(g, start) {
   let mut visited = []
   let mut stack = [start]
-  for _ in 0..len(g.nodes) * 2 {
+  for _ in 0..(len(g.nodes) * 2) {
     if len(stack) == 0 { ret visited }
     let current = last(stack)
     stack = take(stack, len(stack) - 1)
@@ -92,3 +92,4 @@ print("Path A->E: {has_path(g, "A", "E")}")
 print("Path A->F: {has_path(g, "A", "F")}")
 print("Neighbors of A: {neighbors(g, "A")}")
 print("Neighbors of D: {neighbors(g, "D")}")
+
