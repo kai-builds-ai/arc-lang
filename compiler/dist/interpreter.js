@@ -276,8 +276,28 @@ function makePrelude(env) {
         },
         starts: (s, pre) => typeof s === "string" ? s.startsWith(pre) : false,
         ends: (s, suf) => typeof s === "string" ? s.endsWith(suf) : false,
-        int: (v) => typeof v === "string" ? parseInt(v) : typeof v === "number" ? Math.floor(v) : 0,
-        float: (v) => typeof v === "string" ? parseFloat(v) : typeof v === "number" ? v : 0,
+        int: (v) => {
+            if (typeof v === "number")
+                return Math.floor(v);
+            if (typeof v === "string") {
+                const n = parseInt(v);
+                if (isNaN(n))
+                    throw new ArcRuntimeError(`ValueError: cannot convert '${v}' to int`, { code: ErrorCode.TYPE_MISMATCH });
+                return n;
+            }
+            return 0;
+        },
+        float: (v) => {
+            if (typeof v === "number")
+                return v;
+            if (typeof v === "string") {
+                const n = parseFloat(v);
+                if (isNaN(n))
+                    throw new ArcRuntimeError(`ValueError: cannot convert '${v}' to float`, { code: ErrorCode.TYPE_MISMATCH });
+                return n;
+            }
+            return 0;
+        },
         str: (v) => toStr(v),
         bool: (v) => isTruthy(v),
         min: (...args) => {
@@ -2922,6 +2942,23 @@ function evalStmt(stmt, env) {
                 }
             }
             return result;
+        }
+        case "TryCatchStmt": {
+            try {
+                return evalExpr(stmt.body, env);
+            }
+            catch (e) {
+                if (e instanceof ReturnSignal)
+                    throw e; // don't catch return/break/continue
+                if (e instanceof BreakSignal)
+                    throw e;
+                if (e instanceof ContinueSignal)
+                    throw e;
+                const catchEnv = new Env(env);
+                const errMsg = e instanceof Error ? e.message : String(e);
+                catchEnv.set(stmt.catchVar, errMsg);
+                return evalExpr(stmt.catchBody, catchEnv);
+            }
         }
         case "DoStmt": {
             let result = null;

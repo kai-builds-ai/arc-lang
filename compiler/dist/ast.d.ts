@@ -201,7 +201,7 @@ export interface ConstructorPattern {
     args: Pattern[];
     loc: Loc;
 }
-export type Stmt = LetStmt | FnStmt | ForStmt | DoStmt | WhileStmt | ExprStmt | UseStmt | TypeStmt | AssignStmt | MemberAssignStmt | IndexAssignStmt | RetStmt | BreakStmt | ContinueStmt;
+export type Stmt = LetStmt | FnStmt | ForStmt | DoStmt | WhileStmt | ExprStmt | UseStmt | TypeStmt | AssignStmt | MemberAssignStmt | IndexAssignStmt | RetStmt | BreakStmt | ContinueStmt | TryCatchStmt;
 export interface AssignStmt {
     kind: "AssignStmt";
     target: string;
@@ -282,6 +282,13 @@ export interface BreakStmt {
 }
 export interface ContinueStmt {
     kind: "ContinueStmt";
+    loc: Loc;
+}
+export interface TryCatchStmt {
+    kind: "TryCatchStmt";
+    body: Expr;
+    catchVar: string;
+    catchBody: Expr;
     loc: Loc;
 }
 export interface ExprStmt {

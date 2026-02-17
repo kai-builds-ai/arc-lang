@@ -66,6 +66,7 @@ export class Parser {
       case TokenType.Use: return this.parseUse();
       case TokenType.Type: return this.parseType();
       case TokenType.Ret: return this.parseRet();
+      case TokenType.Try: return this.parseTryCatch();
       default: {
         const exprLoc = this.loc();
         const expr = this.parseExpr();
@@ -244,6 +245,16 @@ export class Parser {
     const condition = this.parseExpr(0);
     const body = this.parseBlock();
     return { kind: "WhileStmt", condition, body, loc };
+  }
+
+  private parseTryCatch(): AST.TryCatchStmt {
+    const loc = this.loc();
+    this.expect(TokenType.Try);
+    const body = this.parseBlock();
+    this.expect(TokenType.Catch);
+    const catchVar = this.expect(TokenType.Ident).value;
+    const catchBody = this.parseBlock();
+    return { kind: "TryCatchStmt", body, catchVar, catchBody, loc };
   }
 
   private parseDo(): AST.DoStmt {
@@ -490,7 +501,7 @@ export class Parser {
         // Allow keywords (like 'match') as property names after dot
         const propToken = this.peek();
         let prop: string;
-        if (propToken.type === TokenType.Ident || propToken.type === TokenType.Match || propToken.type === TokenType.Fn || propToken.type === TokenType.Let || propToken.type === TokenType.If || propToken.type === TokenType.For || propToken.type === TokenType.In || propToken.type === TokenType.Do || propToken.type === TokenType.While || propToken.type === TokenType.Until || propToken.type === TokenType.Use || propToken.type === TokenType.Pub || propToken.type === TokenType.Type || propToken.type === TokenType.Ret || propToken.type === TokenType.Where || propToken.type === TokenType.Matching || propToken.type === TokenType.Fetch || propToken.type === TokenType.Async || propToken.type === TokenType.Await) {
+        if (propToken.type === TokenType.Ident || propToken.type === TokenType.Match || propToken.type === TokenType.Fn || propToken.type === TokenType.Let || propToken.type === TokenType.If || propToken.type === TokenType.For || propToken.type === TokenType.In || propToken.type === TokenType.Do || propToken.type === TokenType.While || propToken.type === TokenType.Until || propToken.type === TokenType.Use || propToken.type === TokenType.Pub || propToken.type === TokenType.Type || propToken.type === TokenType.Ret || propToken.type === TokenType.Where || propToken.type === TokenType.Matching || propToken.type === TokenType.Fetch || propToken.type === TokenType.Async || propToken.type === TokenType.Await || propToken.type === TokenType.Try || propToken.type === TokenType.Catch) {
           prop = this.advance().value;
         } else {
           prop = this.expect(TokenType.Ident).value;
@@ -505,7 +516,7 @@ export class Parser {
         // Allow keywords as property names after ?.
         const propToken = this.peek();
         let prop: string;
-        if (propToken.type === TokenType.Ident || propToken.type === TokenType.Match || propToken.type === TokenType.Fn || propToken.type === TokenType.Let || propToken.type === TokenType.If || propToken.type === TokenType.For || propToken.type === TokenType.In || propToken.type === TokenType.Do || propToken.type === TokenType.While || propToken.type === TokenType.Until || propToken.type === TokenType.Use || propToken.type === TokenType.Pub || propToken.type === TokenType.Type || propToken.type === TokenType.Ret || propToken.type === TokenType.Where || propToken.type === TokenType.Matching || propToken.type === TokenType.Fetch || propToken.type === TokenType.Async || propToken.type === TokenType.Await) {
+        if (propToken.type === TokenType.Ident || propToken.type === TokenType.Match || propToken.type === TokenType.Fn || propToken.type === TokenType.Let || propToken.type === TokenType.If || propToken.type === TokenType.For || propToken.type === TokenType.In || propToken.type === TokenType.Do || propToken.type === TokenType.While || propToken.type === TokenType.Until || propToken.type === TokenType.Use || propToken.type === TokenType.Pub || propToken.type === TokenType.Type || propToken.type === TokenType.Ret || propToken.type === TokenType.Where || propToken.type === TokenType.Matching || propToken.type === TokenType.Fetch || propToken.type === TokenType.Async || propToken.type === TokenType.Await || propToken.type === TokenType.Try || propToken.type === TokenType.Catch) {
           prop = this.advance().value;
         } else {
           prop = this.expect(TokenType.Ident).value;

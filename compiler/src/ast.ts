@@ -196,7 +196,7 @@ export interface ConstructorPattern { kind: "ConstructorPattern"; name: string; 
 
 export type Stmt =
   | LetStmt | FnStmt | ForStmt | DoStmt | WhileStmt | ExprStmt | UseStmt | TypeStmt
-  | AssignStmt | MemberAssignStmt | IndexAssignStmt | RetStmt | BreakStmt | ContinueStmt;
+  | AssignStmt | MemberAssignStmt | IndexAssignStmt | RetStmt | BreakStmt | ContinueStmt | TryCatchStmt;
 
 export interface AssignStmt {
   kind: "AssignStmt";
@@ -290,6 +290,14 @@ export interface BreakStmt {
 
 export interface ContinueStmt {
   kind: "ContinueStmt";
+  loc: Loc;
+}
+
+export interface TryCatchStmt {
+  kind: "TryCatchStmt";
+  body: Expr;
+  catchVar: string;
+  catchBody: Expr;
   loc: Loc;
 }
 

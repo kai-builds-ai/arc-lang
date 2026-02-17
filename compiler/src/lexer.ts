@@ -7,7 +7,7 @@ export enum TokenType {
   // Identifiers & Keywords
   Ident,
   Fn, Let, Mut, Type, Use, Pub, Match, If, El, For, In, Do, While, Until,
-  Async, Await, Ret, True, False, NilKw, And, Or, Not, Where, Matching, Fetch, Break, Continue,
+  Async, Await, Ret, True, False, NilKw, And, Or, Not, Where, Matching, Fetch, Break, Continue, Try, Catch,
   // Operators
   Plus, Minus, Star, Slash, Percent, Power,
   Eq, Neq, Lt, Gt, Lte, Gte,
@@ -40,6 +40,7 @@ const KEYWORDS: Record<string, TokenType> = {
   where: TokenType.Where, matching: TokenType.Matching, fetch: TokenType.Fetch,
   break: TokenType.Break, continue: TokenType.Continue,
   return: TokenType.Ret,  // alias: Arc uses 'ret' but accept 'return' too
+  try: TokenType.Try, catch: TokenType.Catch,
 };
 
 export function lex(source: string): Token[] {
