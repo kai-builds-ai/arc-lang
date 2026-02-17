@@ -767,7 +767,7 @@ function makePrelude(env: Env): void {
           const vars = args[1] as MapValue;
           if (vars && typeof vars === "object" && "__map" in vars) {
             for (const [k, v] of vars.entries) {
-              text = text.replaceAll(`{{${k}}}`, String(v ?? ""));
+              text = text.replaceAll(`<<${k}>>`, String(v ?? ""));
             }
           }
           return text;
