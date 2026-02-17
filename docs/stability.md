@@ -68,7 +68,7 @@ Arc uses a **minimum 2 minor versions** deprecation period:
 
 ```
 ⚠ DEPRECATED: 'old_feature' was deprecated in v0.6.0 and will be removed in v0.8.0.
-  Migration: Use 'new_feature' instead. See https://arc-lang.dev/migration/old-to-new
+  Migration: Use 'new_feature' instead. See https://arclang.dev/migration/old-to-new
 ```
 
 ### Exceptions
