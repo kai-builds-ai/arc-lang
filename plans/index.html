@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ARCAI — Plans & Pricing</title>
-<meta name="description" content="Build with Arc. From free tools to full web apps. Plans for individuals, teams, and enterprises.">
+<meta name="description" content="Make every AI coder 40% cheaper. Build, convert, and deploy with Arc — the token-efficient programming language.">
 <link rel="icon" href="https://arclang.dev/favicon.svg">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -13,7 +13,6 @@ a { color:#6c63ff; text-decoration:none; }
 
 .container { max-width:1100px; margin:0 auto; padding:0 24px; }
 
-/* Nav */
 nav { padding:20px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
 nav .container { display:flex; align-items:center; justify-content:space-between; }
 .logo { font-size:1.4rem; font-weight:700; color:#fff; }
@@ -21,11 +20,57 @@ nav .container { display:flex; align-items:center; justify-content:space-between
 nav a.back { color:#888; font-size:0.9rem; transition:color 0.2s; }
 nav a.back:hover { color:#fff; }
 
-/* Hero */
-.hero { text-align:center; padding:80px 0 40px; }
+.hero { text-align:center; padding:80px 0 20px; }
 .hero h1 { font-size:3rem; font-weight:800; margin-bottom:16px; }
 .hero h1 span { color:#6c63ff; }
-.hero p { font-size:1.2rem; color:#888; max-width:600px; margin:0 auto; }
+.hero p { font-size:1.2rem; color:#888; max-width:640px; margin:0 auto; }
+
+/* Value prop */
+.value { padding:40px 0 60px; }
+.value-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; text-align:center; }
+.value-item h3 { font-size:2.2rem; font-weight:800; color:#6c63ff; }
+.value-item p { color:#888; font-size:0.95rem; margin-top:4px; }
+
+/* Pricing */
+.pricing { padding:60px 0 80px; }
+.pricing h2 { text-align:center; font-size:2rem; margin-bottom:12px; font-weight:700; }
+.pricing h2 span { color:#6c63ff; }
+.pricing .subtitle { text-align:center; color:#888; margin-bottom:48px; font-size:1.05rem; }
+
+.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+
+.card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:36px 28px; display:flex; flex-direction:column; transition:border-color 0.3s, transform 0.3s; }
+.card:hover { border-color:#6c63ff44; transform:translateY(-4px); }
+.card.featured { border-color:#6c63ff; position:relative; }
+.card.featured::before { content:'MOST POPULAR'; position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#6c63ff; color:#fff; font-size:0.7rem; font-weight:700; padding:4px 16px; border-radius:20px; letter-spacing:1px; }
+
+.card h3 { font-size:1.4rem; font-weight:700; color:#fff; margin-bottom:4px; }
+.card .audience { font-size:0.85rem; color:#6c63ff; margin-bottom:8px; }
+.card .price { font-size:2.4rem; font-weight:800; color:#fff; margin:12px 0 4px; }
+.card .price span { font-size:1rem; font-weight:400; color:#888; }
+.card .period { color:#888; font-size:0.9rem; margin-bottom:20px; }
+.card ul { list-style:none; flex:1; }
+.card li { padding:6px 0; color:#aaa; font-size:0.9rem; }
+.card li::before { content:'✓ '; color:#6c63ff; font-weight:700; }
+
+.card .btn { display:block; text-align:center; padding:14px; border-radius:10px; font-weight:600; font-size:1rem; margin-top:24px; transition:all 0.3s; cursor:pointer; border:none; }
+.btn-free { background:rgba(255,255,255,0.06); color:#fff; }
+.btn-free:hover { background:rgba(255,255,255,0.1); }
+.btn-pro { background:#6c63ff; color:#fff; }
+.btn-pro:hover { background:#5a52e0; }
+.btn-biz { background:rgba(108,99,255,0.15); color:#6c63ff; border:1px solid #6c63ff44; }
+.btn-biz:hover { background:rgba(108,99,255,0.25); }
+
+/* Use cases */
+.usecases { padding:60px 0; }
+.usecases h2 { text-align:center; font-size:2rem; margin-bottom:12px; font-weight:700; }
+.usecases h2 span { color:#6c63ff; }
+.usecases .subtitle { text-align:center; color:#888; margin-bottom:48px; font-size:1.05rem; }
+.usecase-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; }
+.usecase { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:28px; }
+.usecase h3 { font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:8px; }
+.usecase h3 .emoji { margin-right:8px; }
+.usecase p { color:#888; font-size:0.9rem; }
 
 /* Roadmap */
 .roadmap { padding:60px 0; }
@@ -45,41 +90,11 @@ nav a.back:hover { color:#fff; }
 .phase-dot { position:absolute; left:50%; transform:translateX(-50%); width:16px; height:16px; background:#6c63ff; border-radius:50%; top:32px; z-index:1; }
 .phase-label { display:inline-block; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#6c63ff; background:rgba(108,99,255,0.1); padding:4px 12px; border-radius:20px; margin-bottom:12px; }
 .phase-content h3 { font-size:1.3rem; font-weight:700; margin-bottom:4px; color:#fff; }
-.phase-price { font-size:1rem; color:#6c63ff; font-weight:600; margin-bottom:12px; }
 .phase-content ul { list-style:none; }
 .phase-content li { padding:4px 0; color:#aaa; font-size:0.95rem; }
 .phase-content li::before { content:'→ '; color:#6c63ff; }
 
 .current-badge { display:inline-block; font-size:0.7rem; background:#6c63ff; color:#fff; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle; }
-
-/* Pricing Cards */
-.pricing { padding:60px 0 80px; }
-.pricing h2 { text-align:center; font-size:2rem; margin-bottom:12px; font-weight:700; }
-.pricing h2 span { color:#6c63ff; }
-.pricing .subtitle { text-align:center; color:#888; margin-bottom:48px; font-size:1.05rem; }
-
-.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
-
-.card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:36px 28px; display:flex; flex-direction:column; transition:border-color 0.3s, transform 0.3s; }
-.card:hover { border-color:#6c63ff44; transform:translateY(-4px); }
-.card.featured { border-color:#6c63ff; position:relative; }
-.card.featured::before { content:'MOST POPULAR'; position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#6c63ff; color:#fff; font-size:0.7rem; font-weight:700; padding:4px 16px; border-radius:20px; letter-spacing:1px; }
-
-.card h3 { font-size:1.4rem; font-weight:700; color:#fff; margin-bottom:4px; }
-.card .price { font-size:2.4rem; font-weight:800; color:#fff; margin:12px 0 4px; }
-.card .price span { font-size:1rem; font-weight:400; color:#888; }
-.card .period { color:#888; font-size:0.9rem; margin-bottom:20px; }
-.card ul { list-style:none; flex:1; }
-.card li { padding:6px 0; color:#aaa; font-size:0.9rem; }
-.card li::before { content:'✓ '; color:#6c63ff; font-weight:700; }
-
-.card .btn { display:block; text-align:center; padding:14px; border-radius:10px; font-weight:600; font-size:1rem; margin-top:24px; transition:all 0.3s; cursor:pointer; border:none; }
-.btn-free { background:rgba(255,255,255,0.06); color:#fff; }
-.btn-free:hover { background:rgba(255,255,255,0.1); }
-.btn-pro { background:#6c63ff; color:#fff; }
-.btn-pro:hover { background:#5a52e0; }
-.btn-biz { background:rgba(108,99,255,0.15); color:#6c63ff; border:1px solid #6c63ff44; }
-.btn-biz:hover { background:rgba(108,99,255,0.25); }
 
 /* CTA */
 .cta { text-align:center; padding:60px 0 80px; }
@@ -89,12 +104,13 @@ nav a.back:hover { color:#fff; }
 .cta a.btn-main { display:inline-block; background:#6c63ff; color:#fff; padding:14px 36px; border-radius:10px; font-weight:600; font-size:1.1rem; transition:background 0.3s; }
 .cta a.btn-main:hover { background:#5a52e0; }
 
-/* Footer */
 footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align:center; color:#555; font-size:0.85rem; }
 
 @media (max-width:768px) {
   .hero h1 { font-size:2rem; }
   .cards { grid-template-columns:1fr; max-width:400px; margin:0 auto; }
+  .value-grid { grid-template-columns:1fr; gap:16px; }
+  .usecase-grid { grid-template-columns:1fr; }
   .timeline::before { left:20px; }
   .phase { flex-direction:column !important; padding-left:48px; }
   .phase-content { width:100% !important; margin:0 !important; }
@@ -113,26 +129,46 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
 
 <section class="hero">
   <div class="container">
-    <h1>Build Faster with <span>ARCAI</span></h1>
-    <p>From learning Arc to shipping full web apps — at a fraction of the code and cost.</p>
+    <h1>Make Every AI Coder <span>40% Cheaper</span></h1>
+    <p>Arc generates less code that does more. Whether it's AI writing code or humans learning — fewer tokens means lower costs and better results.</p>
+  </div>
+</section>
+
+<section class="value">
+  <div class="container">
+    <div class="value-grid">
+      <div class="value-item">
+        <h3>40-60%</h3>
+        <p>Fewer tokens per generation</p>
+      </div>
+      <div class="value-item">
+        <h3>2x</h3>
+        <p>More code fits in context</p>
+      </div>
+      <div class="value-item">
+        <h3>50%</h3>
+        <p>Lower API costs at scale</p>
+      </div>
+    </div>
   </div>
 </section>
 
 <section class="pricing">
   <div class="container">
     <h2>Simple <span>Pricing</span></h2>
-    <p class="subtitle">Start free. Scale when you're ready.</p>
+    <p class="subtitle">Try free. Scale when the savings add up.</p>
     <div class="cards">
 
       <div class="card">
         <h3>Free</h3>
+        <div class="audience">Developers & AI agents</div>
         <div class="price">$0</div>
         <div class="period">forever</div>
         <ul>
-          <li>Standard + Test modes</li>
-          <li>Build simple tools & widgets</li>
-          <li>Convert code to Arc</li>
-          <li>Side-by-side token comparison</li>
+          <li>Build tools & widgets with AI</li>
+          <li>Convert JS/Python to Arc</li>
+          <li>Live token comparison (Arc vs JS vs Python)</li>
+          <li>Interactive code playground</li>
           <li>No signup required</li>
         </ul>
         <a href="https://chat.arclang.dev" class="btn btn-free">Start Building →</a>
@@ -140,6 +176,7 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
 
       <div class="card featured">
         <h3>Pro</h3>
+        <div class="audience">Individuals & teams shipping with AI</div>
         <div class="price">$49<span>/mo</span></div>
         <div class="period">$199/mo for teams</div>
         <ul>
@@ -149,26 +186,54 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
           <li>Custom domains</li>
           <li>Project history & versioning</li>
           <li>Priority AI model</li>
-          <li>Export code</li>
+          <li>Export & own your code</li>
+          <li>Higher rate limits</li>
         </ul>
         <div class="btn btn-pro">Coming Soon</div>
       </div>
 
       <div class="card">
         <h3>Business</h3>
+        <div class="audience">Companies cutting AI coding costs</div>
         <div class="price">$499<span>/mo</span></div>
         <div class="period">or project-based contracts</div>
         <ul>
           <li>Everything in Pro</li>
-          <li>Enterprise code migration</li>
-          <li>Codebase audit & conversion</li>
-          <li>Dedicated support</li>
+          <li>Codebase audit & migration to Arc</li>
+          <li>AI pipeline optimization</li>
+          <li>Integrate Arc into your AI tools</li>
+          <li>Dedicated support & SLAs</li>
           <li>Custom integrations</li>
-          <li>SLA guarantee</li>
+          <li>Volume-based pricing available</li>
         </ul>
         <div class="btn btn-biz">Contact Us</div>
       </div>
 
+    </div>
+  </div>
+</section>
+
+<section class="usecases">
+  <div class="container">
+    <h2>Who <span>Benefits</span></h2>
+    <p class="subtitle">Anyone using AI to write code is overpaying. Here's who saves the most.</p>
+    <div class="usecase-grid">
+      <div class="usecase">
+        <h3><span class="emoji">🤖</span>AI Coding Tools</h3>
+        <p>Copilot, Cursor, Devin — every AI code generation burns tokens on verbose syntax. Arc as an output language cuts costs 40-60% per generation.</p>
+      </div>
+      <div class="usecase">
+        <h3><span class="emoji">🏗️</span>AI Agent Builders</h3>
+        <p>Agents running in context windows live longer with Arc. More logic per token means fewer session deaths and better task completion.</p>
+      </div>
+      <div class="usecase">
+        <h3><span class="emoji">🏢</span>Companies at Scale</h3>
+        <p>Running thousands of AI code generations daily? Arc cuts your API bill nearly in half. At scale, that's tens of thousands per month saved.</p>
+      </div>
+      <div class="usecase">
+        <h3><span class="emoji">👩‍💻</span>Developers</h3>
+        <p>Learn Arc, write less code, ship faster. The playground lets you see the difference instantly — then build real tools with it.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -182,13 +247,12 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
         <div class="phase-dot"></div>
         <div class="phase-content">
           <span class="phase-label">Phase 1</span><span class="current-badge">Now</span>
-          <h3>Free Platform</h3>
+          <h3>Free AI Code Platform</h3>
           <ul>
-            <li>Chat-based code builder</li>
-            <li>Standard mode — build & convert to Arc</li>
-            <li>Test mode — Arc vs Java vs Python token comparison</li>
-            <li>Usable widgets right in the browser</li>
-            <li>No signup required</li>
+            <li>AI builds tools & widgets in Arc</li>
+            <li>Convert any code to Arc instantly</li>
+            <li>Live token comparison — Arc vs JS vs Python</li>
+            <li>Interactive playground in the browser</li>
           </ul>
         </div>
       </div>
@@ -197,12 +261,11 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
         <div class="phase-dot"></div>
         <div class="phase-content">
           <span class="phase-label">Phase 2</span>
-          <h3>Accounts & Projects</h3>
+          <h3>Accounts & Complex Builds</h3>
           <ul>
-            <li>Sign up to unlock complex builds</li>
+            <li>Sign up to unlock dashboards, games, mini apps</li>
             <li>Save and manage projects</li>
-            <li>Dashboards, games, mini apps</li>
-            <li>Usage limits for free tier</li>
+            <li>AI builds increasingly complex applications</li>
           </ul>
         </div>
       </div>
@@ -211,12 +274,11 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
         <div class="phase-dot"></div>
         <div class="phase-content">
           <span class="phase-label">Phase 3</span>
-          <h3>ARCAI Pro — $49/mo</h3>
+          <h3>ARCAI Pro — Full Web Apps</h3>
           <ul>
-            <li>Build full websites and web apps</li>
-            <li>One-click deploy with custom domains</li>
-            <li>Priority AI model</li>
-            <li>Project versioning & export</li>
+            <li>AI builds and deploys complete websites</li>
+            <li>Custom domains, versioning, export</li>
+            <li>Priority model for complex generation</li>
           </ul>
         </div>
       </div>
@@ -225,12 +287,11 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
         <div class="phase-dot"></div>
         <div class="phase-content">
           <span class="phase-label">Phase 4</span>
-          <h3>ARCAI Business — $499/mo+</h3>
+          <h3>ARCAI Business — Enterprise</h3>
           <ul>
-            <li>Enterprise code migration services</li>
-            <li>Codebase audits & conversion consulting</li>
-            <li>Dedicated support & SLAs</li>
-            <li>Project-based contracts $5K-50K+</li>
+            <li>Migrate existing codebases to Arc</li>
+            <li>Integrate Arc into AI coding pipelines</li>
+            <li>Dedicated support, SLAs, consulting</li>
           </ul>
         </div>
       </div>
@@ -239,12 +300,11 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
         <div class="phase-dot"></div>
         <div class="phase-content">
           <span class="phase-label">Phase 5</span>
-          <h3>ARCAI Platform</h3>
+          <h3>ARCAI Platform — Ecosystem</h3>
           <ul>
             <li>Template & component marketplace</li>
             <li>Revenue share with creators</li>
-            <li>Plugin ecosystem</li>
-            <li>API access for integrations</li>
+            <li>API for third-party AI tools to use Arc</li>
           </ul>
         </div>
       </div>
@@ -255,8 +315,8 @@ footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align
 
 <section class="cta">
   <div class="container">
-    <h2>Ready to <span>Build</span>?</h2>
-    <p>Start writing Arc for free. No signup, no credit card, no limits.</p>
+    <h2>Stop <span>Overpaying</span> for AI Code</h2>
+    <p>Every token saved is money back in your pocket. Try ARCAI free.</p>
     <a href="https://chat.arclang.dev" class="btn-main">Try ARCAI Free →</a>
   </div>
 </section>
