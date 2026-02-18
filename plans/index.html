@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARCAI — Plans & Pricing</title>
+<meta name="description" content="Build with Arc. From free tools to full web apps. Plans for individuals, teams, and enterprises.">
+<link rel="icon" href="https://arclang.dev/favicon.svg">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#0a0a0f; color:#e0e0e8; line-height:1.6; }
+a { color:#6c63ff; text-decoration:none; }
+
+.container { max-width:1100px; margin:0 auto; padding:0 24px; }
+
+/* Nav */
+nav { padding:20px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+nav .container { display:flex; align-items:center; justify-content:space-between; }
+.logo { font-size:1.4rem; font-weight:700; color:#fff; }
+.logo span { color:#6c63ff; }
+nav a.back { color:#888; font-size:0.9rem; transition:color 0.2s; }
+nav a.back:hover { color:#fff; }
+
+/* Hero */
+.hero { text-align:center; padding:80px 0 40px; }
+.hero h1 { font-size:3rem; font-weight:800; margin-bottom:16px; }
+.hero h1 span { color:#6c63ff; }
+.hero p { font-size:1.2rem; color:#888; max-width:600px; margin:0 auto; }
+
+/* Roadmap */
+.roadmap { padding:60px 0; }
+.roadmap h2 { text-align:center; font-size:2rem; margin-bottom:48px; font-weight:700; }
+.roadmap h2 span { color:#6c63ff; }
+
+.timeline { position:relative; }
+.timeline::before { content:''; position:absolute; left:50%; transform:translateX(-50%); width:2px; height:100%; background:linear-gradient(to bottom, #6c63ff, #6c63ff33); }
+
+.phase { display:flex; margin-bottom:48px; position:relative; }
+.phase:nth-child(odd) { flex-direction:row-reverse; }
+.phase-content { width:45%; padding:28px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; transition:border-color 0.3s; }
+.phase-content:hover { border-color:#6c63ff44; }
+.phase:nth-child(odd) .phase-content { margin-right:auto; margin-left:5%; }
+.phase:nth-child(even) .phase-content { margin-left:auto; margin-right:5%; }
+
+.phase-dot { position:absolute; left:50%; transform:translateX(-50%); width:16px; height:16px; background:#6c63ff; border-radius:50%; top:32px; z-index:1; }
+.phase-label { display:inline-block; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#6c63ff; background:rgba(108,99,255,0.1); padding:4px 12px; border-radius:20px; margin-bottom:12px; }
+.phase-content h3 { font-size:1.3rem; font-weight:700; margin-bottom:4px; color:#fff; }
+.phase-price { font-size:1rem; color:#6c63ff; font-weight:600; margin-bottom:12px; }
+.phase-content ul { list-style:none; }
+.phase-content li { padding:4px 0; color:#aaa; font-size:0.95rem; }
+.phase-content li::before { content:'→ '; color:#6c63ff; }
+
+.current-badge { display:inline-block; font-size:0.7rem; background:#6c63ff; color:#fff; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle; }
+
+/* Pricing Cards */
+.pricing { padding:60px 0 80px; }
+.pricing h2 { text-align:center; font-size:2rem; margin-bottom:12px; font-weight:700; }
+.pricing h2 span { color:#6c63ff; }
+.pricing .subtitle { text-align:center; color:#888; margin-bottom:48px; font-size:1.05rem; }
+
+.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+
+.card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:36px 28px; display:flex; flex-direction:column; transition:border-color 0.3s, transform 0.3s; }
+.card:hover { border-color:#6c63ff44; transform:translateY(-4px); }
+.card.featured { border-color:#6c63ff; position:relative; }
+.card.featured::before { content:'MOST POPULAR'; position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#6c63ff; color:#fff; font-size:0.7rem; font-weight:700; padding:4px 16px; border-radius:20px; letter-spacing:1px; }
+
+.card h3 { font-size:1.4rem; font-weight:700; color:#fff; margin-bottom:4px; }
+.card .price { font-size:2.4rem; font-weight:800; color:#fff; margin:12px 0 4px; }
+.card .price span { font-size:1rem; font-weight:400; color:#888; }
+.card .period { color:#888; font-size:0.9rem; margin-bottom:20px; }
+.card ul { list-style:none; flex:1; }
+.card li { padding:6px 0; color:#aaa; font-size:0.9rem; }
+.card li::before { content:'✓ '; color:#6c63ff; font-weight:700; }
+
+.card .btn { display:block; text-align:center; padding:14px; border-radius:10px; font-weight:600; font-size:1rem; margin-top:24px; transition:all 0.3s; cursor:pointer; border:none; }
+.btn-free { background:rgba(255,255,255,0.06); color:#fff; }
+.btn-free:hover { background:rgba(255,255,255,0.1); }
+.btn-pro { background:#6c63ff; color:#fff; }
+.btn-pro:hover { background:#5a52e0; }
+.btn-biz { background:rgba(108,99,255,0.15); color:#6c63ff; border:1px solid #6c63ff44; }
+.btn-biz:hover { background:rgba(108,99,255,0.25); }
+
+/* CTA */
+.cta { text-align:center; padding:60px 0 80px; }
+.cta h2 { font-size:2rem; font-weight:700; margin-bottom:12px; }
+.cta h2 span { color:#6c63ff; }
+.cta p { color:#888; margin-bottom:28px; font-size:1.05rem; }
+.cta a.btn-main { display:inline-block; background:#6c63ff; color:#fff; padding:14px 36px; border-radius:10px; font-weight:600; font-size:1.1rem; transition:background 0.3s; }
+.cta a.btn-main:hover { background:#5a52e0; }
+
+/* Footer */
+footer { border-top:1px solid rgba(255,255,255,0.06); padding:24px 0; text-align:center; color:#555; font-size:0.85rem; }
+
+@media (max-width:768px) {
+  .hero h1 { font-size:2rem; }
+  .cards { grid-template-columns:1fr; max-width:400px; margin:0 auto; }
+  .timeline::before { left:20px; }
+  .phase { flex-direction:column !important; padding-left:48px; }
+  .phase-content { width:100% !important; margin:0 !important; }
+  .phase-dot { left:20px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">Arc <span>⚡</span> AI</div>
+    <a href="https://arclang.dev" class="back">← Back to arclang.dev</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <h1>Build Faster with <span>ARCAI</span></h1>
+    <p>From learning Arc to shipping full web apps — at a fraction of the code and cost.</p>
+  </div>
+</section>
+
+<section class="pricing">
+  <div class="container">
+    <h2>Simple <span>Pricing</span></h2>
+    <p class="subtitle">Start free. Scale when you're ready.</p>
+    <div class="cards">
+
+      <div class="card">
+        <h3>Free</h3>
+        <div class="price">$0</div>
+        <div class="period">forever</div>
+        <ul>
+          <li>Standard + Test modes</li>
+          <li>Build simple tools & widgets</li>
+          <li>Convert code to Arc</li>
+          <li>Side-by-side token comparison</li>
+          <li>No signup required</li>
+        </ul>
+        <a href="https://chat.arclang.dev" class="btn btn-free">Start Building →</a>
+      </div>
+
+      <div class="card featured">
+        <h3>Pro</h3>
+        <div class="price">$49<span>/mo</span></div>
+        <div class="period">$199/mo for teams</div>
+        <ul>
+          <li>Everything in Free</li>
+          <li>Build full websites & web apps</li>
+          <li>One-click deploy</li>
+          <li>Custom domains</li>
+          <li>Project history & versioning</li>
+          <li>Priority AI model</li>
+          <li>Export code</li>
+        </ul>
+        <div class="btn btn-pro">Coming Soon</div>
+      </div>
+
+      <div class="card">
+        <h3>Business</h3>
+        <div class="price">$499<span>/mo</span></div>
+        <div class="period">or project-based contracts</div>
+        <ul>
+          <li>Everything in Pro</li>
+          <li>Enterprise code migration</li>
+          <li>Codebase audit & conversion</li>
+          <li>Dedicated support</li>
+          <li>Custom integrations</li>
+          <li>SLA guarantee</li>
+        </ul>
+        <div class="btn btn-biz">Contact Us</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="roadmap">
+  <div class="container">
+    <h2>The <span>Roadmap</span></h2>
+
+    <div class="timeline">
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-content">
+          <span class="phase-label">Phase 1</span><span class="current-badge">Now</span>
+          <h3>Free Platform</h3>
+          <ul>
+            <li>Chat-based code builder</li>
+            <li>Standard mode — build & convert to Arc</li>
+            <li>Test mode — Arc vs Java vs Python token comparison</li>
+            <li>Usable widgets right in the browser</li>
+            <li>No signup required</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-content">
+          <span class="phase-label">Phase 2</span>
+          <h3>Accounts & Projects</h3>
+          <ul>
+            <li>Sign up to unlock complex builds</li>
+            <li>Save and manage projects</li>
+            <li>Dashboards, games, mini apps</li>
+            <li>Usage limits for free tier</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-content">
+          <span class="phase-label">Phase 3</span>
+          <h3>ARCAI Pro — $49/mo</h3>
+          <ul>
+            <li>Build full websites and web apps</li>
+            <li>One-click deploy with custom domains</li>
+            <li>Priority AI model</li>
+            <li>Project versioning & export</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-content">
+          <span class="phase-label">Phase 4</span>
+          <h3>ARCAI Business — $499/mo+</h3>
+          <ul>
+            <li>Enterprise code migration services</li>
+            <li>Codebase audits & conversion consulting</li>
+            <li>Dedicated support & SLAs</li>
+            <li>Project-based contracts $5K-50K+</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot"></div>
+        <div class="phase-content">
+          <span class="phase-label">Phase 5</span>
+          <h3>ARCAI Platform</h3>
+          <ul>
+            <li>Template & component marketplace</li>
+            <li>Revenue share with creators</li>
+            <li>Plugin ecosystem</li>
+            <li>API access for integrations</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <h2>Ready to <span>Build</span>?</h2>
+    <p>Start writing Arc for free. No signup, no credit card, no limits.</p>
+    <a href="https://chat.arclang.dev" class="btn-main">Try ARCAI Free →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    © 2026 ARCAI · <a href="https://arclang.dev">arclang.dev</a> · <a href="https://github.com/kai-builds-ai/arc-lang">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
