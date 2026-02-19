@@ -20,6 +20,13 @@ class Env {
         if (this.parent)
             return this.parent.get(name);
         // Collect all known variable names for "did you mean?" suggestion
+        if (name === "mut" || name === "var") {
+            throw new ArcRuntimeError(`Undefined variable: ${name}`, {
+                code: ErrorCode.UNDEFINED_VARIABLE,
+                category: "RuntimeError",
+                suggestion: "Did you mean 'let mut' to declare a mutable variable?",
+            });
+        }
         const candidates = this.allNames();
         const closest = findClosestMatch(name, candidates);
         throw new ArcRuntimeError(`Undefined variable: ${name}`, {
@@ -215,6 +222,12 @@ function resolveAsync(v) {
 function makePrelude(env) {
     const fns = {
         print: (...args) => { console.log(args.map(toStr).join(" ")); return null; },
+        throw: (msg) => { throw new Error(toStr(msg ?? "error")); },
+        arity: (v) => {
+            if (v && typeof v === "object" && v.__fn)
+                return (v.params || []).length;
+            return null;
+        },
         len: (v) => {
             if (typeof v === "string")
                 return [...v].length; // codepoint count, not UTF-16
@@ -260,6 +273,25 @@ function makePrelude(env) {
                 if (typeof a === "number" && typeof b === "number")
                     return a - b;
                 return String(a).localeCompare(String(b));
+            });
+        },
+        sort_by: (list, fn) => {
+            if (!Array.isArray(list))
+                throw new Error("sort_by expects a list as first argument");
+            if (!fn || !fn.__fn)
+                throw new Error("sort_by expects a function as second argument");
+            const fnVal = fn;
+            const paramCount = fnVal.params ? fnVal.params.length : 0;
+            if (paramCount !== 1) {
+                throw new ArcRuntimeError(`sort_by takes a key function fn(x) that returns a sort key, not a comparator fn(a, b). ` +
+                    `For example: sort_by(list, fn(x) => x.name) — not sort_by(list, fn(a, b) => a - b)`, { code: ErrorCode.WRONG_ARITY, category: "TypeError" });
+            }
+            return [...list].sort((a, b) => {
+                const ka = callFn(fnVal, [a]);
+                const kb = callFn(fnVal, [b]);
+                if (typeof ka === "number" && typeof kb === "number")
+                    return ka - kb;
+                return String(ka).localeCompare(String(kb));
             });
         },
         take: (list, n) => Array.isArray(list) ? list.slice(0, n) : null,
@@ -556,21 +588,30 @@ function makePrelude(env) {
             }
         },
         error_throw: (code, message) => {
+            if (message === undefined || message === null) {
+                throw new Error(toStr(code));
+            }
             throw new Error(`[${toStr(code)}] ${toStr(message)}`);
         },
         error_retry: (fn, times) => {
             const n = typeof times === "number" ? times : 1;
             let lastErr = null;
             for (let i = 0; i < n; i++) {
-                const result = typeof fn === "function" ? fn() : callFn(fn, []);
-                if (result && typeof result === "object" && "__map" in result) {
-                    const entries = result.entries;
-                    if (entries.has("kind") && entries.has("message")) {
-                        lastErr = result;
-                        continue;
+                try {
+                    const result = typeof fn === "function" ? fn() : callFn(fn, []);
+                    if (result && typeof result === "object" && "__map" in result) {
+                        const entries = result.entries;
+                        if (entries.has("kind") && entries.has("message")) {
+                            lastErr = result;
+                            continue;
+                        }
                     }
+                    return result;
                 }
-                return result;
+                catch (e) {
+                    lastErr = e instanceof Error ? e.message : String(e);
+                    continue;
+                }
             }
             return lastErr;
         },
@@ -2548,14 +2589,14 @@ function evalExpr(expr, env) {
                     if (typeof left !== "number" || typeof right !== "number")
                         throw new ArcRuntimeError(`TypeError: cannot divide non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     if (right === 0)
-                        return left === 0 ? null : (left > 0 ? Infinity : -Infinity);
+                        throw new ArcRuntimeError("Division by zero", { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     return left / right;
                 }
                 case "%": {
                     if (typeof left !== "number" || typeof right !== "number")
                         throw new ArcRuntimeError(`TypeError: cannot modulo non-numbers`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     if (right === 0)
-                        return null;
+                        throw new ArcRuntimeError("Division by zero", { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     return left % right;
                 }
                 case "**": {
@@ -2647,7 +2688,15 @@ function evalExpr(expr, env) {
             if (obj === null)
                 return null;
             if (obj && typeof obj === "object" && "__map" in obj) {
-                return obj.entries.get(expr.property) ?? null;
+                const mapObj = obj;
+                const val = mapObj.entries.get(expr.property);
+                if (val === undefined && "__module" in obj) {
+                    const modName = obj.__module;
+                    const candidates = [...mapObj.entries.keys()];
+                    const closest = findClosestMatch(expr.property, candidates);
+                    throw new ArcRuntimeError(`Module '${modName}' has no member '${expr.property}'${closest ? `. Did you mean '${closest}'?` : ""}`, { code: ErrorCode.PROPERTY_ACCESS, loc: expr.loc });
+                }
+                return val ?? null;
             }
             // Teaching error messages for common method-style access
             const prop = expr.property;
@@ -2922,6 +2971,8 @@ function evalExpr(expr, env) {
             }
             return result;
         }
+        case "GroupExpr":
+            return evalExpr(expr.expr, env);
         default:
             throw new Error(`Unknown expression kind: ${expr.kind}`);
     }

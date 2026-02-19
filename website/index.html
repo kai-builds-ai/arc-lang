@@ -18,10 +18,8 @@
       <a href="#why">Why Arc</a>
       <a href="#showcase">Showcase</a>
       <a href="#features">Features</a>
-      <a href="#try">Try It</a>
       <a href="#savings">Savings</a>
       <a href="#start">Get Started</a>
-      <a href="https://play.arclang.dev">Playground</a>
       <a href="https://plans.arclang.dev">Plans</a>
       <a href="https://github.com/kai-builds-ai/arc-lang">GitHub</a>
     </div>
@@ -195,36 +193,6 @@
         <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/examples/games">View Code →</a>
       </div>
     </div>
-  </div>
-</section>
-
-<section id="try">
-  <div class="container">
-    <h2 class="reveal">Try It <span>Live</span></h2>
-    <p class="reveal subtitle">Edit the code below — token counts update in real-time. <em class="arc-badge">⚡ Powered by Arc</em></p>
-    <div class="token-counter reveal">
-      <div class="counter-col">
-        <div class="label">Arc <span class="tokens" id="arc-count">0 tokens</span></div>
-        <textarea id="arc-input" spellcheck="false">fn fetchUsers() {
-  @GET("api/users")
-    |> filter(u => u.active)
-    |> map(u => u.name)
-    |> sort()
-}</textarea>
-      </div>
-      <div class="counter-col">
-        <div class="label">JavaScript <span class="tokens" id="js-count">0 tokens</span></div>
-        <textarea id="js-input" spellcheck="false">async function fetchUsers() {
-  const res = await fetch("api/users");
-  const data = await res.json();
-  return data
-    .filter(u => u.active)
-    .map(u => u.name)
-    .sort();
-}</textarea>
-      </div>
-    </div>
-    <p class="savings-display reveal" id="savings"></p>
   </div>
 </section>
 

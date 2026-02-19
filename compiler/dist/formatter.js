@@ -35,6 +35,16 @@ function extractComments(source) {
                 col++;
             }
         }
+        else if (source[i] === '/' && i + 1 < source.length && source[i + 1] === '/') {
+            const startLine = line, startCol = col;
+            let text = '';
+            while (i < source.length && source[i] !== '\n') {
+                text += source[i];
+                i++;
+                col++;
+            }
+            comments.push({ text, line: startLine, col: startCol });
+        }
         else if (source[i] === '#') {
             const startLine = line, startCol = col;
             let text = '';
@@ -98,7 +108,10 @@ export function format(source, options) {
     function formatExpr(expr, depth) {
         switch (expr.kind) {
             case "IntLiteral": return String(expr.value);
-            case "FloatLiteral": return String(expr.value);
+            case "FloatLiteral": {
+                const s = String(expr.value);
+                return s.includes('.') ? s : s + '.0';
+            }
             case "BoolLiteral": return expr.value ? "true" : "false";
             case "NilLiteral": return "nil";
             case "StringLiteral": {
@@ -244,6 +257,7 @@ export function format(source, options) {
                 const targets = expr.targets.map(t => formatExpr(t, depth)).join(", ");
                 return `fetch [${targets}]`;
             }
+            case "GroupExpr": return `(${formatExpr(expr.expr, depth)})`;
             case "SpreadExpr": return `...${formatExpr(expr.expr, depth)}`;
             case "OptionalMemberExpr": return `${formatExpr(expr.object, depth)}?.${expr.property}`;
             case "TryExpr": return `${formatExpr(expr.expr, depth)}?`;

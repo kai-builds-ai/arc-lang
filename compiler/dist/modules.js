@@ -124,7 +124,7 @@ export function handleUse(stmt, env, currentFile) {
     for (const [name, value] of Object.entries(exports)) {
         entries.set(name, value);
     }
-    env.set(nsName, { __map: true, entries });
+    env.set(nsName, { __map: true, __module: nsName, entries });
 }
 /**
  * Create a UseHandler bound to a specific file path.

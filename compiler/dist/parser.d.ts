@@ -37,6 +37,7 @@ export declare class Parser {
     private parsePrefix;
     private parseStringInterp;
     private parseListOrComprehension;
+    private isIdentOrKeyword;
     private isMapStart;
     private parseMapEntry;
     private parseMapOrBlock;

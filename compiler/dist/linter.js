@@ -2,6 +2,16 @@
 // Checks for common code quality issues
 import { lex } from "./lexer.js";
 import { parse } from "./parser.js";
+/** Walk an expression to find the root variable name (e.g. `a[b].c` → "a") */
+function getRootVariable(expr) {
+    if (expr.kind === "Identifier")
+        return expr.name;
+    if (expr.kind === "MemberExpr" || expr.kind === "OptionalMemberExpr")
+        return getRootVariable(expr.object);
+    if (expr.kind === "IndexExpr")
+        return getRootVariable(expr.object);
+    return null;
+}
 const DEFAULT_OPTIONS = {
     maxLineLength: 100,
     file: "<stdin>",
@@ -212,6 +222,9 @@ export function lint(source, options) {
                 for (const t of expr.targets)
                     analyzeExpr(t, scope);
                 break;
+            case "GroupExpr":
+                analyzeExpr(expr.expr, scope);
+                break;
         }
     }
     function analyzePattern(pat, scope) {
@@ -399,15 +412,27 @@ export function lint(source, options) {
                 scope.markUsed(stmt.target);
                 analyzeExpr(stmt.value, scope);
                 break;
-            case "MemberAssignStmt":
+            case "MemberAssignStmt": {
                 analyzeExpr(stmt.object, scope);
                 analyzeExpr(stmt.value, scope);
+                const memberRoot = getRootVariable(stmt.object);
+                if (memberRoot) {
+                    scope.markMutated(memberRoot);
+                    scope.markUsed(memberRoot);
+                }
                 break;
-            case "IndexAssignStmt":
+            }
+            case "IndexAssignStmt": {
                 analyzeExpr(stmt.object, scope);
                 analyzeExpr(stmt.index, scope);
                 analyzeExpr(stmt.value, scope);
+                const indexRoot = getRootVariable(stmt.object);
+                if (indexRoot) {
+                    scope.markMutated(indexRoot);
+                    scope.markUsed(indexRoot);
+                }
                 break;
+            }
         }
     }
     const globalScope = new LintScope();
