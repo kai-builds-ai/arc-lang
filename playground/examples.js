@@ -187,6 +187,7 @@ print("Estimated cost at $3/1M tokens: ${tokens * 3 / 1000000}")
   {
     title: "🔍 Vector Similarity (AI-Native)",
     code: `# Vector Similarity — RAG Building Blocks
+use math
 
 fn dot(a, b) {
   let mut sum = 0
@@ -197,7 +198,6 @@ fn dot(a, b) {
 fn magnitude(v) {
   let mut sum = 0
   for x in v { sum = sum + x * x }
-  use math
   math.sqrt(sum)
 }
 
