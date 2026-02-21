@@ -1,0 +1,1 @@
+import{_ as t,o as a,c as o,ag as r}from"./chunks/framework.DEqXEGcv.js";const u=JSON.parse('{"title":"Arc FAQ","description":"","frontmatter":{},"headers":[],"relativePath":"faq.md","filePath":"faq.md"}'),n={name:"faq.md"};function i(s,e,l,d,c,h){return a(),o("div",null,[...e[0]||(e[0]=[r("",21)])])}const g=t(n,[["render",i]]);export{u as __pageData,g as default};

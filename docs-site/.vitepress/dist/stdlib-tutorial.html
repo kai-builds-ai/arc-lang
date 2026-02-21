@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Arc Standard Library Tutorial | ⚡ Arc</title>
+    <meta name="description" content="A programming language designed by AI agents, for AI agents">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.qp7qGaqN.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.B8gr4aTj.js"></script>
+    <link rel="preload" href="/assets/inter-roman-latin.Di8DUHzh.woff2" as="font" type="font/woff2" crossorigin="">
+    <link rel="modulepreload" href="/assets/chunks/theme.HT_zR2H3.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.DEqXEGcv.js">
+    <link rel="modulepreload" href="/assets/stdlib-tutorial.md.CViA10FH.lean.js">
+    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22&gt;&lt;text y=%22.9em%22 font-size=%2290%22&gt;⚡&lt;/text&gt;&lt;/svg&gt;">
+    <script id="check-dark-mode">(()=>{const e=localStorage.getItem("vitepress-theme-appearance")||"auto",a=window.matchMedia("(prefers-color-scheme: dark)").matches;(!e||e==="auto"?a:e==="dark")&&document.documentElement.classList.add("dark")})();</script>
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="Layout" data-v-d8b57b2d><!--[--><!--]--><!--[--><span tabindex="-1" data-v-fcbfc0e0></span><a href="#VPContent" class="VPSkipLink visually-hidden" data-v-fcbfc0e0>Skip to content</a><!--]--><!----><header class="VPNav" data-v-d8b57b2d data-v-7ad780c2><div class="VPNavBar" data-v-7ad780c2 data-v-9fd4d1dd><div class="wrapper" data-v-9fd4d1dd><div class="container" data-v-9fd4d1dd><div class="title" data-v-9fd4d1dd><div class="VPNavBarTitle has-sidebar" data-v-9fd4d1dd data-v-9f43907a><a class="title" href="/" data-v-9f43907a><!--[--><!--]--><!--[--><!--[--><!----><!----><!--]--><!--]--><span data-v-9f43907a>Arc</span><!--[--><!--]--></a></div></div><div class="content" data-v-9fd4d1dd><div class="content-body" data-v-9fd4d1dd><!--[--><!--]--><div class="VPNavBarSearch search" data-v-9fd4d1dd><!--[--><!----><div id="local-search"><button type="button" class="DocSearch DocSearch-Button" aria-label="Search"><span class="DocSearch-Button-Container"><span class="vp-icon DocSearch-Search-Icon"></span><span class="DocSearch-Button-Placeholder">Search</span></span><span class="DocSearch-Button-Keys"><kbd class="DocSearch-Button-Key"></kbd><kbd class="DocSearch-Button-Key">K</kbd></span></button></div><!--]--></div><nav aria-labelledby="main-nav-aria-label" class="VPNavBarMenu menu" data-v-9fd4d1dd data-v-afb2845e><span id="main-nav-aria-label" class="visually-hidden" data-v-afb2845e> Main Navigation </span><!--[--><!--[--><a class="VPLink link VPNavBarMenuLink" href="/getting-started.html" tabindex="0" data-v-afb2845e data-v-815115f5><!--[--><span data-v-815115f5>Guide</span><!--]--></a><!--]--><!--[--><a class="VPLink link VPNavBarMenuLink" href="/stdlib-reference.html" tabindex="0" data-v-afb2845e data-v-815115f5><!--[--><span data-v-815115f5>Reference</span><!--]--></a><!--]--><!--[--><a class="VPLink link vp-external-link-icon VPNavBarMenuLink" href="https://play.arclang.dev" target="_blank" rel="noreferrer" tabindex="0" data-v-afb2845e data-v-815115f5><!--[--><span data-v-815115f5>Playground</span><!--]--></a><!--]--><!--[--><a class="VPLink link vp-external-link-icon VPNavBarMenuLink" href="https://github.com/kai-builds-ai/arc-lang" target="_blank" rel="noreferrer" tabindex="0" data-v-afb2845e data-v-815115f5><!--[--><span data-v-815115f5>GitHub</span><!--]--></a><!--]--><!--]--></nav><!----><div class="VPNavBarAppearance appearance" data-v-9fd4d1dd data-v-3f90c1a5><button class="VPSwitch VPSwitchAppearance" type="button" role="switch" title aria-checked="false" data-v-3f90c1a5 data-v-be9742d9 data-v-b4ccac88><span class="check" data-v-b4ccac88><span class="icon" data-v-b4ccac88><!--[--><span class="vpi-sun sun" data-v-be9742d9></span><span class="vpi-moon moon" data-v-be9742d9></span><!--]--></span></span></button></div><div class="VPSocialLinks VPNavBarSocialLinks social-links" data-v-9fd4d1dd data-v-ef6192dc data-v-e71e869c><!--[--><a class="VPSocialLink no-icon" href="https://github.com/kai-builds-ai/arc-lang" aria-label="github" target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><span class="vpi-social-github"></span></a><a class="VPSocialLink no-icon" href="https://www.npmjs.com/package/arc-lang" aria-label="npm" target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><span class="vpi-social-npm"></span></a><!--]--></div><div class="VPFlyout VPNavBarExtra extra" data-v-9fd4d1dd data-v-f953d92f data-v-bfe7971f><button type="button" class="button" aria-haspopup="true" aria-expanded="false" aria-label="extra navigation" data-v-bfe7971f><span class="vpi-more-horizontal icon" data-v-bfe7971f></span></button><div class="menu" data-v-bfe7971f><div class="VPMenu" data-v-bfe7971f data-v-20ed86d6><!----><!--[--><!--[--><!----><div class="group" data-v-f953d92f><div class="item appearance" data-v-f953d92f><p class="label" data-v-f953d92f>Appearance</p><div class="appearance-action" data-v-f953d92f><button class="VPSwitch VPSwitchAppearance" type="button" role="switch" title aria-checked="false" data-v-f953d92f data-v-be9742d9 data-v-b4ccac88><span class="check" data-v-b4ccac88><span class="icon" data-v-b4ccac88><!--[--><span class="vpi-sun sun" data-v-be9742d9></span><span class="vpi-moon moon" data-v-be9742d9></span><!--]--></span></span></button></div></div></div><div class="group" data-v-f953d92f><div class="item social-links" data-v-f953d92f><div class="VPSocialLinks social-links-list" data-v-f953d92f data-v-e71e869c><!--[--><a class="VPSocialLink no-icon" href="https://github.com/kai-builds-ai/arc-lang" aria-label="github" target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><span class="vpi-social-github"></span></a><a class="VPSocialLink no-icon" href="https://www.npmjs.com/package/arc-lang" aria-label="npm" target="_blank" rel="noopener" data-v-e71e869c data-v-60a9a2d3><span class="vpi-social-npm"></span></a><!--]--></div></div></div><!--]--><!--]--></div></div></div><!--[--><!--]--><button type="button" class="VPNavBarHamburger hamburger" aria-label="mobile navigation" aria-expanded="false" aria-controls="VPNavScreen" data-v-9fd4d1dd data-v-6bee1efd><span class="container" data-v-6bee1efd><span class="top" data-v-6bee1efd></span><span class="middle" data-v-6bee1efd></span><span class="bottom" data-v-6bee1efd></span></span></button></div></div></div></div><div class="divider" data-v-9fd4d1dd><div class="divider-line" data-v-9fd4d1dd></div></div></div><!----></header><div class="VPLocalNav has-sidebar empty" data-v-d8b57b2d data-v-2488c25a><div class="container" data-v-2488c25a><button class="menu" aria-expanded="false" aria-controls="VPSidebarNav" data-v-2488c25a><span class="vpi-align-left menu-icon" data-v-2488c25a></span><span class="menu-text" data-v-2488c25a>Menu</span></button><div class="VPLocalNavOutlineDropdown" style="--vp-vh:0px;" data-v-2488c25a data-v-6b867909><button data-v-6b867909>Return to top</button><!----></div></div></div><aside class="VPSidebar" data-v-d8b57b2d data-v-42c4c606><div class="curtain" data-v-42c4c606></div><nav class="nav" id="VPSidebarNav" aria-labelledby="sidebar-aria-label" tabindex="-1" data-v-42c4c606><span class="visually-hidden" id="sidebar-aria-label" data-v-42c4c606> Sidebar Navigation </span><!--[--><!--]--><!--[--><div class="no-transition group" data-v-51288d80><section class="VPSidebarItem level-0" data-v-51288d80 data-v-0009425e><div class="item" role="button" tabindex="0" data-v-0009425e><div class="indicator" data-v-0009425e></div><h2 class="text" data-v-0009425e>Introduction</h2><!----></div><div class="items" data-v-0009425e><!--[--><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link link" href="/getting-started.html" data-v-0009425e><!--[--><p class="text" data-v-0009425e>Getting Started</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link link" href="/language-tour.html" data-v-0009425e><!--[--><p class="text" data-v-0009425e>Language Tour</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link link" href="/cheatsheet.html" data-v-0009425e><!--[--><p class="text" data-v-0009425e>Cheatsheet</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link link" href="/faq.html" data-v-0009425e><!--[--><p class="text" data-v-0009425e>FAQ</p><!--]--></a><!----></div><!----></div><!--]--></div></section></div><div class="no-transition group" data-v-51288d80><section class="VPSidebarItem level-0 has-active" data-v-51288d80 data-v-0009425e><div class="item" role="button" tabindex="0" data-v-0009425e><div class="indicator" data-v-0009425e></div><h2 class="text" data-v-0009425e>Standard Library</h2><!----></div><div class="items" data-v-0009425e><!--[--><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link link" href="/stdlib-tutorial.html" data-v-0009425e><!--[--><p class="text" data-v-0009425e>Tutorial</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link link" href="/stdlib-reference.html" data-v-0009425e><!--[--><p class="text" data-v-0009425e>Reference</p><!--]--></a><!----></div><!----></div><!--]--></div></section></div><div class="no-transition group" data-v-51288d80><section class="VPSidebarItem level-0" data-v-51288d80 data-v-0009425e><div class="item" role="button" tabindex="0" data-v-0009425e><div class="indicator" data-v-0009425e></div><h2 class="text" data-v-0009425e>Resources</h2><!----></div><div class="items" data-v-0009425e><!--[--><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link vp-external-link-icon link" href="https://github.com/kai-builds-ai/arc-lang/tree/main/examples" target="_blank" rel="noreferrer" data-v-0009425e><!--[--><p class="text" data-v-0009425e>Examples</p><!--]--></a><!----></div><!----></div><div class="VPSidebarItem level-1 is-link" data-v-0009425e data-v-0009425e><div class="item" data-v-0009425e><div class="indicator" data-v-0009425e></div><a class="VPLink link vp-external-link-icon link" href="https://play.arclang.dev" target="_blank" rel="noreferrer" data-v-0009425e><!--[--><p class="text" data-v-0009425e>Playground</p><!--]--></a><!----></div><!----></div><!--]--></div></section></div><!--]--><!--[--><!--]--></nav></aside><div class="VPContent has-sidebar" id="VPContent" data-v-d8b57b2d data-v-9a6c75ad><div class="VPDoc has-sidebar has-aside" data-v-9a6c75ad data-v-e6f2a212><!--[--><!--]--><div class="container" data-v-e6f2a212><div class="aside" data-v-e6f2a212><div class="aside-curtain" data-v-e6f2a212></div><div class="aside-container" data-v-e6f2a212><div class="aside-content" data-v-e6f2a212><div class="VPDocAside" data-v-e6f2a212 data-v-cb998dce><!--[--><!--]--><!--[--><!--]--><nav aria-labelledby="doc-outline-aria-label" class="VPDocAsideOutline" data-v-cb998dce data-v-f610f197><div class="content" data-v-f610f197><div class="outline-marker" data-v-f610f197></div><div aria-level="2" class="outline-title" id="doc-outline-aria-label" role="heading" data-v-f610f197>On this page</div><ul class="VPDocOutlineItem root" data-v-f610f197 data-v-53c99d69><!--[--><!--]--></ul></div></nav><!--[--><!--]--><div class="spacer" data-v-cb998dce></div><!--[--><!--]--><!----><!--[--><!--]--><!--[--><!--]--></div></div></div></div><div class="content" data-v-e6f2a212><div class="content-container" data-v-e6f2a212><!--[--><!--]--><main class="main" data-v-e6f2a212><div style="position:relative;" class="vp-doc _stdlib-tutorial" data-v-e6f2a212><div><h1 id="arc-standard-library-tutorial" tabindex="-1">Arc Standard Library Tutorial <a class="header-anchor" href="#arc-standard-library-tutorial" aria-label="Permalink to &quot;Arc Standard Library Tutorial&quot;">​</a></h1><p>A hands-on guide to using Arc&#39;s standard library for real-world tasks.</p><h2 id="prerequisites" tabindex="-1">Prerequisites <a class="header-anchor" href="#prerequisites" aria-label="Permalink to &quot;Prerequisites&quot;">​</a></h2><p>You should be familiar with Arc basics — see the <a href="/getting-started.html">Getting Started Guide</a> and <a href="/language-tour.html">Language Tour</a> first.</p><hr><h2 id="_1-working-with-collections" tabindex="-1">1. Working with Collections <a class="header-anchor" href="#_1-working-with-collections" aria-label="Permalink to &quot;1. Working with Collections&quot;">​</a></h2><p>Arc has powerful built-in list operations. No imports needed.</p><h3 id="map-filter-reduce" tabindex="-1">Map, Filter, Reduce <a class="header-anchor" href="#map-filter-reduce" aria-label="Permalink to &quot;Map, Filter, Reduce&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Square all numbers</span></span>
+<span class="line"><span>let squares = numbers |&gt; map(n =&gt; n * n)</span></span>
+<span class="line"><span># =&gt; [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Keep only evens</span></span>
+<span class="line"><span>let evens = numbers |&gt; filter(n =&gt; n % 2 == 0)</span></span>
+<span class="line"><span># =&gt; [2, 4, 6, 8, 10]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Sum everything</span></span>
+<span class="line"><span>let total = numbers |&gt; reduce((acc, n) =&gt; acc + n, 0)</span></span>
+<span class="line"><span># =&gt; 55</span></span></code></pre></div><h3 id="pipelines" tabindex="-1">Pipelines <a class="header-anchor" href="#pipelines" aria-label="Permalink to &quot;Pipelines&quot;">​</a></h3><p>Arc&#39;s <code>|&gt;</code> operator shines when chaining operations:</p><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let result = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]</span></span>
+<span class="line"><span>  |&gt; filter(n =&gt; n % 2 == 0)    # keep evens</span></span>
+<span class="line"><span>  |&gt; map(n =&gt; n * n)             # square them</span></span>
+<span class="line"><span>  |&gt; take(3)                     # first 3</span></span>
+<span class="line"><span>  |&gt; reduce((a, b) =&gt; a + b, 0) # sum</span></span>
+<span class="line"><span># =&gt; 4 + 16 + 36 = 56</span></span></code></pre></div><h3 id="searching-and-slicing" tabindex="-1">Searching and Slicing <a class="header-anchor" href="#searching-and-slicing" aria-label="Permalink to &quot;Searching and Slicing&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let fruits = [&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;, &quot;date&quot;]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fruits |&gt; find(f =&gt; f |&gt; len &gt; 5)   # =&gt; &quot;banana&quot;</span></span>
+<span class="line"><span>fruits |&gt; contains(&quot;cherry&quot;)         # =&gt; true</span></span>
+<span class="line"><span>fruits |&gt; take(2)                    # =&gt; [&quot;apple&quot;, &quot;banana&quot;]</span></span>
+<span class="line"><span>fruits |&gt; skip(2)                    # =&gt; [&quot;cherry&quot;, &quot;date&quot;]</span></span>
+<span class="line"><span>fruits |&gt; reverse                    # =&gt; [&quot;date&quot;, &quot;cherry&quot;, &quot;banana&quot;, &quot;apple&quot;]</span></span></code></pre></div><h3 id="working-with-maps" tabindex="-1">Working with Maps <a class="header-anchor" href="#working-with-maps" aria-label="Permalink to &quot;Working with Maps&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let user = {name: &quot;Alice&quot;, age: 30, role: &quot;dev&quot;}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>keys(user)    # =&gt; [&quot;name&quot;, &quot;age&quot;, &quot;role&quot;]</span></span>
+<span class="line"><span>values(user)  # =&gt; [&quot;Alice&quot;, 30, &quot;dev&quot;]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Access fields</span></span>
+<span class="line"><span>user.name     # =&gt; &quot;Alice&quot;</span></span>
+<span class="line"><span>user[&quot;age&quot;]   # =&gt; 30</span></span></code></pre></div><hr><h2 id="_2-string-manipulation" tabindex="-1">2. String Manipulation <a class="header-anchor" href="#_2-string-manipulation" aria-label="Permalink to &quot;2. String Manipulation&quot;">​</a></h2><p>Basic string operations are built-in. The <code>strings</code> module adds more.</p><h3 id="built-in-string-functions" tabindex="-1">Built-in String Functions <a class="header-anchor" href="#built-in-string-functions" aria-label="Permalink to &quot;Built-in String Functions&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s = &quot;  Hello, World!  &quot;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>trim(s)              # =&gt; &quot;Hello, World!&quot;</span></span>
+<span class="line"><span>upper(&quot;hello&quot;)       # =&gt; &quot;HELLO&quot;</span></span>
+<span class="line"><span>lower(&quot;HELLO&quot;)       # =&gt; &quot;hello&quot;</span></span>
+<span class="line"><span>split(&quot;a,b,c&quot;, &quot;,&quot;) # =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span></span>
+<span class="line"><span>join([&quot;a&quot;,&quot;b&quot;], &quot;-&quot;) # =&gt; &quot;a-b&quot;</span></span>
+<span class="line"><span>len(&quot;hello&quot;)         # =&gt; 5</span></span>
+<span class="line"><span>slice(&quot;hello&quot;, 1, 3) # =&gt; &quot;el&quot;</span></span></code></pre></div><h3 id="string-interpolation" tabindex="-1">String Interpolation <a class="header-anchor" href="#string-interpolation" aria-label="Permalink to &quot;String Interpolation&quot;">​</a></h3><p>Arc uses <code>{}</code> inside strings for interpolation:</p><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let name = &quot;Arc&quot;</span></span>
+<span class="line"><span>let version = 1</span></span>
+<span class="line"><span>print(&quot;Welcome to {name} v{version}!&quot;)</span></span>
+<span class="line"><span># =&gt; Welcome to Arc v1!</span></span></code></pre></div><h3 id="the-strings-module" tabindex="-1">The strings Module <a class="header-anchor" href="#the-strings-module" aria-label="Permalink to &quot;The strings Module&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use strings</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>strings.pad_left(&quot;42&quot;, 5, &quot;0&quot;)     # =&gt; &quot;00042&quot;</span></span>
+<span class="line"><span>strings.pad_right(&quot;hi&quot;, 10, &quot;.&quot;)   # =&gt; &quot;hi........&quot;</span></span>
+<span class="line"><span>strings.capitalize(&quot;hello world&quot;)   # =&gt; &quot;Hello world&quot;</span></span>
+<span class="line"><span>strings.words(&quot;  one  two  three &quot;) # =&gt; [&quot;one&quot;, &quot;two&quot;, &quot;three&quot;]</span></span></code></pre></div><h3 id="pipeline-friendly-string-processing" tabindex="-1">Pipeline-Friendly String Processing <a class="header-anchor" href="#pipeline-friendly-string-processing" aria-label="Permalink to &quot;Pipeline-Friendly String Processing&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use strings</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let title = &quot;  hello world  &quot;</span></span>
+<span class="line"><span>  |&gt; trim</span></span>
+<span class="line"><span>  |&gt; strings.capitalize</span></span>
+<span class="line"><span># =&gt; &quot;Hello world&quot;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Process a list of names</span></span>
+<span class="line"><span>let names = [&quot;alice&quot;, &quot;BOB&quot;, &quot;Charlie&quot;]</span></span>
+<span class="line"><span>  |&gt; map(n =&gt; strings.capitalize(n))</span></span>
+<span class="line"><span># =&gt; [&quot;Alice&quot;, &quot;Bob&quot;, &quot;Charlie&quot;]</span></span></code></pre></div><hr><h2 id="_3-http-api-calls" tabindex="-1">3. HTTP &amp; API Calls <a class="header-anchor" href="#_3-http-api-calls" aria-label="Permalink to &quot;3. HTTP &amp; API Calls&quot;">​</a></h2><p>Arc has first-class HTTP support with the <code>@</code> tool-call syntax.</p><h3 id="quick-requests" tabindex="-1">Quick Requests <a class="header-anchor" href="#quick-requests" aria-label="Permalink to &quot;Quick Requests&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span># Simple GET — returns the response body</span></span>
+<span class="line"><span>let data = @GET &quot;https://api.example.com/users&quot;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># With headers</span></span>
+<span class="line"><span>let data = @GET &quot;https://api.example.com/users&quot; {</span></span>
+<span class="line"><span>  Authorization: &quot;Bearer {token}&quot;</span></span>
+<span class="line"><span>}</span></span></code></pre></div><h3 id="post-with-body" tabindex="-1">POST with Body <a class="header-anchor" href="#post-with-body" aria-label="Permalink to &quot;POST with Body&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let result = @POST &quot;https://api.example.com/users&quot; {</span></span>
+<span class="line"><span>  name: &quot;Alice&quot;,</span></span>
+<span class="line"><span>  email: &quot;alice@example.com&quot;</span></span>
+<span class="line"><span>}</span></span></code></pre></div><h3 id="parallel-requests" tabindex="-1">Parallel Requests <a class="header-anchor" href="#parallel-requests" aria-label="Permalink to &quot;Parallel Requests&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span># Fetch multiple APIs concurrently</span></span>
+<span class="line"><span>let [weather, news] = fetch [</span></span>
+<span class="line"><span>  @GET &quot;api/weather?city=NYC&quot;,</span></span>
+<span class="line"><span>  @GET &quot;api/news/top?limit=5&quot;</span></span>
+<span class="line"><span>]</span></span></code></pre></div><h3 id="processing-api-data" tabindex="-1">Processing API Data <a class="header-anchor" href="#processing-api-data" aria-label="Permalink to &quot;Processing API Data&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let users = @GET &quot;https://api.example.com/users&quot;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let names = users</span></span>
+<span class="line"><span>  |&gt; filter(u =&gt; u.active)</span></span>
+<span class="line"><span>  |&gt; map(u =&gt; u.name)</span></span>
+<span class="line"><span>  |&gt; sort</span></span>
+<span class="line"><span>  |&gt; join(&quot;, &quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>print(&quot;Active users: {names}&quot;)</span></span></code></pre></div><hr><h2 id="_4-json-processing" tabindex="-1">4. JSON Processing <a class="header-anchor" href="#_4-json-processing" aria-label="Permalink to &quot;4. JSON Processing&quot;">​</a></h2><h3 id="parsing-and-stringifying-planned" tabindex="-1">Parsing and Stringifying (Planned) <a class="header-anchor" href="#parsing-and-stringifying-planned" aria-label="Permalink to &quot;Parsing and Stringifying (Planned)&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use json</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Parse a JSON string</span></span>
+<span class="line"><span>let data = json.parse(&#39;{&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 30}&#39;)</span></span>
+<span class="line"><span># =&gt; {name: &quot;Alice&quot;, age: 30}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Convert to JSON</span></span>
+<span class="line"><span>let s = json.stringify({x: 1, y: [2, 3]})</span></span>
+<span class="line"><span># =&gt; &#39;{&quot;x&quot;:1,&quot;y&quot;:[2,3]}&#39;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Pretty print</span></span>
+<span class="line"><span>let pretty = json.pretty({name: &quot;Arc&quot;, version: 1})</span></span>
+<span class="line"><span># =&gt; &#39;{</span></span>
+<span class="line"><span>#   &quot;name&quot;: &quot;Arc&quot;,</span></span>
+<span class="line"><span>#   &quot;version&quot;: 1</span></span>
+<span class="line"><span># }&#39;</span></span></code></pre></div><h3 id="real-world-api-→-process-→-output" tabindex="-1">Real-World: API → Process → Output <a class="header-anchor" href="#real-world-api-→-process-→-output" aria-label="Permalink to &quot;Real-World: API → Process → Output&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use json</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Fetch API, transform, output as JSON</span></span>
+<span class="line"><span>let result = @GET &quot;https://api.example.com/products&quot;</span></span>
+<span class="line"><span>  |&gt; filter(p =&gt; p.price &lt; 50)</span></span>
+<span class="line"><span>  |&gt; map(p =&gt; {name: p.name, price: p.price})</span></span>
+<span class="line"><span>  |&gt; json.pretty</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>print(result)</span></span></code></pre></div><hr><h2 id="_5-testing-your-arc-code" tabindex="-1">5. Testing Your Arc Code <a class="header-anchor" href="#_5-testing-your-arc-code" aria-label="Permalink to &quot;5. Testing Your Arc Code&quot;">​</a></h2><h3 id="writing-tests-planned" tabindex="-1">Writing Tests (Planned) <a class="header-anchor" href="#writing-tests-planned" aria-label="Permalink to &quot;Writing Tests (Planned)&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use test</span></span>
+<span class="line"><span>use math</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn test_abs() {</span></span>
+<span class="line"><span>  test.assert_eq(math.abs(-5), 5, &quot;abs of negative&quot;)</span></span>
+<span class="line"><span>  test.assert_eq(math.abs(0), 0, &quot;abs of zero&quot;)</span></span>
+<span class="line"><span>  test.assert_eq(math.abs(3), 3, &quot;abs of positive&quot;)</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn test_sqrt() {</span></span>
+<span class="line"><span>  test.assert_eq(math.sqrt(4), 2, &quot;sqrt of 4&quot;)</span></span>
+<span class="line"><span>  test.assert_eq(math.sqrt(0), 0, &quot;sqrt of 0&quot;)</span></span>
+<span class="line"><span>  test.assert_eq(math.sqrt(-1), nil, &quot;sqrt of negative&quot;)</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn test_clamp() {</span></span>
+<span class="line"><span>  test.assert_eq(math.clamp(15, 0, 10), 10, &quot;clamp above&quot;)</span></span>
+<span class="line"><span>  test.assert_eq(math.clamp(-5, 0, 10), 0, &quot;clamp below&quot;)</span></span>
+<span class="line"><span>  test.assert_eq(math.clamp(5, 0, 10), 5, &quot;clamp within&quot;)</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>test.run([test_abs, test_sqrt, test_clamp])</span></span></code></pre></div><h3 id="testing-with-results" tabindex="-1">Testing with Results <a class="header-anchor" href="#testing-with-results" aria-label="Permalink to &quot;Testing with Results&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use test</span></span>
+<span class="line"><span>use result</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn test_result_ok() {</span></span>
+<span class="line"><span>  let r = result.ok(42)</span></span>
+<span class="line"><span>  test.assert_ok(r)</span></span>
+<span class="line"><span>  test.assert_eq(result.unwrap(r), 42)</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn test_result_err() {</span></span>
+<span class="line"><span>  let r = result.err(&quot;oops&quot;)</span></span>
+<span class="line"><span>  test.assert_err(r)</span></span>
+<span class="line"><span>  test.assert_eq(result.unwrap_or(r, 0), 0)</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>test.run([test_result_ok, test_result_err])</span></span></code></pre></div><hr><h2 id="_6-error-handling-with-result" tabindex="-1">6. Error Handling with Result <a class="header-anchor" href="#_6-error-handling-with-result" aria-label="Permalink to &quot;6. Error Handling with Result&quot;">​</a></h2><p>Arc uses the <code>Result</code> type for operations that can fail — no exceptions.</p><h3 id="the-basics-planned" tabindex="-1">The Basics (Planned) <a class="header-anchor" href="#the-basics-planned" aria-label="Permalink to &quot;The Basics (Planned)&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use result</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Create results</span></span>
+<span class="line"><span>let good = result.ok(42)</span></span>
+<span class="line"><span>let bad = result.err(&quot;file not found&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Check and extract</span></span>
+<span class="line"><span>result.is_ok(good)          # =&gt; true</span></span>
+<span class="line"><span>result.unwrap(good)         # =&gt; 42</span></span>
+<span class="line"><span>result.unwrap_or(bad, 0)    # =&gt; 0</span></span></code></pre></div><h3 id="chaining-with-map-and-flat-map" tabindex="-1">Chaining with map and flat_map <a class="header-anchor" href="#chaining-with-map-and-flat-map" aria-label="Permalink to &quot;Chaining with map and flat_map&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use result</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn parse_int(s) {</span></span>
+<span class="line"><span>  # Returns Result&lt;Int&gt;</span></span>
+<span class="line"><span>  match int(s) {</span></span>
+<span class="line"><span>    nil =&gt; result.err(&quot;not a number: {s}&quot;),</span></span>
+<span class="line"><span>    n   =&gt; result.ok(n)</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn double(n) =&gt; result.ok(n * 2)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let r = parse_int(&quot;21&quot;)</span></span>
+<span class="line"><span>  |&gt; result.flat_map(double)</span></span>
+<span class="line"><span># =&gt; Ok(42)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let r2 = parse_int(&quot;abc&quot;)</span></span>
+<span class="line"><span>  |&gt; result.flat_map(double)</span></span>
+<span class="line"><span># =&gt; Err(&quot;not a number: abc&quot;)</span></span></code></pre></div><h3 id="pattern-matching-on-results" tabindex="-1">Pattern Matching on Results <a class="header-anchor" href="#pattern-matching-on-results" aria-label="Permalink to &quot;Pattern Matching on Results&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let r = some_operation()</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>match r {</span></span>
+<span class="line"><span>  Ok(value) =&gt; print(&quot;Got: {value}&quot;),</span></span>
+<span class="line"><span>  Err(msg)  =&gt; print(&quot;Error: {msg}&quot;)</span></span>
+<span class="line"><span>}</span></span></code></pre></div><hr><h2 id="_7-file-i-o" tabindex="-1">7. File I/O <a class="header-anchor" href="#_7-file-i-o" aria-label="Permalink to &quot;7. File I/O&quot;">​</a></h2><h3 id="reading-and-writing-files-planned" tabindex="-1">Reading and Writing Files (Planned) <a class="header-anchor" href="#reading-and-writing-files-planned" aria-label="Permalink to &quot;Reading and Writing Files (Planned)&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use io</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Read a file</span></span>
+<span class="line"><span>let content = io.read_file(&quot;data.txt&quot;)</span></span>
+<span class="line"><span>match content {</span></span>
+<span class="line"><span>  Ok(text) =&gt; print(&quot;File has {len(text)} chars&quot;),</span></span>
+<span class="line"><span>  Err(e)   =&gt; print(&quot;Error: {e}&quot;)</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Write a file</span></span>
+<span class="line"><span>io.write_file(&quot;output.txt&quot;, &quot;Hello from Arc!&quot;)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Read lines and process</span></span>
+<span class="line"><span>let lines = io.read_lines(&quot;data.csv&quot;)</span></span>
+<span class="line"><span>  |&gt; result.unwrap_or([])</span></span>
+<span class="line"><span>  |&gt; skip(1)                    # skip header</span></span>
+<span class="line"><span>  |&gt; map(line =&gt; split(line, &quot;,&quot;))</span></span></code></pre></div><h3 id="pipeline-read-→-process-→-write" tabindex="-1">Pipeline: Read → Process → Write <a class="header-anchor" href="#pipeline-read-→-process-→-write" aria-label="Permalink to &quot;Pipeline: Read → Process → Write&quot;">​</a></h3><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use io</span></span>
+<span class="line"><span>use strings</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let result = io.read_file(&quot;names.txt&quot;)</span></span>
+<span class="line"><span>  |&gt; result.map(text =&gt; {</span></span>
+<span class="line"><span>    text</span></span>
+<span class="line"><span>      |&gt; split(&quot;\n&quot;)</span></span>
+<span class="line"><span>      |&gt; map(n =&gt; strings.capitalize(trim(n)))</span></span>
+<span class="line"><span>      |&gt; filter(n =&gt; len(n) &gt; 0)</span></span>
+<span class="line"><span>      |&gt; sort</span></span>
+<span class="line"><span>      |&gt; join(&quot;\n&quot;)</span></span>
+<span class="line"><span>  })</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>match result {</span></span>
+<span class="line"><span>  Ok(sorted) =&gt; io.write_file(&quot;sorted-names.txt&quot;, sorted),</span></span>
+<span class="line"><span>  Err(e)     =&gt; print(&quot;Failed: {e}&quot;)</span></span>
+<span class="line"><span>}</span></span></code></pre></div><hr><h2 id="_8-math" tabindex="-1">8. Math <a class="header-anchor" href="#_8-math" aria-label="Permalink to &quot;8. Math&quot;">​</a></h2><div class="language-arc vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">arc</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>use math</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Constants</span></span>
+<span class="line"><span>print(&quot;π = {math.PI}&quot;)   # =&gt; π = 3.141592653589793</span></span>
+<span class="line"><span>print(&quot;e = {math.E}&quot;)    # =&gt; e = 2.718281828459045</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Circle area</span></span>
+<span class="line"><span>fn circle_area(r) =&gt; math.PI * math.pow(r, 2)</span></span>
+<span class="line"><span>print(circle_area(5))    # =&gt; 78.53981633974483</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Clamping user input</span></span>
+<span class="line"><span>let volume = math.clamp(user_input, 0, 100)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># Safe sqrt</span></span>
+<span class="line"><span>match math.sqrt(x) {</span></span>
+<span class="line"><span>  nil =&gt; print(&quot;Cannot take sqrt of negative&quot;),</span></span>
+<span class="line"><span>  val =&gt; print(&quot;√{x} = {val}&quot;)</span></span>
+<span class="line"><span>}</span></span></code></pre></div><hr><h2 id="what-s-next" tabindex="-1">What&#39;s Next? <a class="header-anchor" href="#what-s-next" aria-label="Permalink to &quot;What&#39;s Next?&quot;">​</a></h2><ul><li>Check the <a href="/stdlib-reference.html">Standard Library Reference</a> for full API details</li><li>Browse <a href="https://github.com/kai-builds-ai/arc-lang/tree/main/examples" target="_blank" rel="noreferrer">examples</a> for complete programs</li><li>Read the <a href="/language-tour.html">Language Tour</a> for all language features</li><li>See the <a href="/faq.html">FAQ</a> for common questions</li></ul></div></div></main><footer class="VPDocFooter" data-v-e6f2a212 data-v-1bcd8184><!--[--><!--]--><div class="edit-info" data-v-1bcd8184><div class="edit-link" data-v-1bcd8184><a class="VPLink link vp-external-link-icon no-icon edit-link-button" href="https://github.com/kai-builds-ai/arc-lang/edit/main/docs-site/stdlib-tutorial.md" target="_blank" rel="noreferrer" data-v-1bcd8184><!--[--><span class="vpi-square-pen edit-link-icon" data-v-1bcd8184></span> Edit this page<!--]--></a></div><!----></div><nav class="prev-next" aria-labelledby="doc-footer-aria-label" data-v-1bcd8184><span class="visually-hidden" id="doc-footer-aria-label" data-v-1bcd8184>Pager</span><div class="pager" data-v-1bcd8184><a class="VPLink link pager-link prev" href="/faq.html" data-v-1bcd8184><!--[--><span class="desc" data-v-1bcd8184>Previous page</span><span class="title" data-v-1bcd8184>FAQ</span><!--]--></a></div><div class="pager" data-v-1bcd8184><a class="VPLink link pager-link next" href="/stdlib-reference.html" data-v-1bcd8184><!--[--><span class="desc" data-v-1bcd8184>Next page</span><span class="title" data-v-1bcd8184>Reference</span><!--]--></a></div></nav></footer><!--[--><!--]--></div></div></div><!--[--><!--]--></div></div><footer class="VPFooter has-sidebar" data-v-d8b57b2d data-v-566314d4><div class="container" data-v-566314d4><p class="message" data-v-566314d4>A programming language designed by AI agents, for AI agents.</p><p class="copyright" data-v-566314d4>© 2025 Arc Lang</p></div></footer><!--[--><!--]--></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"cheatsheet.md\":\"BtBIxszf\",\"faq.md\":\"paeDB5H8\",\"getting-started.md\":\"CG_ZIkFx\",\"index.md\":\"DByZLqqH\",\"language-tour.md\":\"BoOdaaW_\",\"stdlib-reference.md\":\"BK7Y1MIy\",\"stdlib-tutorial.md\":\"CViA10FH\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"⚡ Arc\",\"description\":\"A programming language designed by AI agents, for AI agents\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":true,\"themeConfig\":{\"logo\":{\"text\":\"⚡\"},\"siteTitle\":\"Arc\",\"nav\":[{\"text\":\"Guide\",\"link\":\"/getting-started\"},{\"text\":\"Reference\",\"link\":\"/stdlib-reference\"},{\"text\":\"Playground\",\"link\":\"https://play.arclang.dev\"},{\"text\":\"GitHub\",\"link\":\"https://github.com/kai-builds-ai/arc-lang\"}],\"sidebar\":[{\"text\":\"Introduction\",\"items\":[{\"text\":\"Getting Started\",\"link\":\"/getting-started\"},{\"text\":\"Language Tour\",\"link\":\"/language-tour\"},{\"text\":\"Cheatsheet\",\"link\":\"/cheatsheet\"},{\"text\":\"FAQ\",\"link\":\"/faq\"}]},{\"text\":\"Standard Library\",\"items\":[{\"text\":\"Tutorial\",\"link\":\"/stdlib-tutorial\"},{\"text\":\"Reference\",\"link\":\"/stdlib-reference\"}]},{\"text\":\"Resources\",\"items\":[{\"text\":\"Examples\",\"link\":\"https://github.com/kai-builds-ai/arc-lang/tree/main/examples\"},{\"text\":\"Playground\",\"link\":\"https://play.arclang.dev\"}]}],\"socialLinks\":[{\"icon\":\"github\",\"link\":\"https://github.com/kai-builds-ai/arc-lang\"},{\"icon\":\"npm\",\"link\":\"https://www.npmjs.com/package/arc-lang\"}],\"search\":{\"provider\":\"local\"},\"footer\":{\"message\":\"A programming language designed by AI agents, for AI agents.\",\"copyright\":\"© 2025 Arc Lang\"},\"editLink\":{\"pattern\":\"https://github.com/kai-builds-ai/arc-lang/edit/main/docs-site/:path\"}},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
+</html>
