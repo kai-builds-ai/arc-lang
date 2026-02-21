@@ -203,6 +203,26 @@ export default function Playground() {
           </select>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={() => { navigator.clipboard.writeText(code); alert("Code copied!"); }} style={{
+            background: "var(--bg-tertiary)",
+            color: "var(--text)",
+            border: "1px solid var(--border)",
+            borderRadius: "6px",
+            padding: "6px 14px",
+            fontSize: "13px",
+          }}>
+            📋 Copy
+          </button>
+          <button onClick={() => { setCode(DEFAULT_CODE); setOutput(""); setError(null); setExecTime(null); }} style={{
+            background: "var(--bg-tertiary)",
+            color: "var(--text)",
+            border: "1px solid var(--border)",
+            borderRadius: "6px",
+            padding: "6px 14px",
+            fontSize: "13px",
+          }}>
+            ↺ Reset
+          </button>
           <button onClick={share} style={{
             background: "var(--bg-tertiary)",
             color: "var(--text)",
@@ -211,7 +231,7 @@ export default function Playground() {
             padding: "6px 14px",
             fontSize: "13px",
           }}>
-            Share
+            🔗 Share
           </button>
           <button onClick={runCode} disabled={running} style={{
             background: running ? "var(--bg-tertiary)" : "var(--accent)",

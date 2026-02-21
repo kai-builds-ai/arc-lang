@@ -118,5 +118,23 @@
     "name": "CSV Processing",
     "description": "Parse CSV data into records and generate CSV from maps",
     "code": "// CSV Processing\nuse csv\n\nlet data = \"name,age,city\\nAlice,30,NYC\\nBob,25,LA\\nCarol,28,Chicago\"\nlet records = csv.parse_csv_headers(data)\nprint(\"Records: {records}\")\n\nfor person in records {\n  print(\"{person.name} is {person.age}, lives in {person.city}\")\n}\n\n// Generate CSV from data\nlet rows = [\n  {name: \"Dave\", score: 95},\n  {name: \"Eve\", score: 87}\n]\nlet output = csv.to_csv(rows)\nprint(\"\\nGenerated CSV:\\n{output}\")"
+  },
+  {
+    "category": "AI-Native",
+    "name": "Prompt Templates",
+    "description": "Build, fill, and count tokens in prompt templates — Arc's AI-native stdlib",
+    "code": "// Prompt Templates — AI-Native Stdlib\nuse prompt\n\n// Build and fill a template\nlet template = \"You are a {role}. The user says: {message}\"\nlet filled = prompt.fill(template, {\n  role: \"helpful assistant\",\n  message: \"What is Arc?\"\n})\nprint(filled)\n\n// Token counting — know your costs\nlet text = \"Arc is a language designed for AI agents with token efficiency\"\nlet tokens = prompt.count_tokens(text)\nprint(\"Token count: {tokens}\")\n\n// Context windowing — fit prompts into model limits\nlet messages = [\n  \"First message from user\",\n  \"Response from assistant\",\n  \"Follow-up question\",\n  \"Another response\",\n  \"Final question\"\n]\nlet windowed = prompt.window(messages, 20)\nprint(\"Windowed to fit: {windowed}\")"
+  },
+  {
+    "category": "AI-Native",
+    "name": "Embeddings & Similarity",
+    "description": "Vector math, cosine similarity, and semantic search with the embed module",
+    "code": "// Embeddings & Similarity Search\nuse embed\n\n// Cosine similarity between vectors\nlet vec_a = [1.0, 0.5, 0.0, 0.3]\nlet vec_b = [0.9, 0.6, 0.1, 0.2]\nlet vec_c = [0.0, 0.0, 1.0, 0.0]\n\nlet sim_ab = embed.cosine(vec_a, vec_b)\nlet sim_ac = embed.cosine(vec_a, vec_c)\nprint(\"Similarity A↔B: {sim_ab}\")\nprint(\"Similarity A↔C: {sim_ac}\")\nprint(\"A and B are more similar!\")\n\n// Find most similar from a collection\nlet query = [1.0, 0.5, 0.0, 0.3]\nlet docs = [\n  [0.9, 0.6, 0.1, 0.2],\n  [0.0, 0.0, 1.0, 0.0],\n  [0.8, 0.4, 0.1, 0.4]\n]\nlet best = embed.most_similar(query, docs)\nprint(\"Most similar index: {best}\")\n\n// Chunk text for embedding\nlet text = \"Arc is a programming language. It was designed for AI agents. It uses pipelines and pattern matching.\"\nlet chunks = embed.chunk(text, 50)\nprint(\"Chunks: {chunks}\")"
+  },
+  {
+    "category": "AI-Native",
+    "name": "Persistent Store",
+    "description": "Key-value persistent storage for agent memory and state",
+    "code": "// Persistent Key-Value Store\nuse store\n\n// Set values\nstore.set(\"user:name\", \"Roger\")\nstore.set(\"user:lang\", \"Arc\")\nstore.set(\"counter\", 0)\n\n// Get values\nlet name = store.get(\"user:name\")\nlet lang = store.get(\"user:lang\")\nprint(\"User: {name}, Language: {lang}\")\n\n// Update counter\nlet mut count = store.get(\"counter\")\ncount = count + 1\nstore.set(\"counter\", count)\nprint(\"Visit count: {count}\")\n\n// Check existence\nprint(\"Has user:name? {store.has(\"user:name\")}\")\nprint(\"Has missing? {store.has(\"nope\")}\")\n\n// List all keys\nlet all_keys = store.keys()\nprint(\"All keys: {all_keys}\")\n\n// Delete\nstore.del(\"counter\")\nprint(\"After delete, keys: {store.keys()}\")"
   }
 ]
