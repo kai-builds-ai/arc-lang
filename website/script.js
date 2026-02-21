@@ -116,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
       el.textContent = prefix + current + suffix;
     }, 25);
   }
-});
 
   // --- Savings Calculator ---
   const spendInput = document.getElementById('monthly-spend');
@@ -153,5 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCalc();
   }
 
-// Log that Arc engine is running
-console.log('⚡ Arc Interactive Engine loaded — token counting powered by Arc');
+  // Log that Arc engine is running
+  console.log('⚡ Arc Interactive Engine loaded — token counting powered by Arc');
+});

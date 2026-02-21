@@ -197,7 +197,7 @@ export interface GroupExpr {
 // ---- Patterns ----
 
 export type Pattern =
-  | WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern | ConstructorPattern;
+  | WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern | ConstructorPattern | RangePattern;
 
 export interface WildcardPattern { kind: "WildcardPattern"; loc: Loc; }
 export interface LiteralPattern { kind: "LiteralPattern"; value: number | string | boolean | null; loc: Loc; }
@@ -205,6 +205,7 @@ export interface BindingPattern { kind: "BindingPattern"; name: string; loc: Loc
 export interface ArrayPattern { kind: "ArrayPattern"; elements: Pattern[]; loc: Loc; }
 export interface OrPattern { kind: "OrPattern"; patterns: Pattern[]; loc: Loc; }
 export interface ConstructorPattern { kind: "ConstructorPattern"; name: string; args: Pattern[]; loc: Loc; }
+export interface RangePattern { kind: "RangePattern"; from: number; to: number; loc: Loc; }
 
 // ---- Statements ----
 

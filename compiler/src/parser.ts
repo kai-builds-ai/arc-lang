@@ -1022,7 +1022,17 @@ export class Parser {
     }
     if (t.type === TokenType.Int || t.type === TokenType.Float) {
       this.advance();
-      return { kind: "LiteralPattern", value: parseFloat(t.value), loc };
+      const fromVal = parseFloat(t.value);
+      if (this.at(TokenType.Range)) {
+        this.advance();
+        const toTok = this.peek();
+        if (toTok.type !== TokenType.Int && toTok.type !== TokenType.Float) {
+          throw new ParseError(`Expected number after '..' in range pattern`, this.loc());
+        }
+        this.advance();
+        return { kind: "RangePattern", from: fromVal, to: parseFloat(toTok.value), loc };
+      }
+      return { kind: "LiteralPattern", value: fromVal, loc };
     }
     if (t.type === TokenType.String) {
       this.advance();

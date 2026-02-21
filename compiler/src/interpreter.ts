@@ -2518,6 +2518,8 @@ function matchPattern(pattern: AST.Pattern, value: Value, env: Env): boolean {
       if (pattern.elements.length !== value.length) return false;
       return pattern.elements.every((p, i) => matchPattern(p, value[i], env));
     }
+    case "RangePattern":
+      return typeof value === "number" && value >= pattern.from && value <= pattern.to;
     case "OrPattern":
       return pattern.patterns.some(p => matchPattern(p, value, env));
     case "ConstructorPattern": {

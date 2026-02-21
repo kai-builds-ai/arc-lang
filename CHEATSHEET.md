@@ -61,6 +61,8 @@ let result = if x > 0 { "positive" } else { "non-positive" }
 let msg = match status {
   200 => "ok",
   404 => "not found",
+  400..499 => "client error",
+  500..599 => "server error",
   _ => "unknown"
 }
 

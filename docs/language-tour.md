@@ -56,6 +56,7 @@ Arc's most powerful feature. Replaces if/else chains, switch statements, and typ
 match n {
   0 => "zero",
   1 | 2 => "small",
+  3..10 => "medium",
   n if n < 0 => "negative",
   n => "other: {n}"
 }
