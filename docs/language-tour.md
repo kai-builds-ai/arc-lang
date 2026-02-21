@@ -183,13 +183,13 @@ Arc uses map-based results for error handling:
 ```arc
 fn safe_divide(a, b) {
   if b == 0 { {ok: false, error: "division by zero"} }
-  el { {ok: true, value: a / b} }
+  else { {ok: true, value: a / b} }
 }
 
 let result = safe_divide(10, 3)
 if result.ok {
   print("Result: {result.value}")
-} el {
+} else {
   print("Error: {result.error}")
 }
 ```
@@ -228,11 +228,11 @@ let result = await task
 ### If / El (Expression)
 
 ```arc
-let label = if count > 0 { "active" } el { "empty" }
+let label = if count > 0 { "active" } else { "empty" }
 
 if ready {
   go()
-} el {
+} else {
   wait()
 }
 ```

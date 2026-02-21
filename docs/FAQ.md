@@ -50,7 +50,7 @@ See the [grammar spec](../spec/grammar.md#token-counting-methodology) for the fu
 `el` is Arc's keyword for `else`. It saves 2 characters per use and is unambiguous in context:
 
 ```arc
-let x = if ready { "go" } el { "wait" }
+let x = if ready { "go" } else { "wait" }
 ```
 
 ## How do I contribute?

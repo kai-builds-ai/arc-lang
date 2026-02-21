@@ -91,7 +91,7 @@ fn processData(raw) {
 ```arc
 fn divide(a: Float, b: Float) -> Result<Float> {
   if b == 0 { Err("division by zero") }
-  el { Ok(a / b) }
+  else { Ok(a / b) }
 }
 ```
 

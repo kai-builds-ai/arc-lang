@@ -319,7 +319,7 @@ let lookup = {k: v.upper() for {k, v} in entries}
 let msg = "Hello, {name}! You have {count} messages."
 
 # If as expression
-let label = if count > 0 { "active" } el { "empty" }
+let label = if count > 0 { "active" } else { "empty" }
 ```
 
 **Rationale:**

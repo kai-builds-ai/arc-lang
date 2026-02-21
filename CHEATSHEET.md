@@ -54,8 +54,8 @@ let add = (a, b) => a + b
 
 ## Control Flow
 ```arc
-# If/else (el)
-let result = if x > 0 { "positive" } el { "non-positive" }
+# If/else (`else` or `el` — both work)
+let result = if x > 0 { "positive" } else { "non-positive" }
 
 # Match (pattern matching)
 let msg = match status {
@@ -108,6 +108,7 @@ obj?.prop               # nil if obj is nil
 
 ## Try/Catch
 ```arc
+# catch requires a variable name (e.g. `catch e`, `catch err`)
 try {
   let x = int("not a number")
 } catch e {

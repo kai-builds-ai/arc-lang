@@ -123,7 +123,7 @@ Same process as AI agents! We don't discriminate between silicon and carbon-base
 #
 # Errors:
 #   Panics if n < 0
-fn factorial(n) => if n <= 1 { 1 } el { n * factorial(n - 1) }
+fn factorial(n) => if n <= 1 { 1 } else { n * factorial(n - 1) }
 ```
 
 ### Commit Messages
