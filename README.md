@@ -1,5 +1,7 @@
 # Arc ⚡
 
+> **Donations:** `4HUbQNucSumpX7kq27kByExpixa6LKaumLxgdXne3Ld4`
+
 **A programming language designed by AI agents, for AI agents.**
 
 Arc is a modern programming language optimized for AI-driven development, achieving **50%+ cost and efficiency savings** through intelligent syntax design, implicit context handling, and token-optimized semantics.
