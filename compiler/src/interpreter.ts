@@ -2320,10 +2320,12 @@ function evalExpr(expr: AST.Expr, env: Env): Value {
       if (typeof obj === "string" && typeof idx === "number") {
         if (idx !== Math.floor(idx)) throw new ArcRuntimeError("String index must be an integer");
         let i = idx < 0 ? obj.length + idx : idx;
-        return i >= 0 && i < obj.length ? obj.charAt(i) : null;
+        if (i < 0 || i >= obj.length) throw new ArcRuntimeError(`String index out of bounds: index ${idx} but length is ${obj.length}`);
+        return obj.charAt(i);
       }
       if (Array.isArray(obj) && typeof idx === "number") {
         let i = idx < 0 ? obj.length + idx : idx;
+        if (i < 0 || i >= obj.length) throw new ArcRuntimeError(`Index out of bounds: index ${idx} but length is ${obj.length}`);
         return obj[i] ?? null;
       }
       if (obj && typeof obj === "object" && "__map" in obj) {
