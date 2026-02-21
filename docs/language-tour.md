@@ -126,9 +126,12 @@ Expressions inside `{}` in strings:
 ```arc
 let name = "Arc"
 let msg = "Hello, {name}!"
-let math = "2 + 3 = {2 + 3}"
+let result = 2 + 3
+let math = "2 + 3 = {result}"
 let nested = "User: {user.name} ({user.age})"
 ```
+
+> **Note:** `{expr}` only interpolates when `expr` starts with a letter or underscore. `{42}` or `{2 + 3}` stays literal — assign to a variable first.
 
 Use `\{` to escape braces in strings: `"literal \{braces\}"`
 

@@ -105,7 +105,7 @@ Arc ships with a comprehensive standard library. All modules with native runtime
 | [`env`](stdlib/env.arc) | Environment variable utilities |
 | [`log`](stdlib/log.arc) | Structured logging with levels |
 
-Plus 50+ built-in functions available without imports:
+Plus 50+ built-in functions available without `use`:
 
 | Category | Functions |
 |----------|-----------|

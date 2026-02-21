@@ -19,7 +19,7 @@ Arc is a **domain-specific language** for AI agent workflows, not a general-purp
 
 ## Can I use this in production?
 
-Arc is in **active development** (Phase 5: Production Hardening). The interpreter, compiler (with optimizer and JS/WAT codegen), 11 stdlib modules, LSP, VS Code extension, package manager, formatter, and linter are all working with 358+ tests passing. Follow the [roadmap](../ROADMAP.md) for status.
+Arc is in **active development** (Phase 6: Community & Adoption). The interpreter, compiler (with optimizer and JS/WAT codegen), 27 stdlib modules, LSP, VS Code extension, package manager, formatter, linter, and security sandbox are all working with 1,291+ tests passing. Follow the [roadmap](../ROADMAP.md) for status.
 
 ## How do tool calls work?
 

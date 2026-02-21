@@ -645,14 +645,14 @@ fn fetchUser(id) -> Result<User>
 
 ## 10. Module System
 
-### 10.1 Import Resolution
+### 10.1 Module Resolution
 
 ```arc
-import {func} from "module"
+use mymodule { func }
 ```
 
 **Resolution Order:**
-1. Check if "module" is builtin (e.g., "fs", "http")
+1. Check if "module" is builtin (e.g., "io", "http")
 2. Check for local file: `./module.arc`, `./module/index.arc`
 3. Check in `node_modules` or package directory
 4. Throw error if not found
@@ -670,9 +670,9 @@ fn _privateFunction() => "not exported"
 
 **Semantics:**
 1. Top-level `fn`, `type`, `let` are exportable
-2. Importers can choose which to import
+2. Users of the module can choose which to use
 3. Private definitions (prefixed `_`) not exported
-4. Re-exports possible: `import {x} from "a"; x` exports x
+4. Re-exports possible: `use a { x }; x` exports x
 
 ---
 

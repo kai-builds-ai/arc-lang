@@ -4,7 +4,8 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.5.x   | :white_check_mark: |
+| 0.6.x   | :white_check_mark: |
+| 0.5.x   | :x:                |
 | < 0.5   | :x:                |
 
 Arc is pre-release software. Security patches are applied to the latest minor version only.
@@ -43,10 +44,10 @@ The `SafeInterpreter` (`createSandbox()`) wraps the interpreter with configurabl
 
 All limits are configurable via `SecurityConfig`.
 
-### Import Control
+### Module (`use`) Control
 
-- Imports can be restricted via allowlists (`allowedImports`) or blocklists (`blockedImports`)
-- Imports can be completely disabled (`disableImports: true`)
+- Module imports via `use` can be restricted via allowlists (`allowedImports`) or blocklists (`blockedImports`)
+- Module imports can be completely disabled (`disableImports: true`)
 
 ### Tool Call Restrictions
 
@@ -75,7 +76,7 @@ All `os.exec` calls have a hard 10-second timeout to prevent hanging processes.
 ## Known Limitations
 
 - **Pre-release software** — Arc has not undergone a formal security audit.
-- **No filesystem sandbox** — `os.*` file operations (`read`, `write`, `remove`, `mkdir`, etc.) have no path restrictions outside of the sandbox. The `SafeInterpreter` disables imports but does not restrict native file I/O functions available in the base environment.
+- **No filesystem sandbox** — `os.*` file operations (`read`, `write`, `remove`, `mkdir`, etc.) have no path restrictions outside of the sandbox. The `SafeInterpreter` disables module loading (`use`) but does not restrict native file I/O functions available in the base environment.
 - **No network sandbox** — Outside the `SafeInterpreter`, HTTP tool calls (`@GET`, `@POST`) are unrestricted.
 - **os.exec exists** — Even with injection protection, `os.exec` runs real system commands. The regex-based filter may not catch all attack vectors.
 - **No memory limits** — There is no hard memory cap; sufficiently large allocations within step limits can still exhaust system memory.
@@ -97,7 +98,7 @@ All `os.exec` calls have a hard 10-second timeout to prevent hanging processes.
    sandbox.run(untrustedSource);
    ```
 
-2. **Disable tool calls and imports** for untrusted input — these are the largest attack surface.
+2. **Disable tool calls and module loading (`use`)** for untrusted input — these are the largest attack surface.
 
 3. **Lower resource limits** based on your use case. The defaults are generous; tighten them.
 

@@ -80,7 +80,7 @@ Lifecycle hooks (`before_run`, `after_run`, `on_error`) are functions composed v
 | `async/await` | Task execution, retry delays, timeouts |
 | `parallel { }` | Concurrent independent task batches |
 | `try/catch` | Retry logic with exponential backoff |
-| `import` | Module system for workflows importing scheduler |
+| `use` | Module system for workflows using scheduler |
 | `pub` | Public API surface for each module |
 | `collections.*` | `map`, `filter`, `reduce`, `group_by`, `sort_by`, `chunks`, `index_by` |
 | `datetime.*` | Timestamps, formatting, duration math, cron matching |
@@ -106,8 +106,8 @@ See [`equivalent-lines.md`](./equivalent-lines.md) for detailed analysis. Summar
 ## Running
 
 ```arc
-import "showcase/task-scheduler/main" as scheduler
-import "showcase/task-scheduler/workflows/deploy" as deploy
+use "showcase/task-scheduler/main" as scheduler
+use "showcase/task-scheduler/workflows/deploy" as deploy
 
 # Run a deploy pipeline
 await deploy.run_deploy({ app_name: "myapp", version: "2.1.0", environment: "production" })

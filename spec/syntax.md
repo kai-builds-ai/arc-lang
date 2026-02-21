@@ -42,7 +42,7 @@ counter = counter + 1
 ```arc
 let {name, age, email} = getUser()
 let [first, second, ..rest] = getItems()
-let {status, body: data} = @GET "api/data"
+let {status, data} = @GET "api/data"
 ```
 
 **Comparison — Destructuring an API response:**
@@ -50,7 +50,7 @@ let {status, body: data} = @GET "api/data"
 ```javascript
 // JavaScript (14 tokens)
 const response = await fetch('api/data');
-const { status, body: data } = await response.json();
+const { status, data } = await response.json();
 ```
 
 ```python
@@ -62,7 +62,7 @@ status = response.status_code
 
 ```arc
 # Arc (7 tokens)
-let {status, body: data} = @GET "api/data"
+let {status, data} = @GET "api/data"
 ```
 
 **Savings: 50% vs JS, 42% vs Python**
@@ -177,11 +177,11 @@ fn area(s: Shape) => match s {
 ### Nested Matching
 ```arc
 match response {
-  {status: 200, body: {users: [first, ..rest]}} => {
+  {status: 200, data: {users: [first, ..rest]}} => {
     process(first)
     queue(rest)
   }
-  {status: 200, body: {users: []}} => print("no users")
+  {status: 200, data: {users: []}} => print("no users")
   {status: s} => error("HTTP {s}")
 }
 ```
@@ -510,9 +510,11 @@ let version = 1
 # Simple interpolation
 print("Welcome to {name} v{version}")
 
-# Expression interpolation
-print("2 + 2 = {2 + 2}")
-print("Users: {users |> len}")
+# Expression interpolation (must start with letter/underscore)
+let sum = 2 + 2
+print("2 + 2 = {sum}")
+let count = users |> len
+print("Users: {count}")
 
 # Multi-line (backtick raw strings)
 let html = `

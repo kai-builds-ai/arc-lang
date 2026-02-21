@@ -15,10 +15,10 @@ Comprehensive documentation for the Arc ⚡ programming language.
 
 ## Standard Library
 
-- **[Stdlib Reference](stdlib-reference.md)** — Full API reference for all 11 modules
+- **[Stdlib Reference](stdlib-reference.md)** — Full API reference for all 27 modules
 - **[Stdlib Tutorial](stdlib-tutorial.md)** — Hands-on guide to using the stdlib
 
-Modules: `math`, `strings`, `collections`, `map`, `io`, `http`, `json`, `csv`, `test`, `result`, `time`
+Modules: `math`, `strings`, `collections`, `map`, `io`, `http`, `json`, `csv`, `test`, `result`, `time`, `regex`, `datetime`, `os`, `error`, `net`, `crypto`, `prompt`, `embed`, `llm`, `store`, `yaml`, `toml`, `html`, `path`, `env`, `log`
 
 ## Reference
 

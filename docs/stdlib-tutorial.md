@@ -26,7 +26,7 @@ let evens = numbers |> filter(n => n % 2 == 0)
 # => [2, 4, 6, 8, 10]
 
 # Sum everything
-let total = numbers |> reduce(0, (acc, n) => acc + n)
+let total = numbers |> reduce((acc, n) => acc + n, 0)
 # => 55
 ```
 
@@ -39,7 +39,7 @@ let result = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   |> filter(n => n % 2 == 0)    # keep evens
   |> map(n => n * n)             # square them
   |> take(3)                     # first 3
-  |> reduce(0, (a, b) => a + b) # sum
+  |> reduce((a, b) => a + b, 0) # sum
 # => 4 + 16 + 36 = 56
 ```
 

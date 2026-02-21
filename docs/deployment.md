@@ -54,7 +54,7 @@ The `compiler/package.json` includes:
 ```json
 {
   "name": "arc-lang",
-  "version": "0.5.9",
+  "version": "0.6.12",
   "bin": { "arc": "./dist/index.js" },
   "scripts": {
     "build": "tsc",

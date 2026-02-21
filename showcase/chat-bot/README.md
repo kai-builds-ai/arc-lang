@@ -68,7 +68,7 @@ Plugins receive the full conversation context and can:
 | **Datetime module** | Message timestamps, rate limit windows, cache TTL |
 | **Error handling** | `result` type with `ok`/`err`, retry logic |
 | **Spread operator** | Immutable context updates with `{ ...ctx, field: value }` |
-| **Module system** | `import` with aliasing, `pub` exports |
+| **Module system** | `use` with aliasing, `pub` exports |
 
 ## File Structure
 

@@ -781,21 +781,17 @@ stdlib/
 └── cmd/            # Command execution
 ```
 
-### Import Syntax
+### Use Syntax
 
 ```arc
-// Import entire module
-import collections
+// Use entire module
+use collections
 
-// Import specific exports
-import {List, Map, Set} from collections
+// Use specific exports
+use collections { List, Map, Set }
 
-// Import with alias
-import collections as col
-import {List as L} from collections
-
-// Import everything (discouraged)
-import * from collections
+// Use everything (discouraged)
+use collections { * }
 ```
 
 ---

@@ -168,7 +168,7 @@ use collections
 | `index_of` | `(list, val) -> Int \| nil` | Index of first occurrence |
 | `includes` | `(list, val) -> Bool` | Check if list contains value |
 
-> Built-in list functions (`map`, `filter`, `reduce`, `take`, `skip`, `find`, `contains`, `len`, `push`, `concat`) are available without import.
+> Built-in list functions (`map`, `filter`, `reduce`, `take`, `skip`, `find`, `contains`, `len`, `push`, `concat`) are available without `use`.
 
 ---
 
@@ -193,7 +193,7 @@ use map
 | `pick` | `(m, keys) -> Map` | Select only specified keys |
 | `omit` | `(m, keys) -> Map` | Remove specified keys |
 
-> Built-in `keys(m)`, `values(m)` are available without import.
+> Built-in `keys(m)`, `values(m)` are available without `use`.
 
 ---
 
@@ -385,7 +385,7 @@ use time
 
 ---
 
-## Built-in Functions (No Import Required)
+## Built-in Functions (No `use` Required)
 
 These are available globally in every Arc program:
 

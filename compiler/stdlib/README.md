@@ -40,7 +40,7 @@ strings.capitalize("hello")     # => "Hello"
 strings.words("one two three")  # => ["one", "two", "three"]
 ```
 
-## Built-in Functions (No Import)
+## Built-in Functions (No `use` Required)
 
 Many common operations are built into Arc and need no `use` statement:
 
