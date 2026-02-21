@@ -153,4 +153,100 @@ print("Average score: {avg / count}")
 print("Top scores: {scores |> filter(s => s >= 90) |> sort}")
 `
   }
+  {
+    title: "🧠 Prompt Templates (AI-Native)",
+    code: `# Prompt Templates — Arc's AI-Native Stdlib
+use prompt
+
+# Build a prompt template
+let template = "You are a {role}. The user says: {message}"
+let filled = prompt.fill(template, {
+  role: "helpful assistant",
+  message: "What is Arc?"
+})
+print(filled)
+
+# Token counting — know your costs
+let text = "Arc is a language designed for AI agents with token efficiency"
+let tokens = prompt.count_tokens(text)
+print("Token count: {tokens}")
+
+# Context windowing — fit prompts into model limits
+let messages = [
+  "First message from user",
+  "Response from assistant",
+  "Follow-up question",
+  "Another response",
+  "Final question"
+]
+let windowed = prompt.window(messages, 20)
+print("Windowed to fit: {windowed}")
+`
+  },
+  {
+    title: "🔍 Embeddings & Similarity (AI-Native)",
+    code: `# Embeddings & Similarity Search
+use embed
+
+# Cosine similarity between vectors
+let vec_a = [1.0, 0.5, 0.0, 0.3]
+let vec_b = [0.9, 0.6, 0.1, 0.2]
+let vec_c = [0.0, 0.0, 1.0, 0.0]
+
+let sim_ab = embed.cosine(vec_a, vec_b)
+let sim_ac = embed.cosine(vec_a, vec_c)
+print("Similarity A↔B: {sim_ab}")
+print("Similarity A↔C: {sim_ac}")
+print("A and B are more similar!")
+
+# Find most similar from a collection
+let query = [1.0, 0.5, 0.0, 0.3]
+let docs = [
+  [0.9, 0.6, 0.1, 0.2],
+  [0.0, 0.0, 1.0, 0.0],
+  [0.8, 0.4, 0.1, 0.4]
+]
+let best = embed.most_similar(query, docs)
+print("Most similar index: {best}")
+
+# Chunk text for embedding
+let text = "Arc is a programming language. It was designed for AI agents. It uses pipelines and pattern matching."
+let chunks = embed.chunk(text, 50)
+print("Chunks: {chunks}")
+`
+  },
+  {
+    title: "💾 Persistent Store (AI-Native)",
+    code: `# Persistent Key-Value Store
+use store
+
+# Set values
+store.set("user:name", "Roger")
+store.set("user:lang", "Arc")
+store.set("counter", 0)
+
+# Get values
+let name = store.get("user:name")
+let lang = store.get("user:lang")
+print("User: {name}, Language: {lang}")
+
+# Update counter
+let mut count = store.get("counter")
+count = count + 1
+store.set("counter", count)
+print("Visit count: {count}")
+
+# Check existence
+print("Has user:name? {store.has("user:name")}")
+print("Has missing? {store.has("nope")}")
+
+# List all keys
+let keys = store.keys()
+print("All keys: {keys}")
+
+# Delete
+store.del("counter")
+print("After delete, keys: {store.keys()}")
+`
+  }
 ];

@@ -20,6 +20,8 @@
       </select>
       <button class="btn-run" id="run-btn">▶ Run</button>
       <button class="btn-share" id="share-btn">🔗 Share</button>
+      <button class="btn-copy" id="copy-btn">📋 Copy</button>
+      <button class="btn-reset" id="reset-btn">↺ Reset</button>
     </div>
   </div>
 
@@ -158,6 +160,22 @@
       document.body.appendChild(toast);
       setTimeout(function() { toast.remove(); }, 2000);
     }
+
+    // Copy
+    document.getElementById("copy-btn").addEventListener("click", function() {
+      var code = editorGetCode();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(function() {
+          showToast("Code copied!");
+        });
+      }
+    });
+
+    // Reset
+    document.getElementById("reset-btn").addEventListener("click", function() {
+      editorSetCode(ARC_EXAMPLES[0].code);
+      outputEl.innerHTML = '<div class="output-placeholder">Press ▶ Run or Ctrl+Enter to execute your code</div>';
+    });
 
     // Resize handle
     var dragging = false;

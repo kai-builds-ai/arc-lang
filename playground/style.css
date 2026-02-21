@@ -104,6 +104,15 @@ button:hover, select:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
 }
+.btn-copy, .btn-reset {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-copy:hover, .btn-reset:hover {
+  background: var(--hover);
+  border-color: var(--text-dim);
+}
 
 /* Main layout */
 .main {
