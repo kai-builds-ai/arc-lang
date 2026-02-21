@@ -14,7 +14,8 @@ export default defineConfig({
       { text: 'Guide', link: '/getting-started' },
       { text: 'Reference', link: '/stdlib-reference' },
       { text: 'Playground', link: 'https://play.arclang.dev' },
-      { text: 'GitHub', link: 'https://github.com/kai-builds-ai/arc-lang' }
+      { text: 'GitHub', link: 'https://github.com/kai-builds-ai/arc-lang' },
+      { text: 'Discord', link: 'https://discord.gg/BTcakNB6Jd' }
     ],
     sidebar: [
       {
