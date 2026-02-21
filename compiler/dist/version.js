@@ -1,5 +1,5 @@
 // Arc Version System
-export const ARC_VERSION = "0.6.15";
+export const ARC_VERSION = "0.6.16";
 export const ARC_BUILD_DATE = new Date().toISOString().split("T")[0];
 export const ARC_PLATFORM = `${process.platform}-${process.arch}`;
 /** Print version info */
