@@ -48,6 +48,13 @@ class Env {
         suggestion: "Did you mean 'let mut' to declare a mutable variable?",
       });
     }
+    if (name === "import") {
+      throw new ArcRuntimeError(`Undefined variable: ${name}`, {
+        code: ErrorCode.UNDEFINED_VARIABLE,
+        category: "RuntimeError",
+        suggestion: "Arc uses 'use' instead of 'import'. Try: use modulename",
+      });
+    }
     const candidates = this.allNames();
     const closest = findClosestMatch(name, candidates);
     throw new ArcRuntimeError(`Undefined variable: ${name}`, {
