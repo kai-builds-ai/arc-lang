@@ -121,6 +121,11 @@ Run `arc builtins` for full details or `arc builtins --modules` for stdlib refer
 
 📖 **[Cheat Sheet](CHEATSHEET.md)** | **[Standard Library Reference](docs/stdlib-reference.md)** | **[Standard Library Tutorial](docs/stdlib-tutorial.md)**
 
+## Try It
+
+- 🎮 **[Online Playground](https://play.arclang.dev)** — Try Arc in your browser, no install needed
+- 🔌 **[VS Code Extension](editors/vscode/)** — Syntax highlighting, diagnostics, hover, go-to-definition, completions
+
 ## Documentation
 
 - **[Getting Started](docs/getting-started.md)** — Installation, first program, REPL, basics

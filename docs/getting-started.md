@@ -1,5 +1,7 @@
 # Getting Started with Arc
 
+> 🎮 **Want to try Arc without installing?** Use the [Online Playground](https://play.arclang.dev)!
+
 ## Installation
 
 ### Option A: Global Install (recommended)

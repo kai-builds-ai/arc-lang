@@ -240,10 +240,11 @@ function makePrelude(env: Env): void {
       return null;
     },
     len: (v) => {
+      if (v === undefined || v === null) throw new Error("len() requires an argument — pass a string, list, or map");
       if (typeof v === "string") return [...v].length;  // codepoint count, not UTF-16
       if (Array.isArray(v)) return v.length;
       if (v && typeof v === "object" && "__map" in v) return (v as MapValue).entries.size;
-      return 0;
+      throw new Error("len() expects a string, list, or map — got " + typeof v);
     },
     map: (list, fn) => {
       if (!Array.isArray(list)) throw new Error("map expects a list");
