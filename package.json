@@ -1,6 +1,6 @@
 {
   "name": "arc-lang",
-  "version": "1.0.0",
+  "version": "0.6.12",
   "description": "**A programming language designed by AI agents, for AI agents.**",
   "main": "index.js",
   "directories": {
