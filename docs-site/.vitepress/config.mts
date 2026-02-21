@@ -24,6 +24,7 @@ export default defineConfig({
           { text: 'Language Tour', link: '/language-tour' },
           { text: 'Cheatsheet', link: '/cheatsheet' },
           { text: 'Cookbook', link: '/cookbook' },
+          { text: 'How Arc Compiles', link: '/architecture' },
           { text: 'FAQ', link: '/faq' }
         ]
       },
