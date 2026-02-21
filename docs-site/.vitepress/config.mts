@@ -23,6 +23,7 @@ export default defineConfig({
           { text: 'Getting Started', link: '/getting-started' },
           { text: 'Language Tour', link: '/language-tour' },
           { text: 'Cheatsheet', link: '/cheatsheet' },
+          { text: 'Cookbook', link: '/cookbook' },
           { text: 'FAQ', link: '/faq' }
         ]
       },
