@@ -179,11 +179,11 @@ describe("regex module (via use)", () => {
   });
 
   it("replace first", () => {
-    expect(run('use regex\nreplace("\\\\d+", "X", "a1 b2 c3")')).toBe("aX b2 c3");
+    expect(run('use regex\nreplace("\\\\d+", "a1 b2 c3", "X")')).toBe("aX b2 c3");
   });
 
   it("replace_all", () => {
-    expect(run('use regex\nreplace_all("\\\\d+", "X", "a1 b2 c3")')).toBe("aX bX cX");
+    expect(run('use regex\nreplace_all("\\\\d+", "a1 b2 c3", "X")')).toBe("aX bX cX");
   });
 
   it("is_valid true", () => {
