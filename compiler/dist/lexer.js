@@ -338,6 +338,19 @@ export function lex(source) {
                 }
                 num += advance();
             }
+            // Scientific notation: e.g. 1e10, 1.5e-3, 2E+6
+            if (i < source.length && (peek() === "e" || peek() === "E")) {
+                const next = peek(1);
+                if (next >= "0" && next <= "9" || next === "+" || next === "-") {
+                    isFloat = true;
+                    num += advance(); // consume e/E
+                    if (peek() === "+" || peek() === "-")
+                        num += advance(); // consume sign
+                    while (i < source.length && peek() >= "0" && peek() <= "9") {
+                        num += advance();
+                    }
+                }
+            }
             tokens.push(tok(isFloat ? TokenType.Float : TokenType.Int, num, sl, sc));
             continue;
         }

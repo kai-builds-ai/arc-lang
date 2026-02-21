@@ -2562,10 +2562,11 @@ function evalExpr(expr, env) {
             const right = evalExpr(expr.right, env);
             switch (expr.op) {
                 case "+": {
-                    if (typeof left === "string" || typeof right === "string") {
-                        if (left === null || right === null)
-                            throw new ArcRuntimeError(`TypeError: cannot add nil`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
-                        return toStr(left) + toStr(right);
+                    if (typeof left === "string" && typeof right === "string") {
+                        return left + right;
+                    }
+                    if ((typeof left === "string" && typeof right !== "string") || (typeof left !== "string" && typeof right === "string")) {
+                        throw new ArcRuntimeError(`TypeError: cannot add ${typeof left} and ${typeof right} — use str() to convert, or ++ for string concatenation`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });
                     }
                     if (left === null || right === null)
                         throw new ArcRuntimeError(`TypeError: cannot add nil`, { code: ErrorCode.INVALID_OPERATOR, loc: expr.loc });

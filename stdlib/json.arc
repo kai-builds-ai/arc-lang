@@ -198,6 +198,13 @@ pub fn get_path(obj, path) {
   for part in parts {
     if type_of(current) == "map" {
       current = current[part]
+    } el if type_of(current) == "list" {
+      let idx = int(part)
+      if idx != nil {
+        current = current[idx]
+      } el {
+        current = nil
+      }
     } el {
       current = nil
     }
