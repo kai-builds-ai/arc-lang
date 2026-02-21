@@ -1,4 +1,4 @@
-# Arc Language VS Code Extension
+# Arc Language — VS Code Extension
 
 Syntax highlighting and language server support for the [Arc programming language](https://github.com/kai-builds-ai/arc-lang).
 
