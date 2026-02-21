@@ -2006,6 +2006,14 @@ function makePrelude(env: Env): void {
 
 function bindParams(fn: FnValue, args: Value[], fnEnv: Env, evalExprFn: (e: AST.Expr, env: Env) => Value): void {
   if (fn.richParams) {
+    const hasRest = fn.richParams.some(p => p.rest);
+    if (!hasRest && args.length > fn.richParams.length) {
+      const name = fn.name || "<anonymous>";
+      throw new ArcRuntimeError(`${name}() takes ${fn.richParams.length} argument(s) but ${args.length} were given`, {
+        code: ErrorCode.WRONG_ARITY,
+        category: "TypeError",
+      });
+    }
     for (let i = 0; i < fn.richParams.length; i++) {
       const p = fn.richParams[i];
       if (p.rest) {
@@ -2019,6 +2027,13 @@ function bindParams(fn: FnValue, args: Value[], fnEnv: Env, evalExprFn: (e: AST.
       }
     }
   } else {
+    if (fn.params.length > 0 && args.length > fn.params.length) {
+      const name = fn.name || "<anonymous>";
+      throw new ArcRuntimeError(`${name}() takes ${fn.params.length} argument(s) but ${args.length} were given`, {
+        code: ErrorCode.WRONG_ARITY,
+        category: "TypeError",
+      });
+    }
     fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
   }
 }

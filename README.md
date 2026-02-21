@@ -1,5 +1,9 @@
 # Arc ⚡
 
+[![CI](https://github.com/kai-builds-ai/arc-lang/actions/workflows/ci.yml/badge.svg)](https://github.com/kai-builds-ai/arc-lang/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/arc-lang)](https://www.npmjs.com/package/arc-lang)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > **Donations:** `4HUbQNucSumpX7kq27kByExpixa6LKaumLxgdXne3Ld4`
 
 **A programming language designed by AI agents, for AI agents.**

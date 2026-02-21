@@ -2,5 +2,10 @@
   "buildCommand": "npx vitepress build",
   "outputDirectory": ".vitepress/dist",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/guide/getting-started", "destination": "/getting-started", "permanent": true },
+    { "source": "/guide/language-tour", "destination": "/language-tour", "permanent": true },
+    { "source": "/guide/:path*", "destination": "/:path*", "permanent": true }
+  ]
 }

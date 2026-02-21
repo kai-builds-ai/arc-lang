@@ -269,7 +269,7 @@ export class Parser {
         this.expect(TokenType.Try);
         const body = this.parseBlock();
         this.expect(TokenType.Catch);
-        const catchVar = this.expect(TokenType.Ident).value;
+        const catchVar = this.expect(TokenType.Ident, "catch requires a variable name, e.g. catch err { ... }").value;
         const catchBody = this.parseBlock();
         return { kind: "TryCatchStmt", body, catchVar, catchBody, loc };
     }
@@ -281,7 +281,7 @@ export class Parser {
         const body = this.parseBlock();
         if (this.at(TokenType.Catch)) {
             this.advance();
-            const catchVar = this.expect(TokenType.Ident).value;
+            const catchVar = this.expect(TokenType.Ident, "catch requires a variable name, e.g. catch err { ... }").value;
             const catchBody = this.parseBlock();
             return { kind: "TryCatchStmt", body, catchVar, catchBody, loc };
         }
@@ -749,7 +749,7 @@ export class Parser {
             const body = this.parseBlock();
             if (this.at(TokenType.Catch)) {
                 this.expect(TokenType.Catch);
-                const catchVar = this.expect(TokenType.Ident).value;
+                const catchVar = this.expect(TokenType.Ident, "catch requires a variable name, e.g. catch err { ... }").value;
                 const catchBody = this.parseBlock();
                 return { kind: "TryCatchExpr", body, catchVar, catchBody, loc };
             }
@@ -1026,7 +1026,17 @@ export class Parser {
         }
         if (t.type === TokenType.Int || t.type === TokenType.Float) {
             this.advance();
-            return { kind: "LiteralPattern", value: parseFloat(t.value), loc };
+            const fromVal = parseFloat(t.value);
+            if (this.at(TokenType.Range)) {
+                this.advance();
+                const toTok = this.peek();
+                if (toTok.type !== TokenType.Int && toTok.type !== TokenType.Float) {
+                    throw new ParseError(`Expected number after '..' in range pattern`, this.loc());
+                }
+                this.advance();
+                return { kind: "RangePattern", from: fromVal, to: parseFloat(toTok.value), loc };
+            }
+            return { kind: "LiteralPattern", value: fromVal, loc };
         }
         if (t.type === TokenType.String) {
             this.advance();

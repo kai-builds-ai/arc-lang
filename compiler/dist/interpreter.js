@@ -27,6 +27,13 @@ class Env {
                 suggestion: "Did you mean 'let mut' to declare a mutable variable?",
             });
         }
+        if (name === "import") {
+            throw new ArcRuntimeError(`Undefined variable: ${name}`, {
+                code: ErrorCode.UNDEFINED_VARIABLE,
+                category: "RuntimeError",
+                suggestion: "Arc uses 'use' instead of 'import'. Try: use modulename",
+            });
+        }
         const candidates = this.allNames();
         const closest = findClosestMatch(name, candidates);
         throw new ArcRuntimeError(`Undefined variable: ${name}`, {
@@ -229,13 +236,15 @@ function makePrelude(env) {
             return null;
         },
         len: (v) => {
+            if (v === undefined || v === null)
+                throw new Error("len() requires an argument — pass a string, list, or map");
             if (typeof v === "string")
                 return [...v].length; // codepoint count, not UTF-16
             if (Array.isArray(v))
                 return v.length;
             if (v && typeof v === "object" && "__map" in v)
                 return v.entries.size;
-            return 0;
+            throw new Error("len() expects a string, list, or map — got " + typeof v);
         },
         map: (list, fn) => {
             if (!Array.isArray(list))
@@ -2449,6 +2458,14 @@ function makePrelude(env) {
 }
 function bindParams(fn, args, fnEnv, evalExprFn) {
     if (fn.richParams) {
+        const hasRest = fn.richParams.some(p => p.rest);
+        if (!hasRest && args.length > fn.richParams.length) {
+            const name = fn.name || "<anonymous>";
+            throw new ArcRuntimeError(`${name}() takes ${fn.richParams.length} argument(s) but ${args.length} were given`, {
+                code: ErrorCode.WRONG_ARITY,
+                category: "TypeError",
+            });
+        }
         for (let i = 0; i < fn.richParams.length; i++) {
             const p = fn.richParams[i];
             if (p.rest) {
@@ -2466,6 +2483,13 @@ function bindParams(fn, args, fnEnv, evalExprFn) {
         }
     }
     else {
+        if (fn.params.length > 0 && args.length > fn.params.length) {
+            const name = fn.name || "<anonymous>";
+            throw new ArcRuntimeError(`${name}() takes ${fn.params.length} argument(s) but ${args.length} were given`, {
+                code: ErrorCode.WRONG_ARITY,
+                category: "TypeError",
+            });
+        }
         fn.params.forEach((p, i) => fnEnv.set(p, args[i] ?? null));
     }
 }
@@ -2785,10 +2809,14 @@ function evalExpr(expr, env) {
                 if (idx !== Math.floor(idx))
                     throw new ArcRuntimeError("String index must be an integer");
                 let i = idx < 0 ? obj.length + idx : idx;
-                return i >= 0 && i < obj.length ? obj.charAt(i) : null;
+                if (i < 0 || i >= obj.length)
+                    throw new ArcRuntimeError(`String index out of bounds: index ${idx} but length is ${obj.length}`);
+                return obj.charAt(i);
             }
             if (Array.isArray(obj) && typeof idx === "number") {
                 let i = idx < 0 ? obj.length + idx : idx;
+                if (i < 0 || i >= obj.length)
+                    throw new ArcRuntimeError(`Index out of bounds: index ${idx} but length is ${obj.length}`);
                 return obj[i] ?? null;
             }
             if (obj && typeof obj === "object" && "__map" in obj) {
@@ -2992,6 +3020,8 @@ function matchPattern(pattern, value, env) {
                 return false;
             return pattern.elements.every((p, i) => matchPattern(p, value[i], env));
         }
+        case "RangePattern":
+            return typeof value === "number" && value >= pattern.from && value <= pattern.to;
         case "OrPattern":
             return pattern.patterns.some(p => matchPattern(p, value, env));
         case "ConstructorPattern": {

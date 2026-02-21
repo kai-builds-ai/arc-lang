@@ -256,7 +256,7 @@ export class Parser {
     this.expect(TokenType.Try);
     const body = this.parseBlock();
     this.expect(TokenType.Catch);
-    const catchVar = this.expect(TokenType.Ident).value;
+    const catchVar = this.expect(TokenType.Ident, "catch requires a variable name, e.g. catch err { ... }").value;
     const catchBody = this.parseBlock();
     return { kind: "TryCatchStmt", body, catchVar, catchBody, loc };
   }
@@ -269,7 +269,7 @@ export class Parser {
     const body = this.parseBlock();
     if (this.at(TokenType.Catch)) {
       this.advance();
-      const catchVar = this.expect(TokenType.Ident).value;
+      const catchVar = this.expect(TokenType.Ident, "catch requires a variable name, e.g. catch err { ... }").value;
       const catchBody = this.parseBlock();
       return { kind: "TryCatchStmt", body, catchVar, catchBody, loc } as AST.TryCatchStmt;
     }
@@ -736,7 +736,7 @@ export class Parser {
       const body = this.parseBlock();
       if (this.at(TokenType.Catch)) {
         this.expect(TokenType.Catch);
-        const catchVar = this.expect(TokenType.Ident).value;
+        const catchVar = this.expect(TokenType.Ident, "catch requires a variable name, e.g. catch err { ... }").value;
         const catchBody = this.parseBlock();
         return { kind: "TryCatchExpr", body, catchVar, catchBody, loc } as AST.TryCatchExpr;
       }

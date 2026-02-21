@@ -182,7 +182,7 @@ export interface GroupExpr {
     expr: Expr;
     loc: Loc;
 }
-export type Pattern = WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern | ConstructorPattern;
+export type Pattern = WildcardPattern | LiteralPattern | BindingPattern | ArrayPattern | OrPattern | ConstructorPattern | RangePattern;
 export interface WildcardPattern {
     kind: "WildcardPattern";
     loc: Loc;
@@ -211,6 +211,12 @@ export interface ConstructorPattern {
     kind: "ConstructorPattern";
     name: string;
     args: Pattern[];
+    loc: Loc;
+}
+export interface RangePattern {
+    kind: "RangePattern";
+    from: number;
+    to: number;
     loc: Loc;
 }
 export type Stmt = LetStmt | FnStmt | ForStmt | DoStmt | WhileStmt | ExprStmt | UseStmt | TypeStmt | AssignStmt | MemberAssignStmt | IndexAssignStmt | RetStmt | BreakStmt | ContinueStmt | TryCatchStmt;
