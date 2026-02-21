@@ -48,70 +48,52 @@ use math
 
 ### Constants
 
-#### `PI`
-```arc
-pub let PI = 3.141592653589793
-```
-The ratio of a circle's circumference to its diameter.
-
-#### `E`
-```arc
-pub let E = 2.718281828459045
-```
-Euler's number, the base of natural logarithms.
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `PI` | `3.141592653589793` | Ratio of circle's circumference to diameter |
+| `E` | `2.718281828459045` | Euler's number |
+| `TAU` | `6.283185307179586` | 2π — full circle in radians |
 
 ### Functions
 
-#### `abs(x) -> Number`
-Returns the absolute value of `x`.
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `abs` | `(x) -> Number` | Absolute value |
+| `sign` | `(x) -> Number` | Sign of number (-1, 0, or 1) |
+| `clamp` | `(x, lo, hi) -> Number` | Constrain to range [lo, hi] |
+| `ceil` | `(x) -> Int` | Smallest integer ≥ x |
+| `floor` | `(x) -> Int` | Largest integer ≤ x |
+| `round` | `(x) -> Int` | Round to nearest integer |
+| `pow` | `(base, exp) -> Number` | Raise base to power |
+| `sqrt` | `(x) -> Number \| nil` | Square root (nil for negative) |
+| `cbrt` | `(x) -> Number` | Cube root |
+| `hypot` | `(a, b) -> Number` | Hypotenuse (√(a²+b²)) |
+| `sin` | `(x) -> Number` | Sine (radians) |
+| `cos` | `(x) -> Number` | Cosine (radians) |
+| `tan` | `(x) -> Number` | Tangent (radians) |
+| `asin` | `(x) -> Number` | Arcsine |
+| `acos` | `(x) -> Number` | Arccosine |
+| `atan` | `(x) -> Number` | Arctangent |
+| `atan2` | `(y, x) -> Number` | Two-argument arctangent |
+| `degrees` | `(radians) -> Number` | Convert radians to degrees |
+| `radians` | `(degrees) -> Number` | Convert degrees to radians |
+| `log` | `(x) -> Number` | Natural logarithm |
+| `log2` | `(x) -> Number` | Base-2 logarithm |
+| `log10` | `(x) -> Number` | Base-10 logarithm |
+| `exp` | `(x) -> Number` | e^x |
+| `factorial` | `(n) -> Int` | Factorial |
+| `gcd` | `(a, b) -> Int` | Greatest common divisor |
+| `lcm` | `(a, b) -> Int` | Least common multiple |
+| `sum` | `(list) -> Number` | Sum of a list |
+| `product` | `(list) -> Number` | Product of a list |
 
 ```arc
-math.abs(-5)   # => 5
-math.abs(3)    # => 3
-```
-
-#### `pow(base, exp) -> Number`
-Returns `base` raised to the power `exp` (integer exponents).
-
-```arc
-math.pow(2, 10)  # => 1024
-math.pow(3, 0)   # => 1
-```
-
-#### `sqrt(x) -> Number | nil`
-Returns the square root of `x` using Newton's method. Returns `nil` for negative inputs.
-
-```arc
-math.sqrt(144)  # => 12
-math.sqrt(2)    # => 1.4142135623730951
-math.sqrt(-1)   # => nil
-```
-
-#### `ceil(x) -> Int`
-Returns the smallest integer greater than or equal to `x`.
-
-```arc
-math.ceil(4.2)   # => 5
-math.ceil(-1.7)  # => -1
-math.ceil(3.0)   # => 3
-```
-
-#### `floor(x) -> Int`
-Returns the largest integer less than or equal to `x`.
-
-```arc
-math.floor(4.9)   # => 4
-math.floor(-1.2)  # => -2
-math.floor(3.0)   # => 3
-```
-
-#### `clamp(x, lo, hi) -> Number`
-Constrains `x` to the range `[lo, hi]`.
-
-```arc
-math.clamp(15, 0, 10)   # => 10
-math.clamp(-5, 0, 10)   # => 0
-math.clamp(5, 0, 10)    # => 5
+math.abs(-5)       # => 5
+math.pow(2, 10)    # => 1024
+math.sqrt(144)     # => 12
+math.round(4.6)    # => 5
+math.sin(math.PI)  # => ~0
+math.sum([1,2,3])  # => 6
 ```
 
 ---
@@ -171,13 +153,20 @@ use collections
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `range` | `(start, end, step?) -> [Int]` | Generate a range of integers |
-| `zip` | `(a, b) -> [(Any, Any)]` | Pair elements from two lists |
-| `flatten` | `(nested) -> [Any]` | Flatten nested lists one level |
-| `chunk` | `(list, size) -> [[Any]]` | Split list into chunks |
-| `unique` | `(list) -> [Any]` | Remove duplicates |
-| `sort_by` | `(list, fn) -> [Any]` | Sort by key function |
+| `set` | `(list) -> [Any]` | Remove duplicates (returns deduplicated list) |
+| `unique` | `(list) -> [Any]` | Alias for `set` |
 | `group_by` | `(list, fn) -> Map` | Group elements by key function |
+| `count_by` | `(list, fn) -> Map` | Count elements by key function |
+| `chunk` | `(list, size) -> [[Any]]` | Split list into chunks |
+| `flatten` | `(nested) -> [Any]` | Flatten nested lists one level |
+| `zip_with` | `(a, b, fn) -> [Any]` | Combine two lists element-wise with a function |
+| `partition` | `(list, fn) -> [[Any], [Any]]` | Split list into [matches, non-matches] |
+| `frequencies` | `(list) -> Map` | Count occurrences of each element |
+| `min_by` | `(list, fn) -> Any` | Minimum element by key function |
+| `max_by` | `(list, fn) -> Any` | Maximum element by key function |
+| `sort_by` | `(list, fn) -> [Any]` | Sort by key function |
+| `index_of` | `(list, val) -> Int \| nil` | Index of first occurrence |
+| `includes` | `(list, val) -> Bool` | Check if list contains value |
 
 > Built-in list functions (`map`, `filter`, `reduce`, `take`, `skip`, `find`, `contains`, `len`, `push`, `concat`) are available without import.
 
@@ -195,12 +184,16 @@ use map
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `keys` | `(m) -> [Any]` | Get all keys |
-| `values` | `(m) -> [Any]` | Get all values |
-| `entries` | `(m) -> [(Any, Any)]` | Get key-value pairs |
 | `merge` | `(a, b) -> Map` | Merge two maps (b overwrites a) |
-| `has_key` | `(m, key) -> Bool` | Check if key exists |
 | `map_values` | `(m, fn) -> Map` | Transform all values |
+| `map_keys` | `(m, fn) -> Map` | Transform all keys |
+| `filter_map` | `(m, fn) -> Map` | Filter entries by predicate |
+| `from_pairs` | `(pairs) -> Map` | Create map from key-value pairs |
+| `to_pairs` | `(m) -> [(Any, Any)]` | Convert map to key-value pairs |
+| `pick` | `(m, keys) -> Map` | Select only specified keys |
+| `omit` | `(m, keys) -> Map` | Remove specified keys |
+
+> Built-in `keys(m)`, `values(m)` are available without import.
 
 ---
 
@@ -219,7 +212,9 @@ use io
 | `read_file` | `(path) -> Result<String>` | Read file contents |
 | `write_file` | `(path, content) -> Result<nil>` | Write string to file |
 | `read_lines` | `(path) -> Result<[String]>` | Read file as lines |
+| `write_lines` | `(path, lines) -> Result<nil>` | Write list of lines to file |
 | `exists` | `(path) -> Bool` | Check if path exists |
+| `append` | `(path, content) -> Result<nil>` | Append string to file |
 
 > `print(...)` is a built-in and does not require import.
 
@@ -241,7 +236,8 @@ use http
 | `post` | `(url, body, headers?) -> Result<Response>` | HTTP POST |
 | `put` | `(url, body, headers?) -> Result<Response>` | HTTP PUT |
 | `delete` | `(url, headers?) -> Result<Response>` | HTTP DELETE |
-| `fetch` | `(url, options?) -> Result<Response>` | Generic HTTP request |
+| `fetch_all` | `(requests) -> [Result<Response>]` | Execute multiple HTTP requests |
+| `parse_url` | `(url) -> Map` | Parse URL into components |
 
 > Arc also supports the `@GET`, `@POST` syntax for inline HTTP calls — see the [Language Tour](language-tour.md).
 
@@ -259,9 +255,10 @@ use json
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `parse` | `(s: String) -> Result<Any>` | Parse JSON string to Arc value |
-| `stringify` | `(value, indent?) -> String` | Convert Arc value to JSON string |
+| `from_json` | `(s: String) -> Result<Any>` | Parse JSON string to Arc value |
+| `to_json` | `(value, indent?) -> String` | Convert Arc value to JSON string |
 | `pretty` | `(value) -> String` | Pretty-print with 2-space indent |
+| `get_path` | `(value, path) -> Any` | Get nested value by dot-separated path |
 
 ---
 
@@ -277,9 +274,9 @@ use csv
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `parse` | `(s: String, sep?) -> [[String]]` | Parse CSV to rows |
-| `parse_records` | `(s: String, sep?) -> [Map]` | Parse CSV with header row to maps |
-| `stringify` | `(rows: [[String]], sep?) -> String` | Convert rows to CSV string |
+| `parse_csv` | `(s: String, sep?) -> [[String]]` | Parse CSV to rows |
+| `parse_csv_headers` | `(s: String, sep?) -> [Map]` | Parse CSV with header row to maps |
+| `to_csv` | `(rows: [[String]], sep?) -> String` | Convert rows to CSV string |
 
 ---
 
@@ -295,27 +292,32 @@ use test
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `assert` | `(cond, msg?)` | Assert condition is truthy |
-| `assert_eq` | `(a, b, msg?)` | Assert equality |
-| `assert_ne` | `(a, b, msg?)` | Assert inequality |
-| `assert_err` | `(result, msg?)` | Assert Result is Err |
-| `assert_ok` | `(result, msg?)` | Assert Result is Ok |
-| `run` | `(tests: [fn])` | Run test suite |
+| `describe` | `(name, fn)` | Define a test suite |
+| `it` | `(name, fn)` | Define a test case |
+| `expect_eq` | `(a, b)` | Assert equality |
+| `expect_neq` | `(a, b)` | Assert inequality |
+| `expect_true` | `(cond)` | Assert truthy |
+| `expect_false` | `(cond)` | Assert falsy |
+| `expect_nil` | `(val)` | Assert nil |
+| `expect_gt` | `(a, b)` | Assert a > b |
+| `expect_lt` | `(a, b)` | Assert a < b |
+| `run_tests` | `()` | Run all defined test suites |
 
 ### Example
 
 ```arc
 use test
 
-fn test_addition() {
-  test.assert_eq(1 + 1, 2, "basic addition")
-}
+test.describe("math", fn() {
+  test.it("adds numbers", fn() {
+    test.expect_eq(1 + 1, 2)
+  })
+  test.it("strings are non-empty", fn() {
+    test.expect_true(len("hello") > 0)
+  })
+})
 
-fn test_string() {
-  test.assert("hello" |> len > 0, "non-empty")
-}
-
-test.run([test_addition, test_string])
+test.run_tests()
 ```
 
 ---
@@ -340,8 +342,16 @@ Arc uses `Result<T>` as the standard error-handling pattern — either `Ok(value
 | `is_err` | `(r) -> Bool` | Check if Err |
 | `unwrap` | `(r) -> T` | Get value or panic |
 | `unwrap_or` | `(r, default) -> T` | Get value or default |
+| `unwrap_err` | `(r) -> String` | Get error message or panic |
 | `map` | `(r, fn) -> Result<U>` | Transform Ok value |
 | `flat_map` | `(r, fn) -> Result<U>` | Chain Result-returning functions |
+| `try_fn` | `(fn) -> Result<T>` | Run function, catching errors as Err |
+| `result_is_ok` | `(r) -> Bool` | Check if Ok (alternate form) |
+| `result_is_err` | `(r) -> Bool` | Check if Err (alternate form) |
+| `result_unwrap` | `(r) -> T` | Unwrap (alternate form) |
+| `result_unwrap_or` | `(r, default) -> T` | Unwrap or default (alternate form) |
+| `result_map` | `(r, fn) -> Result<U>` | Map Ok value (alternate form) |
+| `flat_map_result` | `(r, fn) -> Result<U>` | Chain Results (alternate form) |
 
 ### Example
 
@@ -370,10 +380,8 @@ use time
 | Function | Signature | Description |
 |----------|-----------|-------------|
 | `now` | `() -> Timestamp` | Current Unix timestamp (ms) |
-| `format` | `(ts, fmt) -> String` | Format timestamp |
-| `parse` | `(s, fmt) -> Result<Timestamp>` | Parse date string |
+| `format_duration` | `(ms) -> String` | Format milliseconds as human-readable duration |
 | `sleep` | `(ms)` | Pause execution |
-| `elapsed` | `(start) -> Int` | Milliseconds since start |
 
 ---
 
@@ -397,7 +405,7 @@ These are available globally in every Arc program:
 | `slice(x, start, end)` | Slice string or list |
 | `map(list, fn)` | Transform each element |
 | `filter(list, fn)` | Keep matching elements |
-| `reduce(list, init, fn)` | Fold list to single value |
+| `reduce(list, fn, init)` | Fold list to single value |
 | `find(list, fn)` | Find first match |
 | `contains(list, val)` | Check membership |
 | `push(list, val)` | Append to list |
@@ -423,17 +431,18 @@ use regex
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `match` | `(pattern, str) -> Match \| nil` | First match |
-| `match_all` | `(pattern, str) -> [Match]` | All matches |
+| `find` | `(pattern, str) -> Match \| nil` | Find first match |
+| `find_all` | `(pattern, str) -> [Match]` | Find all matches |
+| `match_all` | `(pattern, str) -> [Match]` | All matches (alias for find_all) |
 | `test` | `(pattern, str) -> Bool` | Test if pattern matches |
-| `replace` | `(pattern, str, replacement) -> String` | Replace first match |
+| `replace` | `(pattern, str, replacement) -> String` | Replace all matches |
+| `replace_first` | `(pattern, str, replacement) -> String` | Replace first match |
 | `replace_all` | `(pattern, str, replacement) -> String` | Replace all matches |
 | `split` | `(pattern, str) -> [String]` | Split by pattern |
-| `capture` | `(pattern, str) -> [String] \| nil` | Capture groups |
-| `captures_all` | `(pattern, str) -> [[String]]` | All capture groups |
+| `capture` | `(pattern, str) -> [String] \| nil` | Capture groups from first match |
+| `capture_all` | `(pattern, str) -> [[String]]` | All capture groups |
 | `escape` | `(str) -> String` | Escape regex metacharacters |
-| `find` | `(pattern, str) -> Match \| nil` | Find first match (alias) |
-| `find_all` | `(pattern, str) -> [Match]` | Find all matches (alias) |
+| `is_valid` | `(pattern) -> Bool` | Check if pattern is valid regex |
 
 ---
 
@@ -454,8 +463,16 @@ use datetime
 | `parse` | `(str) -> Timestamp` | Parse date string |
 | `format` | `(ts, fmt) -> String` | Format timestamp |
 | `add_days` | `(ts, days) -> Timestamp` | Add days to timestamp |
+| `add_hours` | `(ts, hours) -> Timestamp` | Add hours to timestamp |
+| `add_minutes` | `(ts, minutes) -> Timestamp` | Add minutes to timestamp |
 | `diff_days` | `(a, b) -> Number` | Days between two timestamps |
+| `diff_hours` | `(a, b) -> Number` | Hours between two timestamps |
+| `diff_minutes` | `(a, b) -> Number` | Minutes between two timestamps |
 | `day_of_week` | `(ts) -> String` | Day of week name |
+| `is_before` | `(a, b) -> Bool` | Check if timestamp a is before b |
+| `is_after` | `(a, b) -> Bool` | Check if timestamp a is after b |
+| `to_iso` | `(ts) -> String` | Convert timestamp to ISO 8601 string |
+| `from_iso` | `(str) -> Timestamp` | Parse ISO 8601 string to timestamp |
 
 ---
 
@@ -472,21 +489,26 @@ use os
 | Function | Signature | Description |
 |----------|-----------|-------------|
 | `cwd` | `() -> String` | Current working directory |
-| `chdir` | `(path) -> nil` | Change directory |
+| `get_env` | `(name) -> String \| nil` | Get environment variable |
+| `env` | `(name) -> String \| nil` | Get environment variable (alias) |
+| `set_env` | `(name, value) -> nil` | Set environment variable |
 | `list_dir` | `(path) -> [String]` | List directory contents |
+| `is_file` | `(path) -> Bool` | Check if path is a file |
+| `is_dir` | `(path) -> Bool` | Check if path is a directory |
 | `mkdir` | `(path) -> nil` | Create directory |
-| `remove` | `(path) -> nil` | Remove file or directory |
+| `rmdir` | `(path) -> nil` | Remove directory |
+| `remove` | `(path) -> nil` | Remove file |
 | `rename` | `(from, to) -> nil` | Rename/move file |
 | `copy` | `(src, dst) -> nil` | Copy file |
-| `exists` | `(path) -> Bool` | Check if path exists |
-| `stat` | `(path) -> Map` | File metadata |
+| `file_size` | `(path) -> Int` | Get file size in bytes |
+| `file_ext` | `(path) -> String` | Get file extension |
+| `join_path` | `(...parts) -> String` | Join path segments |
+| `parent_dir` | `(path) -> String` | Get parent directory |
+| `basename` | `(path) -> String` | Get file name from path |
 | `exec` | `(cmd) -> Map` | Execute shell command (10s timeout, injection-protected) |
 | `platform` | `() -> String` | OS platform name |
-| `arch` | `() -> String` | CPU architecture |
-| `env` | `(name) -> String \| nil` | Get environment variable |
-| `set_env` | `(name, value) -> nil` | Set environment variable |
-| `homedir` | `() -> String` | User home directory |
-| `tmpdir` | `() -> String` | Temp directory path |
+| `home_dir` | `() -> String` | User home directory |
+| `temp_dir` | `() -> String` | Temp directory path |
 
 ---
 
@@ -502,10 +524,15 @@ use error
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
+| `error` | `(msg) -> Error` | Create an error value |
+| `is_error` | `(val) -> Bool` | Check if value is an error |
+| `wrap_error` | `(msg, cause) -> Error` | Wrap an error with additional context |
+| `try_fn` | `(fn) -> Result` | Run function, catching errors as Result |
 | `try_catch` | `(fn, handler) -> Any` | Try/catch wrapper |
 | `try_finally` | `(fn, cleanup) -> Any` | Try/finally wrapper |
+| `try_catch_finally` | `(fn, handler, cleanup) -> Any` | Try/catch/finally wrapper |
 | `throw` | `(msg) -> never` | Throw an error |
-| `panic` | `(msg) -> never` | Unrecoverable error |
+| `retry` | `(fn, attempts) -> Result` | Retry a function on failure |
 
 ---
 
@@ -521,11 +548,12 @@ use net
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `dns_lookup` | `(hostname) -> String` | DNS resolution |
-| `base64_encode` | `(str) -> String` | Base64 encode |
-| `base64_decode` | `(str) -> String` | Base64 decode |
+| `url_parse` | `(url) -> Map` | Parse URL into components |
 | `url_encode` | `(str) -> String` | URL encode |
+| `url_decode` | `(str) -> String` | URL decode |
 | `parse_query` | `(str) -> Map` | Parse query string |
+| `build_query` | `(map) -> String` | Build query string from map |
+| `ip_is_valid` | `(str) -> Bool` | Validate IP address |
 
 ---
 
@@ -541,12 +569,20 @@ use crypto
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
+| `md5` | `(str) -> String` | MD5 hash |
+| `sha1` | `(str) -> String` | SHA-1 hash |
 | `sha256` | `(str) -> String` | SHA-256 hash |
 | `sha512` | `(str) -> String` | SHA-512 hash |
 | `hmac_sha256` | `(key, data) -> String` | HMAC-SHA256 |
-| `uuid` | `() -> String` | Generate UUID v4 |
+| `hmac_sha512` | `(key, data) -> String` | HMAC-SHA512 |
 | `random_bytes` | `(n) -> String` | Random bytes (hex) |
-| `md5` | `(str) -> String` | MD5 hash |
+| `random_int` | `(min, max) -> Int` | Random integer in range |
+| `uuid` | `() -> String` | Generate UUID v4 |
+| `base64_encode` | `(str) -> String` | Base64 encode |
+| `base64_decode` | `(str) -> String` | Base64 decode |
+| `hash_password` | `(password) -> String` | Hash a password |
+| `verify_password` | `(password, hash) -> Bool` | Verify password against hash |
+| `constant_time_eq` | `(a, b) -> Bool` | Constant-time string comparison |
 
 ---
 
@@ -889,6 +925,10 @@ use log
 | `set_level` | `(level: String) -> nil` | Set minimum log level |
 | `with` | `(fields: Map) -> Logger` | Create child logger with extra fields |
 | `json` | `(level, msg, fields) -> nil` | Emit structured JSON log entry |
+| `child_debug` | `(logger, msg) -> nil` | Log debug with child logger |
+| `child_info` | `(logger, msg) -> nil` | Log info with child logger |
+| `child_warn` | `(logger, msg) -> nil` | Log warn with child logger |
+| `child_error` | `(logger, msg) -> nil` | Log error with child logger |
 
 ### Example
 
@@ -901,7 +941,7 @@ log.warn("Disk usage high")
 log.error("Connection failed")
 
 let logger = log.with({service: "api", version: "1.0"})
-log.child_info(logger, "Request received")
+log.child_info(logger, "Request received")  # Log with child logger context
 
 log.json("info", "request", {method: "GET", path: "/api/users", status: 200})
 ```
