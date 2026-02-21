@@ -87,7 +87,7 @@ do { x = x + 1 } until x >= 10
 + - * / % **            # add, sub, mul, div, mod, power
 
 # String
-++ "hello" ++ " world"  # concatenation
+"hello" + " world"      # concatenation (++ also works)
 "ha" * 3                # repetition → "hahaha"
 
 # Comparison
@@ -112,7 +112,7 @@ obj?.prop               # nil if obj is nil
 try {
   let x = int("not a number")
 } catch e {
-  print("Error: " ++ e)
+  print("Error: " + e)
 }
 ```
 
@@ -292,6 +292,6 @@ let pretty = json.pretty(data)
 try {
   let val = int(user_input)
 } catch e {
-  print("Invalid: " ++ e)
+  print("Invalid: " + e)
 }
 ```

@@ -39,7 +39,7 @@ arc repl
 Arc REPL v0.1 — Type expressions to evaluate
 > 2 + 3
 5
-> "hello" ++ " world"
+> "hello" + " world"
 hello world
 > [1, 2, 3] |> map(x => x * 2)
 [2, 4, 6]
