@@ -1,21 +1,45 @@
 {
   "name": "arc-lang",
   "displayName": "Arc Language",
-  "description": "Syntax highlighting and language support for the Arc programming language",
+  "description": "Syntax highlighting, IntelliSense, and language support for Arc — a token-efficient language for AI agents",
   "version": "0.1.0",
-  "publisher": "kai-builds-ai",
+  "publisher": "KaiBuildsAI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kai-builds-ai/arc-lang"
+  },
+  "homepage": "https://arclang.dev",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.75.0"
   },
-  "categories": ["Programming Languages"],
-  "activationEvents": ["onLanguage:arc"],
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "arc",
+    "arc-lang",
+    "ai",
+    "agent",
+    "pipeline",
+    "token-efficient"
+  ],
+  "activationEvents": [
+    "onLanguage:arc"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
       {
         "id": "arc",
-        "aliases": ["Arc", "arc"],
-        "extensions": [".arc"],
+        "aliases": [
+          "Arc",
+          "arc"
+        ],
+        "extensions": [
+          ".arc"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -35,6 +59,7 @@
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
+    "@types/node": "^25.3.0",
     "@types/vscode": "^1.75.0",
     "typescript": "^5.3.0"
   }
