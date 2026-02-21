@@ -28,7 +28,9 @@ let nothing = nil        # nil
 ```arc
 let name = "world"
 let greeting = "hello {name}"           # interpolation
-let expr = "1 + 1 = {1 + 1}"           # expressions in {}
+let sum = x + y; "total: {sum}"         # expressions via variables
+# Note: {expr} only interpolates if expr starts with a letter/underscore
+# {42} or {1+1} stay literal — assign to a variable first
 let multi = "line one
 line two"                                # multiline
 let repeated = "ha" * 3                  # "hahaha"
@@ -256,8 +258,9 @@ arc builtins             # List all built-in functions
 // HTTP requests
 use http
 let res = http.get("https://api.example.com/data")
-print(res.status)
-print(res.body)
+print(res.status)  // 200
+print(res.data)    // response body (parsed JSON or string)
+print(res.ok)      // true if 2xx
 
 // Fetch (parallel HTTP)
 let [weather, news] = fetch [
