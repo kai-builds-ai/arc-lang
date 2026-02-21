@@ -129,7 +129,7 @@ Run `arc builtins` for full details or `arc builtins --modules` for stdlib refer
 
 - 📖 **[Documentation](https://docs.arclang.dev)** — Full docs with search
 - 🎮 **[Online Playground](https://play.arclang.dev)** — Try Arc in your browser, no install needed
-- 🔌 **[VS Code Extension](editors/vscode/)** — Syntax highlighting, diagnostics, hover, go-to-definition, completions
+- 🔌 **[VS Code Extension](https://marketplace.visualstudio.com/items?itemName=KaiBuildsAI.arc-lang)** — Syntax highlighting, diagnostics, hover, go-to-definition, completions
 
 ## Documentation
 

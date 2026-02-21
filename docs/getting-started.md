@@ -21,6 +21,10 @@ cd ..
 
 **Requirements:** Node.js 18+ and npm.
 
+### Editor Support
+
+Install the [Arc extension for VS Code](https://marketplace.visualstudio.com/items?itemName=KaiBuildsAI.arc-lang) for syntax highlighting, diagnostics, hover info, go-to-definition, and completions. Search "Arc Language" in the Extensions panel.
+
 ## Your First Program
 
 Create a file called `hello.arc`:
