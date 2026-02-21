@@ -21,19 +21,19 @@ pub fn test(pattern, text) {
 
 # Replaces the first occurrence of `pattern` with `replacement` in `text`
 # (For global replacement, use replace_all)
-pub fn replace(pattern, replacement, text) {
+pub fn replace(pattern, text, replacement) {
   let re = regex_new(pattern)
   regex_replace(re, replacement, text)
 }
 
 # Alias for replace — replaces only the first occurrence
-pub fn replace_first(pattern, replacement, text) {
+pub fn replace_first(pattern, text, replacement) {
   let re = regex_new(pattern)
   regex_replace(re, replacement, text)
 }
 
 # Replaces all occurrences of `pattern` with `replacement` in `text`
-pub fn replace_all(pattern, replacement, text) {
+pub fn replace_all(pattern, text, replacement) {
   let re = regex_new(pattern)
   regex_replace_all(re, replacement, text)
 }
@@ -54,6 +54,12 @@ pub fn capture(pattern, text) {
 pub fn capture_all(pattern, text) {
   let re = regex_new(pattern)
   regex_captures_all(re, text)
+}
+
+# Returns a list of all matches of `pattern` in `text` (alias for find_all)
+pub fn match_all(pattern, text) {
+  let re = regex_new(pattern)
+  regex_find_all(re, text)
 }
 
 # Escapes all regex special characters in `text`

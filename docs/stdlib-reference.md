@@ -449,8 +449,8 @@ use datetime
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `now` | `() -> String` | Current ISO 8601 timestamp |
-| `today` | `() -> String` | Current date (YYYY-MM-DD) |
+| `now` | `() -> Number` | Current Unix timestamp (milliseconds) |
+| `today` | `() -> Map` | Current date as `{year, month, day, hour, minute, second, ms}` |
 | `parse` | `(str) -> Timestamp` | Parse date string |
 | `format` | `(ts, fmt) -> String` | Format timestamp |
 | `add_days` | `(ts, days) -> Timestamp` | Add days to timestamp |
