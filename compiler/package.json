@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc",
     "copy-stdlib": "node -e \"const fs=require('fs');const p=require('path');function cp(s,d){fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s)){const sp=p.join(s,f),dp=p.join(d,f);fs.statSync(sp).isDirectory()?cp(sp,dp):fs.copyFileSync(sp,dp)}}cp(p.join(__dirname,'..','stdlib'),p.join(__dirname,'stdlib'))\"",
+    "postinstall": "node -e \"console.log('\\n  ⚡ Arc installed! Try: arc repl\\n     Docs: https://docs.arclang.dev\\n     Playground: https://play.arclang.dev\\n')\"",
     "prepublishOnly": "npm run copy-stdlib && tsc",
     "run": "tsx src/index.ts run",
     "parse": "tsx src/index.ts parse"
