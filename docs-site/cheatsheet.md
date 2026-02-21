@@ -24,13 +24,40 @@ let m = {a: 1, b: 2}    # map
 let nothing = nil        # nil
 ```
 
+## Type Declarations
+```arc
+# Named types — give meaning to primitives
+type Email = String matching /^[^@]+@[^@]+$/
+type Positive = Number where x > 0
+type Age = Number where x >= 0 and x <= 150
+type Username = String matching /^[a-zA-Z_]\w{2,19}$/
+
+# Composite types
+type User = {name: String, age: Age, email: Email}
+
+# Union types
+type Status = "active" | "inactive" | "banned"
+```
+
+Arc's type system is **declaration-based, not annotation-based** — by design. Instead of cluttering every function signature with types, you declare meaningful types once and the checker validates your code. Less ceremony, more meaning. Use `arc check file.arc` to type-check.
+
+## Optional Chaining
+```arc
+let user = {name: "Roger", address: {city: "NYC"}}
+print(user?.name)                # "Roger"
+print(user?.phone?.number)       # nil (no error)
+print(user?.address?.city)       # "NYC"
+```
+
+Safe navigation through nested data — returns `nil` instead of crashing if any part is missing.
+
 ## Strings
 ```arc
 let name = "world"
 let greeting = "hello {name}"           # interpolation
-let sum = x + y; "total: {sum}"         # expressions via variables
-# Note: {expr} only interpolates if expr starts with a letter/underscore
-# {42} or {1+1} stay literal — assign to a variable first
+let msg = "total: {x + y}"              # expressions work too
+let info = "len: {len(items)}"          # function calls in interpolation
+let first = "first: {items[0]}"         # indexing in interpolation
 let multi = "line one
 line two"                                # multiline
 let repeated = "ha" * 3                  # "hahaha"
@@ -61,6 +88,8 @@ let result = if x > 0 { "positive" } else { "non-positive" }
 let msg = match status {
   200 => "ok",
   404 => "not found",
+  400..499 => "client error",
+  500..599 => "server error",
   _ => "unknown"
 }
 

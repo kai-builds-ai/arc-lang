@@ -126,37 +126,60 @@ Expressions inside `{}` in strings:
 ```arc
 let name = "Arc"
 let msg = "Hello, {name}!"
-let result = 2 + 3
-let math = "2 + 3 = {result}"
+let math = "2 + 3 = {2 + 3}"              # expressions work
+let info = "length: {len(items)}"          # function calls
+let first = "first item: {items[0]}"       # indexing
 let nested = "User: {user.name} ({user.age})"
 ```
 
-> **Note:** `{expr}` only interpolates when `expr` starts with a letter or underscore. `{42}` or `{2 + 3}` stays literal — assign to a variable first.
+Full expressions are supported inside `{}` — variables, math, function calls, property access, indexing.
 
 Use `\{` to escape braces in strings: `"literal \{braces\}"`
 
 ## Type System
 
+Arc's type system is **declaration-based, not annotation-based** — by design. Instead of adding types to every function signature (more tokens, more ceremony), you declare meaningful types once and let the checker do the work.
+
 ### Primitive Types
 
-`Int`, `Float`, `String`, `Bool`, `Nil`, `Any`
+`Number`, `String`, `Bool`, `Nil`, `Any`
 
-### Type Definitions
-
-```arc
-type User = {name: String, age: Int, email: Email}
-type Result<T> = Ok(T) | Err(String)
-type Handler = (Request) -> Response
-```
-
-### Semantic / Constrained Types
+### Type Declarations
 
 ```arc
-type Email = String matching /^[^@]+@[^@]+\.[^@]+$/
-type Age = Int where x => x >= 0 and x <= 150
+# Give meaning to primitives
+type Email = String matching /^[^@]+@[^@]+$/
+type Age = Number where x >= 0 and x <= 150
+type Positive = Number where x > 0
+type Username = String matching /^[a-zA-Z_]\w{2,19}$/
+
+# Composite types
+type User = {name: String, age: Age, email: Email}
+
+# Union types
+type Status = "active" | "inactive" | "banned"
 ```
 
-Types carry meaning, not just structure. Validation is built into the type.
+### Constrained Types
+
+The `where` and `matching` keywords let you encode validation directly into types:
+
+```arc
+type Positive = Number where x > 0       # runtime constraint
+type Email = String matching /\S+@\S+/    # regex validation
+```
+
+This is more powerful than simple type annotations — your types carry *meaning*, not just structure.
+
+### Type Checking
+
+```bash
+arc check file.arc    # Static type checking
+```
+
+### Why No Inline Annotations?
+
+Arc is designed for **token efficiency**. Inline annotations like `fn add(x: Number, y: Number): Number` add tokens to every function — that's cost when AI agents write and read your code. Instead, declare a type once, use it everywhere. Less ceremony, same safety.
 
 ## Tool Calls
 
