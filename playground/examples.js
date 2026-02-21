@@ -154,99 +154,114 @@ print("Top scores: {scores |> filter(s => s >= 90) |> sort}")
 `
   }
   {
-    title: "🧠 Prompt Templates (AI-Native)",
-    code: `# Prompt Templates — Arc's AI-Native Stdlib
-use prompt
+    title: "🧠 Prompt Engineering (AI-Native)",
+    code: `# Prompt Engineering — AI Agent Patterns
 
-# Build a prompt template
-let template = "You are a {role}. The user says: {message}"
-let filled = prompt.fill(template, {
-  role: "helpful assistant",
-  message: "What is Arc?"
-})
-print(filled)
+# Build structured chat messages
+fn system(text) => {role: "system", content: text}
+fn user(text) => {role: "user", content: text}
+fn assistant(text) => {role: "assistant", content: text}
 
-# Token counting — know your costs
-let text = "Arc is a language designed for AI agents with token efficiency"
-let tokens = prompt.count_tokens(text)
-print("Token count: {tokens}")
-
-# Context windowing — fit prompts into model limits
 let messages = [
-  "First message from user",
-  "Response from assistant",
-  "Follow-up question",
-  "Another response",
-  "Final question"
+  system("You are a helpful coding assistant."),
+  user("What is Arc?"),
+  assistant("Arc is a language designed for AI agents."),
+  user("Show me a pipeline example.")
 ]
-let windowed = prompt.window(messages, 20)
-print("Windowed to fit: {windowed}")
+
+# Format as chat transcript
+for msg in messages {
+  print("[{msg.role}]: {msg.content}")
+}
+
+# Token estimation (~4 chars per token)
+fn estimate_tokens(text) => len(text) / 4
+
+let prompt = messages |> map(m => m.content) |> join(" ")
+let tokens = estimate_tokens(prompt)
+print("")
+print("Estimated tokens: {tokens}")
+print("Estimated cost at $3/1M tokens: ${tokens * 3 / 1000000}")
 `
   },
   {
-    title: "🔍 Embeddings & Similarity (AI-Native)",
-    code: `# Embeddings & Similarity Search
-use embed
+    title: "🔍 Vector Similarity (AI-Native)",
+    code: `# Vector Similarity — RAG Building Blocks
 
-# Cosine similarity between vectors
-let vec_a = [1.0, 0.5, 0.0, 0.3]
-let vec_b = [0.9, 0.6, 0.1, 0.2]
-let vec_c = [0.0, 0.0, 1.0, 0.0]
+fn dot(a, b) {
+  let mut sum = 0
+  for i in 0..len(a) { sum = sum + a[i] * b[i] }
+  sum
+}
 
-let sim_ab = embed.cosine(vec_a, vec_b)
-let sim_ac = embed.cosine(vec_a, vec_c)
-print("Similarity A↔B: {sim_ab}")
-print("Similarity A↔C: {sim_ac}")
-print("A and B are more similar!")
+fn magnitude(v) {
+  let mut sum = 0
+  for x in v { sum = sum + x * x }
+  use math
+  math.sqrt(sum)
+}
 
-# Find most similar from a collection
-let query = [1.0, 0.5, 0.0, 0.3]
+fn cosine(a, b) => dot(a, b) / (magnitude(a) * magnitude(b))
+
+let query = [1.0, 0.8, 0.2, 0.0]
+let doc_a = [0.9, 0.7, 0.3, 0.1]
+let doc_b = [0.1, 0.0, 0.8, 0.9]
+let doc_c = [0.95, 0.85, 0.15, 0.0]
+
+print("Query vs Doc A: {cosine(query, doc_a)}")
+print("Query vs Doc B: {cosine(query, doc_b)}")
+print("Query vs Doc C: {cosine(query, doc_c)}")
+
 let docs = [
-  [0.9, 0.6, 0.1, 0.2],
-  [0.0, 0.0, 1.0, 0.0],
-  [0.8, 0.4, 0.1, 0.4]
+  {id: "intro", vec: doc_a},
+  {id: "unrelated", vec: doc_b},
+  {id: "best_match", vec: doc_c}
 ]
-let best = embed.most_similar(query, docs)
-print("Most similar index: {best}")
 
-# Chunk text for embedding
-let text = "Arc is a programming language. It was designed for AI agents. It uses pipelines and pattern matching."
-let chunks = embed.chunk(text, 50)
-print("Chunks: {chunks}")
+let ranked = docs
+  |> map(d => {id: d.id, score: cosine(query, d.vec)})
+  |> sort_by(d => 0 - d.score)
+
+print("")
+print("Search results:")
+for doc in ranked {
+  print("  {doc.id}: {doc.score}")
+}
 `
   },
   {
-    title: "💾 Persistent Store (AI-Native)",
-    code: `# Persistent Key-Value Store
-use store
+    title: "💾 Agent Memory (AI-Native)",
+    code: `# Agent Memory — State Management
 
-# Set values
-store.set("user:name", "Roger")
-store.set("user:lang", "Arc")
-store.set("counter", 0)
+let mut memory = {}
 
-# Get values
-let name = store.get("user:name")
-let lang = store.get("user:lang")
-print("User: {name}, Language: {lang}")
+fn remember(key, value) { memory[key] = value }
+fn recall(key) { memory[key] }
 
-# Update counter
-let mut count = store.get("counter")
-count = count + 1
-store.set("counter", count)
-print("Visit count: {count}")
+remember("user:name", "Kai")
+remember("user:lang", "Arc")
+remember("topic", "AI agents")
 
-# Check existence
-print("Has user:name? {store.has("user:name")}")
-print("Has missing? {store.has("nope")}")
+print("Memory:")
+for k in keys(memory) {
+  print("  {k} = {recall(k)}")
+}
 
-# List all keys
-let keys = store.keys()
-print("All keys: {keys}")
+# Conversation history
+let mut history = []
+fn add_message(role, text) {
+  history = push(history, {role: role, content: text})
+}
 
-# Delete
-store.del("counter")
-print("After delete, keys: {store.keys()}")
+add_message("user", "What can Arc do?")
+add_message("assistant", "Arc is great for AI agents!")
+add_message("user", "Show me pipelines")
+
+print("")
+print("Conversation:")
+for msg in history {
+  print("  [{msg.role}] {msg.content}")
+}
 `
   }
 ];
