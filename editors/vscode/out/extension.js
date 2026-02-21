@@ -39,19 +39,55 @@ const path = __importStar(require("path"));
 const vscode_1 = require("vscode");
 const node_1 = require("vscode-languageclient/node");
 let client;
+function findLspServer(context) {
+    // 1. Check if arc-lang is bundled with the extension
+    const bundled = context.asAbsolutePath(path.join("server", "lsp.js"));
+    try {
+        require.resolve(bundled);
+        return bundled;
+    }
+    catch { }
+    // 2. Try to find arc-lang npm package (global or local install)
+    try {
+        const arcLangPath = require.resolve("arc-lang/dist/lsp.js");
+        return arcLangPath;
+    }
+    catch { }
+    // 3. Check workspace node_modules
+    const workspaceFolders = vscode_1.workspace.workspaceFolders;
+    if (workspaceFolders) {
+        for (const folder of workspaceFolders) {
+            const localPath = path.join(folder.uri.fsPath, "node_modules", "arc-lang", "dist", "lsp.js");
+            try {
+                require.resolve(localPath);
+                return localPath;
+            }
+            catch { }
+        }
+    }
+    // 4. Fallback to relative path (development mode)
+    const devPath = context.asAbsolutePath(path.join("..", "..", "compiler", "dist", "lsp.js"));
+    try {
+        require.resolve(devPath);
+        return devPath;
+    }
+    catch { }
+    return null;
+}
 function activate(context) {
-    // The LSP server is in the compiler directory
-    const serverModule = context.asAbsolutePath(path.join("..", "..", "compiler", "src", "lsp.ts"));
+    const serverModule = findLspServer(context);
+    if (!serverModule) {
+        vscode_1.window.showWarningMessage("Arc Language Server not found. Install arc-lang globally (npm install -g arc-lang) for full IntelliSense support. Syntax highlighting will still work.");
+        return;
+    }
     const serverOptions = {
         run: {
             module: serverModule,
             transport: node_1.TransportKind.ipc,
-            runtime: "tsx",
         },
         debug: {
             module: serverModule,
             transport: node_1.TransportKind.ipc,
-            runtime: "tsx",
         },
     };
     const clientOptions = {

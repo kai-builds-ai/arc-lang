@@ -2,7 +2,7 @@
   "name": "arc-lang",
   "displayName": "Arc Language",
   "description": "Syntax highlighting, IntelliSense, and language support for Arc — a token-efficient language for AI agents",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "KaiBuildsAI",
   "license": "MIT",
   "repository": {

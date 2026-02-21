@@ -1,6 +1,6 @@
 # Arc Language — VS Code Extension
 
-Syntax highlighting and language server support for the [Arc programming language](https://github.com/kai-builds-ai/arc-lang).
+Syntax highlighting and language server support for the [Arc programming language](https://arclang.dev).
 
 ## Features
 
@@ -13,21 +13,25 @@ Syntax highlighting and language server support for the [Arc programming languag
 
 ## Installation
 
-### From Source
+### From VS Code Marketplace (recommended)
 
-1. Clone the repo and `cd editors/vscode`
-2. `npm install`
-3. `npm run compile`
-4. Copy/symlink this folder to `~/.vscode/extensions/arc-lang`
-5. Reload VS Code
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search "Arc Language"
+4. Click Install
+
+For full IntelliSense (diagnostics, hover, completions), also install the Arc compiler:
+
+```bash
+npm install -g arc-lang
+```
+
+Syntax highlighting works without the compiler installed.
 
 ### Development
 
-1. Open this folder in VS Code
-2. Press `F5` to launch Extension Development Host
-3. Open any `.arc` file
-
-## Requirements
-
-- The Arc compiler must be available at `../../compiler/` relative to this extension
-- `tsx` must be installed (`npm install -g tsx`)
+1. Clone the [arc-lang repo](https://github.com/kai-builds-ai/arc-lang)
+2. Open `editors/vscode` in VS Code
+3. `npm install && npm run compile`
+4. Press `F5` to launch Extension Development Host
+5. Open any `.arc` file

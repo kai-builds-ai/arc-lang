@@ -39,7 +39,7 @@ type User = {name: String, age: Age, email: Email}
 type Status = "active" | "inactive" | "banned"
 ```
 
-Arc's type system is **declaration-based, not annotation-based** — by design. Instead of cluttering every function signature with types, you declare meaningful types once and the checker validates your code. Less ceremony, more meaning. Use `arc check file.arc` to type-check.
+Arc's type system is **declaration-based, not annotation-based** — by design. Instead of cluttering every function signature with types, you declare meaningful types once and the checker validates your code. Less ceremony, more meaning. Type declarations are checked at compile time via `arc check file.arc` — they are not runtime constructors (you don't call `Email("foo@bar.com")`).
 
 ## Optional Chaining
 ```arc
